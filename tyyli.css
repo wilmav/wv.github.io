@@ -1,0 +1,125 @@
+/* Globals & Body Setup */
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    /* Luo kaksi saraketta: Header ja Wrapper */
+    display: flex; 
+    min-height: 100vh;
+    background-color: #fff; /* Vain valkoinen tausta */
+}
+
+/* ---------------------------------------------------- */
+/* VASEN PALSTA (Kiinteä Navigaatio) */
+/* ---------------------------------------------------- */
+
+header {
+    width: 300px; 
+    min-width: 300px;
+    height: 100vh;
+    position: fixed; 
+    top: 0;
+    left: 0;
+    
+    background-color: #fff; /* Valkoinen tausta */
+    color: #333; 
+    box-sizing: border-box;
+    
+    /* Flexbox pystysuuntaiseen sijoitteluun */
+    display: flex;
+    flex-direction: column; 
+    overflow-y: auto; 
+    padding: 0 20px; /* Sisäiset marginaalit koko headeriin */
+}
+
+/* SOVELLUKSIA */
+.app-title {
+    /* Pysyy ylhäällä vasemmassa kulmassa */
+    padding-top: 20px;
+    padding-bottom: 50px; /* Lisää tilaa otsikon ja linkkien välille */
+    font-weight: bold;
+    font-size: 2em; /* Nostettu fonttikokoa */
+    color: #000;
+}
+
+/* Navigaatioelementin tyylit sivupalkissa - Linkit Siirretään Alas */
+nav {
+    width: 100%; 
+    text-align: left; 
+    
+    /* Flex-ominaisuus pakottaa navin ALAOSAAN */
+    flex-grow: 1; 
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end; /* Siirtää linkit kohti sivun alaosaa (kuvan mukaisesti) */
+    
+    padding-bottom: 50px; /* Tilaa alareunaan */
+}
+
+nav ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+nav ul li {
+    margin: 10px 0; 
+}
+
+nav ul li a {
+    text-decoration: none;
+    color: #009688; /* Smaragdin vihreä */
+    font-weight: bold;
+    font-size: 1.1em;
+    display: block; 
+}
+
+nav ul li a:hover {
+    color: #333; 
+    text-decoration: underline;
+}
+
+/* ---------------------------------------------------- */
+/* OIKEA PALSTA (Skrollattava Sisältö) */
+/* ---------------------------------------------------- */
+
+/* Kontaineri Koko skrollattavalle alueelle */
+.content-wrapper {
+    /* Vasemman sivupalkin ohitus */
+    margin-left: 300px; 
+    flex-grow: 1; 
+    overflow-y: auto; 
+    background-color: #fff; 
+    
+    /* Sisällön vaakasuuntainen keskitys */
+    display: flex;
+    justify-content: center; 
+}
+
+/* Varsinainen Sisältöalue (keskellä) */
+main {
+    /* Maksimileveys keskitetylle alueelle */
+    max-width: 800px; 
+    width: 100%;
+    background-color: #fff; 
+    padding: 0; 
+    
+    /* SIIRRÄÄ KOKO SISÄLTÖ ALAS YLÄREUNASTA (kuvien mukainen tyhjä tila) */
+    margin-top: 150px; 
+    min-height: 100vh;
+}
+
+/* Sisältöalueen marginaalit */
+.content-padding {
+    padding: 0 3em;
+}
+
+h1 {
+    font-size: 2.5em;
+    margin-top: 0;
+    margin-bottom: 0.5em;
+}
+
+p {
+    font-size: 1.1em;
+    color: #555;
+}

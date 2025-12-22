@@ -1,109 +1,31 @@
 <!DOCTYPE html>
 <html lang="fi">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Kuitulaskuri – Fineli API</title>
-  <link rel="stylesheet" href="style.css" />
+<meta charset="UTF-8">
+<title>Etusivu</title>
+<link rel="stylesheet" href="tyyli.css">
 </head>
 <body>
-  <header class="page-header">
-    <div class="container">
-      <h1>Kuitulaskuri</h1>
-      <p class="subtitle">
-        Valitse suosikkiruokasi Finelistä, lisää määrät ja näe päivän kokonaissumma kuidusta.
-      </p>
-    </div>
-  </header>
+<header>
+    <div class="app-title">Sovelluksia</div>
+    <nav>
+        <ul>
+            <li><a href="index.html">Etusivu</a></li>
+            <li><a href="sovellus1.html">Kuitulaskuri</a></li>
+            <li><a href="sovellus2.html">Sovellus2</a></li>
+            <li><a href="blogi.html">Blogi</a></li>
+            <li><a href="yhteystiedot.html">Yhteystiedot</a></li>
+        </ul>
+    </nav>
+</header>
 
-  <main class="container">
-    <section class="card">
-      <h2>1. Hae ruoka Finelistä</h2>
-      <div class="search-row">
-        <input
-          id="searchInput"
-          type="search"
-          placeholder="Esim. omena, ruisleipä..."
-          autocomplete="off"
-        />
-        <button id="searchButton">Hae</button>
-      </div>
-      <p class="hint">
-        Hakukenttä käyttää Finelin avointa ohjelmointirajapintaa
-        (<code>/api/v1/foods?q=</code>).
-      </p>
-      <div id="searchResults" class="search-results"></div>
-    </section>
-
-    <section class="card">
-      <h2>2. Lisää suosikkiruokia ja kuitumäärät</h2>
-      <p class="hint">
-        Valitse ruoka hakutuloksista. Laskuri käyttää ruoan kokonaista kuitua
-        per 100 g ja muuntaa sen antamasi määrän mukaan.
-      </p>
-      <div id="selectedFood" class="selected-food hidden"></div>
-    </section>
-
-    <section class="card">
-      <h2>3. Päivän kuituyhteenveto</h2>
-      <p class="hint">
-        Valitse itsellesi sopiva kuitutavoite ja seuraa, kuinka lähelle pääset
-        päivän aikana.
-      </p>
-      <div class="goal-row">
-        <div>
-          <label for="fiberGoalSelect" class="field-label">
-            Päivittäinen kuitutavoite
-          </label>
-          <select id="fiberGoalSelect">
-            <option value="fi_min">
-              Suomen vähimmäistaso ~25 g/vrk
-            </option>
-            <option value="avg">
-              Hyvä keskimääräinen taso ~30 g/vrk
-            </option>
-            <option value="high">
-              Korkea kuitutaso ~40 g/vrk (painonhallinnan tueksi)
-            </option>
-          </select>
+<div class="content-wrapper">
+    <main>
+        <div class="content-padding">
+            <h1>Tervetuloa etusivulle</h1>
+            <p>Tähän voit lisätä esittelytekstiäsi.</p>
         </div>
-      </div>
-      <div id="favoritesList" class="favorites-list empty-state">
-        Et ole vielä lisännyt yhtään ruokaa.
-      </div>
-      <div class="summary-row">
-        <div>
-          <span class="summary-label">Päivän kokonaiskuitu:</span>
-          <span id="totalFiber" class="summary-value">0 g</span>
-        </div>
-        <button id="clearAllButton" class="secondary-button">
-          Tyhjennä kaikki
-        </button>
-      </div>
-      <p class="hint small">
-        Suositeltu kuidun saanti aikuisille on useiden lähteiden mukaan
-        vähintään noin 25–30 g / vrk, ja 35–40 g / vrk voi tukea painonhallintaa.
-        Tarkista aina ajantasaiset ravitsemussuositukset luotettavasta lähteestä.
-      </p>
-      <p id="fiberGoalProgress" class="hint small"></p>
-    </section>
-  </main>
-
-  <footer class="page-footer">
-    <div class="container">
-      <p class="footer-text">
-        Lähde: Terveyden ja hyvinvoinnin laitos, Fineli – elintarvikkeiden
-        koostumustietokanta. Aineisto käytössä CC BY 4.0 -lisenssillä.
-      </p>
-      <p class="footer-text small">
-        Tämä sovellus ei ole THL:n tai Finelin tuottama, suosittelema tai ylläpitämä
-        palvelu.
-      </p>
-    </div>
-  </footer>
-
-  <script src="app.js"></script>
+    </main>
+</div>
 </body>
 </html>
-
-
