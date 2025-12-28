@@ -273,7 +273,7 @@ function getEnergyKcalFromFood(food) {
 function getFoodNameByLang(food) {
   if (!food) return "(nimetön)";
   // Fineli palauttaa usein nimen oliona: {fi, sv, en}
-  if (food.name && typeof food.name === "object") {
+  if (food.name && typeof food.name === "object" && food.name !== null) {
     return (
       food.name[currentLang] ||
       food.name.fi ||
@@ -302,21 +302,27 @@ function getNameInCurrentLang(food) {
   if (!food) return null;
   
   // Tarkista ensin, onko ruoalla nimi-objekti (useimmiten Fineli palauttaa tämän muodossa)
-  if (food.name && typeof food.name === "object") {
-    // Palauta nimi valitulla kielellä
-    return food.name[currentLang] || null;
+  // Nimi-objekti on muodossa: {fi: "Porkkana", sv: "Morot", en: "Carrot"}
+  if (food.name && typeof food.name === "object" && food.name !== null) {
+    // Palauta nimi valitulla kielellä, jos se on olemassa
+    const nameInLang = food.name[currentLang];
+    if (nameInLang && typeof nameInLang === "string" && nameInLang.trim().length > 0) {
+      return nameInLang.trim();
+    }
+    // Jos nimeä ei löydy valitulla kielellä, palauta null
+    return null;
   }
   
   // Tarkista varakentät (nameFi, nameSv, nameEn)
   const byLangKey = food[`name${currentLang.toUpperCase()}`];
-  if (typeof byLangKey === "string" && byLangKey.trim()) {
-    return byLangKey;
+  if (byLangKey && typeof byLangKey === "string" && byLangKey.trim().length > 0) {
+    return byLangKey.trim();
   }
   
   // Jos nimi on string-muodossa (ei objekti), se on todennäköisesti suomeksi
   // Palauta vain jos valittu kieli on suomi
-  if (typeof food.name === "string" && food.name.trim()) {
-    return currentLang === "fi" ? food.name : null;
+  if (food.name && typeof food.name === "string" && food.name.trim().length > 0) {
+    return currentLang === "fi" ? food.name.trim() : null;
   }
   
   return null;
@@ -338,18 +344,24 @@ function filterFoodsByLanguage(foods, searchQuery = "") {
     .map(food => {
       // Tarkista ensin, onko ruoalla nimi valitulla kielellä
       const nameInLang = getNameInCurrentLang(food);
-      if (!nameInLang) return null;
+      if (!nameInLang) {
+        // Jos ruoalla ei ole nimeä valitulla kielellä, hylkää se
+        return null;
+      }
       
       const nameLower = nameInLang.toLowerCase().trim();
       const queryLower = query.toLowerCase().trim();
       
-      // Tarkista, sisältääkö nimi hakusanan
-      if (!nameLower.includes(queryLower)) return null;
+      // Tarkista, sisältääkö nimi valitulla kielellä hakusanan (case-insensitive)
+      // Tämä on kriittinen: tarkistamme vain nimeä valitulla kielellä, ei muita kieliä
+      if (!nameLower.includes(queryLower)) {
+        return null;
+      }
       
       // Laske prioriteetti (sama kaikille kielille):
-      // 1. Täysi osuma (esim. "apple" = "Apple" tai "omena" = "Omena") - korkein prioriteetti (3)
-      // 2. Alkaa hakusanalla (esim. "app" → "Apple" tai "omen" → "Omena") - toiseksi korkein (2)
-      // 3. Sisältää hakusanan muualla (esim. "app" → "Fruit Salad, Apple" tai "omen" → "Hedelmäsalaatti, omena") - alhaisin (1)
+      // 1. Täysi osuma (esim. "apple" = "Apple" tai "morot" = "Morot" tai "omena" = "Omena") - korkein prioriteetti (3)
+      // 2. Alkaa hakusanalla (esim. "app" → "Apple" tai "moro" → "Morot" tai "omen" → "Omena") - toiseksi korkein (2)
+      // 3. Sisältää hakusanan muualla (esim. "app" → "Fruit Salad, Apple" tai "moro" → "Morotsallad" tai "omen" → "Hedelmäsalaatti, omena") - alhaisin (1)
       const isExactMatch = nameLower === queryLower;
       const startsWithQuery = nameLower.startsWith(queryLower);
       const priority = isExactMatch ? 3 : startsWithQuery ? 2 : 1;
@@ -387,8 +399,45 @@ async function searchFoods(query) {
     const res = await fetch(`${API_BASE}/foods?q=${encodeURIComponent(query)}`);
     if (!res.ok) throw new Error(`Virhe haussa (${res.status})`);
     const data = await res.json();
+    
+    // Debug: tarkista mitä dataa saadaan
+    if (!Array.isArray(data)) {
+      console.error("API palautti ei-taulukon:", data);
+      searchResultsEl.innerHTML = '<div class="error-text">Haku palautti virheellisen datan.</div>';
+      return;
+    }
+    
     // Suodata tulokset valitun kielen mukaan ja varmista että nimi vastaa hakusanaa
     const filteredData = filterFoodsByLanguage(data, query);
+    
+    // Debug: tarkista suodatuksen tulos
+    if (filteredData.length === 0 && data.length > 0) {
+      console.log(`Haku "${query}" kielellä "${currentLang}" palautti ${data.length} tulosta, mutta suodatuksen jälkeen 0.`);
+      // Tarkista ensimmäiset 10 ruokaa
+      for (let i = 0; i < Math.min(10, data.length); i++) {
+        const food = data[i];
+        const nameInLang = getNameInCurrentLang(food);
+        const nameLower = nameInLang ? nameInLang.toLowerCase().trim() : null;
+        const queryLower = query.toLowerCase().trim();
+        const containsQuery = nameLower ? nameLower.includes(queryLower) : false;
+        console.log(`Ruoan ${i + 1}:`, {
+          id: food.id,
+          nameObj: food.name,
+          nameInLang: nameInLang,
+          nameLower: nameLower,
+          queryLower: queryLower,
+          containsQuery: containsQuery,
+          allNames: food.name && typeof food.name === "object" ? {
+            fi: food.name.fi,
+            sv: food.name.sv,
+            en: food.name.en
+          } : food.name
+        });
+      }
+    } else if (filteredData.length > 0) {
+      console.log(`Haku "${query}" kielellä "${currentLang}" palautti ${data.length} tulosta, suodatuksen jälkeen ${filteredData.length} tulosta.`);
+    }
+    
     renderSearchResults(filteredData);
     renderSuggestions(filteredData);
   } catch (err) {
