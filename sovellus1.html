@@ -25,8 +25,8 @@
         <div class="content-padding">
             <div class="top-bar">
               <div>
-                <h1>Kuitulaskuri</h1>
-                <p class="lead">
+                <h1 data-i18n="app_title">Kuitulaskuri</h1>
+                <p class="lead" data-i18n="app_description">
                   Hae ruokia Finelistä, lisää määrät ja seuraa kuitu- ja kalorikertymää suhteessa tavoitteeseen.
                 </p>
               </div>
@@ -49,6 +49,7 @@
                       type="search"
                       placeholder="Esim. omena, ruisleipä..."
                       autocomplete="off"
+                      data-i18n-placeholder="search_placeholder"
                     />
                     <button id="searchButton" data-i18n="search">Hae</button>
                   </div>
@@ -115,7 +116,7 @@
                 </section>
 
                 <section class="card">
-                  <p class="hint small">
+                  <p class="hint small" data-i18n="source_info">
                     Lähde: Terveyden ja hyvinvoinnin laitos, Fineli – elintarvikkeiden
                     koostumustietokanta. Aineisto käytössä CC BY 4.0 -lisenssillä.
                     Tämä sovellus ei ole THL:n tai Finelin tuottama, suosittelema
@@ -128,12 +129,8 @@
                 <section class="card sticky-card">
                   <h3 data-i18n="samples_title">Korkean kuidun esimerkit</h3>
                   <div class="sample-group">
-                    <h4 data-i18n="plant_title">Kasvikunnan tuotteet (top 10)</h4>
-                    <ul id="plantSamples" class="sample-list"></ul>
-                  </div>
-                  <div class="sample-group">
-                    <h4 data-i18n="animal_title">Eläinperäiset (top 10)</h4>
-                    <ul id="animalSamples" class="sample-list"></ul>
+                    <h4 data-i18n="top20_title">Top 20 kokonaiskuitupitoiset elintarvikkeet (Fineli, g/100 g)</h4>
+                    <ul id="top20Samples" class="sample-list"></ul>
                   </div>
                 </section>
               </aside>
