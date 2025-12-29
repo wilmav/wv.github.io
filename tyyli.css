@@ -1,32 +1,24 @@
-/* Globals & Body Setup */
 body {
     font-family: Arial, sans-serif;
     margin: 0;
-    display: flex; 
     min-height: 100vh;
     background-color: #fff;
 }
-
-/* ---------------------------------------------------- */
-/* VASEN PALSTA (Kiinteä Navigaatio) */
-/* ---------------------------------------------------- */
-
 header {
-    width: 300px; 
+    width: 300px;
     min-width: 300px;
     height: 100vh;
-    position: fixed; 
+    position: fixed;
     top: 0;
     left: 0;
     background-color: #fff;
-    color: #333; 
+    color: #333;
     box-sizing: border-box;
     display: flex;
-    flex-direction: column; 
-    overflow-y: auto; 
+    flex-direction: column;
+    overflow-y: auto;
     padding: 0 20px;
 }
-
 .app-title {
     padding-top: 20px;
     padding-bottom: 50px;
@@ -34,107 +26,76 @@ header {
     font-size: 2em;
     color: #000;
 }
-
 nav {
-    width: 100%; 
-    text-align: left; 
-    flex-grow: 1; 
+    width: 100%;
+    text-align: left;
+    flex-grow: 1;
     display: flex;
     flex-direction: column;
     justify-content: flex-end;
     padding-bottom: 50px;
 }
-
 nav ul {
     list-style: none;
     margin: 0;
     padding: 0;
 }
-
 nav ul li {
-    margin: 10px 0; 
+    margin: 10px 0;
 }
-
 nav ul li a {
     text-decoration: none;
     color: #009688;
     font-weight: bold;
     font-size: 1.1em;
-    display: block; 
+    display: block;
 }
-
 nav ul li a:hover {
-    color: #333; 
+    color: #333;
     text-decoration: underline;
 }
-
-/* ---------------------------------------------------- */
-/* OIKEA PALSTA (Skrollattava Sisältö) */
-/* ---------------------------------------------------- */
-
 .content-wrapper {
-    margin-left: 300px; 
-    flex-grow: 1; 
-    overflow-y: auto; 
+    margin-left: 300px;
+    flex-grow: 1;
+    overflow-y: auto;
     background-color: #fff;
-    display: flex;
-    justify-content: center; 
+    display: block;
 }
-
 main {
-    max-width: 800px; 
+    max-width: 800px;
     width: 100%;
-    background-color: #fff; 
-    padding: 0; 
-    margin-top: 150px; 
+    background-color: #fff;
+    padding-top: 40px;
     min-height: 100vh;
 }
-
 .content-padding {
     padding: 0 3em;
 }
-
-/* ---------------------------------------------------- */
-/* TYPOGRAFIA */
-/* ---------------------------------------------------- */
-
 h1 {
     font-size: 2.5em;
     margin-top: 0;
     margin-bottom: 1em;
 }
-
 p {
     font-size: 1.1em;
     color: #555;
     line-height: 1.6;
 }
-
-/* ---------------------------------------------------- */
-/* BLOGIPOSTAUKSET */
-/* ---------------------------------------------------- */
-
-/* Yksi yhtenäinen postaus */
 .blog-post {
-    margin-bottom: 5em;        /* SELKEÄ VÄLI POSTAUSTEN VÄLIIN */
-    padding-bottom: 2em;       /* Sisäinen hengitys */
-    border-bottom: 1px solid #eee; /* Kevyt visuaalinen erotin */
+    margin-bottom: 5em;
+    padding-bottom: 2em;
+    border-bottom: 1px solid #eee;
 }
-
-/* Päivämäärä */
 .date {
     color: #008B8B;
-    font-size: 1.05em;     /* hieman isompi fontti */
-    margin-bottom: 0.5em; /* lähempänä otsikkoa */
+    font-size: 1.05em;
+    margin-bottom: 0.5em;
 }
-
-/* Alaotsikot */
 .blog-post h2 {
     font-size: 1.6em;
     margin-top: 1.5em;
     margin-bottom: 0.5em;
 }
-
 .date + h2 {
     margin-top: 0.3em;
 }

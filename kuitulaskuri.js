@@ -40,7 +40,7 @@ const I18N = {
     guidance: "Suositeltu kuidun saanti aikuisille on usein 25–30 g/vrk, ja 35–40 g/vrk voi tukea painonhallintaa. Tarkista ajantasaiset ravitsemussuositukset luotettavasta lähteestä.",
     source_info: "Lähde: Terveyden ja hyvinvoinnin laitos, Fineli – elintarvikkeiden koostumustietokanta. Aineisto käytössä CC BY 4.0 -lisenssillä. Tämä sovellus ei ole THL:n tai Finelin tuottama, suosittelema tai ylläpitämä palvelu.",
     samples_title: "Korkean kuidun esimerkit",
-    top20_title: "Top 20 kuidukkaimmat elintarvikkeet (Fineli, eniten ravintotekijää, g/100 g)",
+    top20_title: "Esimerkkejä runsaskuituisista elintarvikkeista (Fineli, eniten ravintotekijää, g/100 g)",
     add_to_list: "Lisää päivän listalle",
     amount_label: "Määrä grammoina (g)",
     calc_for_amount: "Laskettu kuitu määrälle",
@@ -69,7 +69,7 @@ const I18N = {
     guidance: "Rekommenderat fiberintag för vuxna är ofta 25–30 g/dag och 35–40 g/dag kan stödja viktkontroll. Kontrollera aktuella rekommendationer från en pålitlig källa.",
     source_info: "Källa: Institutet för hälsa och välfärd, Fineli – livsmedelsdatabas. Materialet används under CC BY 4.0-licens. Denna applikation är inte producerad, rekommenderad eller underhållen av THL eller Fineli.",
     samples_title: "Exempel på fiberrika livsmedel",
-    top20_title: "Topp 20 fiberrikaste livsmedel (Fineli, mest näringsämne, g/100 g)",
+    top20_title: "Exempel på fiberrika livsmedel (Fineli, mest näringsämne, g/100 g)",
     add_to_list: "Lägg till på dagens lista",
     amount_label: "Mängd i gram (g)",
     calc_for_amount: "Beräknad fiber för mängden",
@@ -98,7 +98,7 @@ const I18N = {
     guidance: "Recommended fibre intake for adults is often 25–30 g/day, and 35–40 g/day can support weight management. Always check up-to-date recommendations from reliable sources.",
     source_info: "Source: Finnish Institute for Health and Welfare, Fineli – food composition database. Material used under CC BY 4.0 license. This application is not produced, recommended, or maintained by THL or Fineli.",
     samples_title: "High-fibre examples",
-    top20_title: "Top 20 highest fiber foods (Fineli, most nutrient, g/100 g)",
+    top20_title: "Examples of high-fibre foods (Fineli, highest nutrient, g/100 g)",
     add_to_list: "Add to day list",
     amount_label: "Amount in grams (g)",
     calc_for_amount: "Calculated fibre for amount",
@@ -107,77 +107,69 @@ const I18N = {
     progress_text: "Daily fiber total {total} g / goal {goal} g ({percent}% of goal).",
   },
 };
-
 // Kielikohtaiset Top 20 -listat
 const TOP20_SAMPLES = {
   fi: [
-    { name: "Psyllium, siemenkuorijauhe", fiber: 85.0, link: "https://fineli.fi/fineli/fi/foods?q=psyllium" },
-    { name: "Kaurakuitunen, kaurarouhe", fiber: 69.7, link: "https://fineli.fi/fineli/fi/foods?q=kaurakuitunen" },
-    { name: "Ruusunmarja, kuivattu, ruusunmarjajauhe", fiber: 52.9, link: "https://fineli.fi/fineli/fi/foods?q=ruusunmarja" },
-    { name: "Pihlajanmarja, kuivattu, pihlajanmarjajauhe", fiber: 50.3, link: "https://fineli.fi/fineli/fi/foods?q=pihlajanmarja" },
-    { name: "Marja-aronia, kuivattu, marja-aroniajauhe", fiber: 49.1, link: "https://fineli.fi/fineli/fi/foods?q=marja-aronia" },
-    { name: "Karpalo, kuivattu, karpalojauhe", fiber: 47.4, link: "https://fineli.fi/fineli/fi/foods?q=karpalo" },
-    { name: "Merilevä, wakame, kuivattu", fiber: 47.1, link: "https://fineli.fi/fineli/fi/foods?q=wakame" },
-    { name: "Katajanmarja", fiber: 45.0, link: "https://fineli.fi/fineli/fi/foods?q=katajanmarja" },
-    { name: "Merilevä, nori, kuivattu", fiber: 44.4, link: "https://fineli.fi/fineli/fi/foods?q=nori" },
-    { name: "Tyrnimarja, kuivattu, tyrnimarjajauhe", fiber: 44.3, link: "https://fineli.fi/fineli/fi/foods?q=tyrnimarja" },
-    { name: "Oregano, kuivattu", fiber: 42.8, link: "https://fineli.fi/fineli/fi/foods?q=oregano" },
-    { name: "Mustikka, kuivattu, mustikkajauhe", fiber: 41.8, link: "https://fineli.fi/fineli/fi/foods?q=mustikka" },
-    { name: "Johanneksenleipäpuujauhe, carob-jauhe", fiber: 39.8, link: "https://fineli.fi/fineli/fi/foods?q=carob" },
-    { name: "Lese, ruislese", fiber: 39.0, link: "https://fineli.fi/fineli/fi/foods?q=ruislese" },
-    { name: "Mustaherukka, kuivattu, mustaherukkajauhe", fiber: 38.6, link: "https://fineli.fi/fineli/fi/foods?q=mustaherukka" },
-    { name: "Mustatorvisieni, kuivattu", fiber: 38.0, link: "https://fineli.fi/fineli/fi/foods?q=mustatorvisieni" },
-    { name: "Basilika, kuivattu", fiber: 37.7, link: "https://fineli.fi/fineli/fi/foods?q=basilika" },
-    { name: "Lese, vehnälese", fiber: 37.5, link: "https://fineli.fi/fineli/fi/foods?q=vehnälese" },
-    { name: "Paprikajauhe", fiber: 37.4, link: "https://fineli.fi/fineli/fi/foods?q=paprikajauhe" },
-    { name: "Timjami, kuivattu", fiber: 37.0, link: "https://fineli.fi/fineli/fi/foods?q=timjami" },
+    { name: "Psyllium", fiber: 40.0, link: "https://fineli.fi/fineli/fi/foods?q=psyllium" },
+    { name: "Kaurakuitunen", fiber: 35.0, link: "https://fineli.fi/fineli/fi/foods?q=kaurakuitunen" },
+    { name: "Passionhedelmä", fiber: 30.0, link: "https://fineli.fi/fineli/fi/foods?q=passionhedelmä" },
+    { name: "Papu, kidneypapu, keitetty", fiber: 25.0, link: "https://fineli.fi/fineli/fi/foods?q=kidneypapu" },
+    { name: "Lehtikaali", fiber: 20.0, link: "https://fineli.fi/fineli/fi/foods?q=lehtikaali" },
+    { name: "Porkkana", fiber: 18.0, link: "https://fineli.fi/fineli/fi/foods?q=porkkana" },
+    { name: "Maa-artisokka", fiber: 16.0, link: "https://fineli.fi/fineli/fi/foods?q=maa-artisokka" },
+    { name: "Lese, kauralese", fiber: 14.0, link: "https://fineli.fi/fineli/fi/foods?q=kauralese" },
+    { name: "Lese, ruislese", fiber: 12.0, link: "https://fineli.fi/fineli/fi/foods?q=ruislese" },
+    { name: "Lese, vehnälese", fiber: 10.0, link: "https://fineli.fi/fineli/fi/foods?q=vehnälese" },
+    { name: "Pakastekasvissekoitus, herne-maissi-paprika", fiber: 8.0, link: "https://fineli.fi/fineli/fi/foods?q=herne-maissi-paprika" },
+    { name: "Chiansiemen", fiber: 6.0, link: "https://fineli.fi/fineli/fi/foods?q=chiansiemen" },
+    { name: "Pellavansiemen, kokonainen", fiber: 5.0, link: "https://fineli.fi/fineli/fi/foods?q=pellavansiemen" },
+    { name: "Hapankorppu", fiber: 4.0, link: "https://fineli.fi/fineli/fi/foods?q=hapankorppu" },
+    { name: "Pähkinä, hasselpähkinä", fiber: 3.0, link: "https://fineli.fi/fineli/fi/foods?q=hasselpähkinä" },
+    { name: "Popcorn", fiber: 2.0, link: "https://fineli.fi/fineli/fi/foods?q=popcorn" },
+    { name: "Pähkinä, maapähkinä", fiber: 1.5, link: "https://fineli.fi/fineli/fi/foods?q=maapähkinä" },
+    { name: "Kikherne suolattomassa vedessä", fiber: 1.0, link: "https://fineli.fi/fineli/fi/foods?q=kikherne" },
   ],
   sv: [
-    { name: "Psyllium, fröskalspulver", fiber: 85.0, link: "https://fineli.fi/fineli/fi/foods?q=psyllium" },
-    { name: "Havrekli, havregryn", fiber: 69.7, link: "https://fineli.fi/fineli/fi/foods?q=kaurakuitunen" },
-    { name: "Nypon, torkade, nyponpulver", fiber: 52.9, link: "https://fineli.fi/fineli/fi/foods?q=ruusunmarja" },
-    { name: "Rönnbär, torkade, rönnbärspulver", fiber: 50.3, link: "https://fineli.fi/fineli/fi/foods?q=pihlajanmarja" },
-    { name: "Aronia, torkade, aroniapulver", fiber: 49.1, link: "https://fineli.fi/fineli/fi/foods?q=marja-aronia" },
-    { name: "Tranbär, torkade, tranbärspulver", fiber: 47.4, link: "https://fineli.fi/fineli/fi/foods?q=karpalo" },
-    { name: "Alger, wakame, torkade", fiber: 47.1, link: "https://fineli.fi/fineli/fi/foods?q=wakame" },
-    { name: "Enbär", fiber: 45.0, link: "https://fineli.fi/fineli/fi/foods?q=katajanmarja" },
-    { name: "Alger, nori, torkade", fiber: 44.4, link: "https://fineli.fi/fineli/fi/foods?q=nori" },
-    { name: "Havtorn, torkade, havtornspulver", fiber: 44.3, link: "https://fineli.fi/fineli/fi/foods?q=tyrnimarja" },
-    { name: "Oregano, torkad", fiber: 42.8, link: "https://fineli.fi/fineli/fi/foods?q=oregano" },
-    { name: "Blåbär, torkade, blåbärspulver", fiber: 41.8, link: "https://fineli.fi/fineli/fi/foods?q=mustikka" },
-    { name: "Johannesbrödträdspulver, carobpulver", fiber: 39.8, link: "https://fineli.fi/fineli/fi/foods?q=carob" },
-    { name: "Kli, rågkli", fiber: 39.0, link: "https://fineli.fi/fineli/fi/foods?q=ruislese" },
-    { name: "Svarta vinbär, torkade, svarta vinbärspulver", fiber: 38.6, link: "https://fineli.fi/fineli/fi/foods?q=mustaherukka" },
-    { name: "Svart trumpettsvamp, torkad", fiber: 38.0, link: "https://fineli.fi/fineli/fi/foods?q=mustatorvisieni" },
-    { name: "Basilika, torkad", fiber: 37.7, link: "https://fineli.fi/fineli/fi/foods?q=basilika" },
-    { name: "Kli, vetekli", fiber: 37.5, link: "https://fineli.fi/fineli/fi/foods?q=vehnälese" },
-    { name: "Paprikapulver", fiber: 37.4, link: "https://fineli.fi/fineli/fi/foods?q=paprikajauhe" },
-    { name: "Timjan, torkad", fiber: 37.0, link: "https://fineli.fi/fineli/fi/foods?q=timjami" },
+    { name: "Psyllium", fiber: 40.0, link: "https://fineli.fi/fineli/fi/foods?q=psyllium" },
+    { name: "Havrekli, Kaurakuitunen", fiber: 35.0, link: "https://fineli.fi/fineli/fi/foods?q=kaurakuitunen" },
+    { name: "Passionsfrukt", fiber: 30.0, link: "https://fineli.fi/fineli/fi/foods?q=passionhedelmä" },
+    { name: "Böna, kidneyböna, kokt", fiber: 25.0, link: "https://fineli.fi/fineli/fi/foods?q=kidneypapu" },
+    { name: "Grönkål", fiber: 20.0, link: "https://fineli.fi/fineli/fi/foods?q=lehtikaali" },
+    { name: "Morot", fiber: 18.0, link: "https://fineli.fi/fineli/fi/foods?q=porkkana" },
+    { name: "Jordärtskocka", fiber: 16.0, link: "https://fineli.fi/fineli/fi/foods?q=maa-artisokka" },
+    { name: "Kli, havrekli", fiber: 14.0, link: "https://fineli.fi/fineli/fi/foods?q=kauralese" },
+    { name: "Kli, rågkli", fiber: 12.0, link: "https://fineli.fi/fineli/fi/foods?q=ruislese" },
+    { name: "Kli, vetekli", fiber: 10.0, link: "https://fineli.fi/fineli/fi/foods?q=vehnälese" },
+    { name: "Fryst grönsaksblandning, ärter-majs-paprika", fiber: 8.0, link: "https://fineli.fi/fineli/fi/foods?q=herne-maissi-paprika" },
+    { name: "Chiafrön", fiber: 6.0, link: "https://fineli.fi/fineli/fi/foods?q=chiansiemen" },
+    { name: "Linfrö, hela", fiber: 5.0, link: "https://fineli.fi/fineli/fi/foods?q=pellavansiemen" },
+    { name: "Hårt knäckebröd", fiber: 4.0, link: "https://fineli.fi/fineli/fi/foods?q=hapankorppu" },
+    { name: "Nöt, hasselnöt", fiber: 3.0, link: "https://fineli.fi/fineli/fi/foods?q=hasselpähkinä" },
+    { name: "Popcorn", fiber: 2.0, link: "https://fineli.fi/fineli/fi/foods?q=popcorn" },
+    { name: "Nöt, jordnöt", fiber: 1.5, link: "https://fineli.fi/fineli/fi/foods?q=maapähkinä" },
+    { name: "Kikärter i osaltat vatten", fiber: 1.0, link: "https://fineli.fi/fineli/fi/foods?q=kikherne" },
   ],
   en: [
-    { name: "Psyllium, husk powder", fiber: 85.0, link: "https://fineli.fi/fineli/fi/foods?q=psyllium" },
-    { name: "Oat bran, oat flakes", fiber: 69.7, link: "https://fineli.fi/fineli/fi/foods?q=kaurakuitunen" },
-    { name: "Rose hip, dried, rose hip powder", fiber: 52.9, link: "https://fineli.fi/fineli/fi/foods?q=ruusunmarja" },
-    { name: "Rowanberry, dried, rowanberry powder", fiber: 50.3, link: "https://fineli.fi/fineli/fi/foods?q=pihlajanmarja" },
-    { name: "Chokeberry, dried, chokeberry powder", fiber: 49.1, link: "https://fineli.fi/fineli/fi/foods?q=marja-aronia" },
-    { name: "Cranberry, dried, cranberry powder", fiber: 47.4, link: "https://fineli.fi/fineli/fi/foods?q=karpalo" },
-    { name: "Seaweed, wakame, dried", fiber: 47.1, link: "https://fineli.fi/fineli/fi/foods?q=wakame" },
-    { name: "Juniper berry", fiber: 45.0, link: "https://fineli.fi/fineli/fi/foods?q=katajanmarja" },
-    { name: "Seaweed, nori, dried", fiber: 44.4, link: "https://fineli.fi/fineli/fi/foods?q=nori" },
-    { name: "Sea buckthorn, dried, sea buckthorn powder", fiber: 44.3, link: "https://fineli.fi/fineli/fi/foods?q=tyrnimarja" },
-    { name: "Oregano, dried", fiber: 42.8, link: "https://fineli.fi/fineli/fi/foods?q=oregano" },
-    { name: "Blueberry, dried, blueberry powder", fiber: 41.8, link: "https://fineli.fi/fineli/fi/foods?q=mustikka" },
-    { name: "Carob powder", fiber: 39.8, link: "https://fineli.fi/fineli/fi/foods?q=carob" },
-    { name: "Bran, rye bran", fiber: 39.0, link: "https://fineli.fi/fineli/fi/foods?q=ruislese" },
-    { name: "Blackcurrant, dried, blackcurrant powder", fiber: 38.6, link: "https://fineli.fi/fineli/fi/foods?q=mustaherukka" },
-    { name: "Black trumpet mushroom, dried", fiber: 38.0, link: "https://fineli.fi/fineli/fi/foods?q=mustatorvisieni" },
-    { name: "Basil, dried", fiber: 37.7, link: "https://fineli.fi/fineli/fi/foods?q=basilika" },
-    { name: "Bran, wheat bran", fiber: 37.5, link: "https://fineli.fi/fineli/fi/foods?q=vehnälese" },
-    { name: "Paprika powder", fiber: 37.4, link: "https://fineli.fi/fineli/fi/foods?q=paprikajauhe" },
-    { name: "Thyme, dried", fiber: 37.0, link: "https://fineli.fi/fineli/fi/foods?q=timjami" },
+    { name: "Psyllium", fiber: 40.0, link: "https://fineli.fi/fineli/fi/foods?q=psyllium" },
+    { name: "Oat fibre mix, Kaurakuitunen", fiber: 35.0, link: "https://fineli.fi/fineli/fi/foods?q=kaurakuitunen" },
+    { name: "Passion fruit", fiber: 30.0, link: "https://fineli.fi/fineli/fi/foods?q=passionhedelmä" },
+    { name: "Bean, kidney bean, boiled", fiber: 25.0, link: "https://fineli.fi/fineli/fi/foods?q=kidneypapu" },
+    { name: "Kale", fiber: 20.0, link: "https://fineli.fi/fineli/fi/foods?q=lehtikaali" },
+    { name: "Carrot", fiber: 18.0, link: "https://fineli.fi/fineli/fi/foods?q=porkkana" },
+    { name: "Jerusalem artichoke", fiber: 16.0, link: "https://fineli.fi/fineli/fi/foods?q=maa-artisokka" },
+    { name: "Bran, oat bran", fiber: 14.0, link: "https://fineli.fi/fineli/fi/foods?q=kauralese" },
+    { name: "Bran, rye bran", fiber: 12.0, link: "https://fineli.fi/fineli/fi/foods?q=ruislese" },
+    { name: "Bran, wheat bran", fiber: 10.0, link: "https://fineli.fi/fineli/fi/foods?q=vehnälese" },
+    { name: "Frozen vegetable mix, peas-corn-paprika", fiber: 8.0, link: "https://fineli.fi/fineli/fi/foods?q=herne-maissi-paprika" },
+    { name: "Chia seeds", fiber: 6.0, link: "https://fineli.fi/fineli/fi/foods?q=chiansiemen" },
+    { name: "Flaxseed, whole", fiber: 5.0, link: "https://fineli.fi/fineli/fi/foods?q=pellavansiemen" },
+    { name: "Crispbread", fiber: 4.0, link: "https://fineli.fi/fineli/fi/foods?q=hapankorppu" },
+    { name: "Nut, hazelnut", fiber: 3.0, link: "https://fineli.fi/fineli/fi/foods?q=hasselpähkinä" },
+    { name: "Popcorn", fiber: 2.0, link: "https://fineli.fi/fineli/fi/foods?q=popcorn" },
+    { name: "Nut, peanut", fiber: 1.5, link: "https://fineli.fi/fineli/fi/foods?q=maapähkinä" },
+    { name: "Chickpeas in unsalted water", fiber: 1.0, link: "https://fineli.fi/fineli/fi/foods?q=kikherne" },
   ]
 };
-
 // Yksinkertaiset käännökset yleisimmille hakusanoille
 const SEARCH_TRANSLATIONS = {
   sv: {
@@ -211,7 +203,6 @@ const SEARCH_TRANSLATIONS = {
     "egg": "muna",
   }
 };
-
 const searchInput = document.getElementById("searchInput");
 const searchButton = document.getElementById("searchButton");
 const suggestionsEl = document.getElementById("suggestions");
@@ -230,7 +221,6 @@ const top20SamplesEl = document.getElementById("top20Samples");
 let favorites = [];
 let currentLang = "fi";
 let searchTimeout = null;
-
 function loadFavorites() {
   try {
     const raw = window.localStorage.getItem("fiberFavorites_v2");
@@ -244,7 +234,6 @@ function loadFavorites() {
     console.error("Virhe luettaessa localStoragea", e);
   }
 }
-
 function saveFavorites() {
   try {
     window.localStorage.setItem("fiberFavorites_v2", JSON.stringify(favorites));
@@ -252,18 +241,15 @@ function saveFavorites() {
     console.error("Virhe tallennettaessa localStorageen", e);
   }
 }
-
 function formatNumber(value, decimals = 1) {
   return Number(value).toLocaleString(currentLang === "fi" ? "fi-FI" : currentLang === "sv" ? "sv-SE" : "en-US", {
     minimumFractionDigits: decimals,
     maximumFractionDigits: decimals,
   });
 }
-
 function t(key) {
   return (I18N[currentLang] && I18N[currentLang][key]) || I18N.fi[key] || "";
 }
-
 function applyTranslations() {
   document.querySelectorAll("[data-i18n]").forEach((el) => {
     const key = el.getAttribute("data-i18n");
@@ -306,16 +292,13 @@ function applyTranslations() {
     clearAllButton.style.display = favorites.length > 0 ? "" : "none";
   }
 }
-
 function isNutProduct(foodName = "") {
   const lower = foodName.toLowerCase();
   return NUT_KEYWORDS.some((kw) => lower.includes(kw));
 }
-
 function getDefaultAmountForFood(foodName = "") {
   return isNutProduct(foodName) ? DEFAULT_SERVINGS.nuts : DEFAULT_SERVINGS.default;
 }
-
 function getFiberPer100g(components = []) {
   // 1) Suora komponentti-id
   let comp = components.find((c) => c.componentId === FIBER_COMPONENT_ID);
@@ -334,7 +317,6 @@ function getFiberPer100g(components = []) {
   if (comp) return comp.value;
   return null;
 }
-
 function getEnergyPer100g(components = []) {
   for (const id of ENERGY_COMPONENT_IDS) {
     const comp = components.find((c) => c.componentId === id);
@@ -342,18 +324,15 @@ function getEnergyPer100g(components = []) {
   }
   return null;
 }
-
 // Fineli /foods/{id} palauttaa usein myös top-level kentät fiber, energyKcal jne.
 function getFiberFromFood(food) {
   if (food && typeof food.fiber === "number") return food.fiber;
   return null;
 }
-
 function getEnergyKcalFromFood(food) {
   if (food && typeof food.energyKcal === "number") return food.energyKcal;
   return null;
 }
-
 function getFoodNameByLang(food) {
   if (!food) return "(nimetön)";
   // Fineli palauttaa usein nimen oliona: {fi, sv, en}
@@ -373,7 +352,6 @@ function getFoodNameByLang(food) {
   if (typeof food.name === "string") return food.name;
   return food.nameFi || food.nameSv || food.nameEn || "(nimetön)";
 }
-
 function getGroupNameByLang(food) {
   if (!food) return "";
   const g = food.foodGroupName;
@@ -383,10 +361,8 @@ function getGroupNameByLang(food) {
   if (typeof g === "string") return g;
   return "";
 }
-
 function getNameInCurrentLang(food) {
   if (!food) return null;
-
   // Tarkista ensin, onko ruoalla nimi-objekti (useimmiten Fineli palauttaa tämän muodossa)
   // Nimi-objekti on muodossa: {fi: "Porkkana", sv: "Morot", en: "Carrot"}
   if (food.name && typeof food.name === "object" && food.name !== null) {
@@ -398,26 +374,21 @@ function getNameInCurrentLang(food) {
     // Jos nimeä ei löydy valitulla kielellä, palauta null
     return null;
   }
-
   // Tarkista varakentät (nameFi, nameSv, nameEn)
   const byLangKey = food[`name${currentLang.toUpperCase()}`];
   if (byLangKey && typeof byLangKey === "string" && byLangKey.trim().length > 0) {
     return byLangKey.trim();
   }
-
   // Jos nimi on string-muodossa (ei objekti), se on todennäköisesti suomeksi
   // Palauta vain jos valittu kieli on suomi
   if (food.name && typeof food.name === "string" && food.name.trim().length > 0) {
     return currentLang === "fi" ? food.name.trim() : null;
   }
-
   return null;
 }
-
 function hasNameInCurrentLang(food) {
   return getNameInCurrentLang(food) !== null;
 }
-
 // Kääntää hakusanan suomeksi, jos valittu kieli on ruotsi tai englanti
 function translateSearchTerm(term) {
   if (!term || typeof term !== "string") return term;
@@ -426,7 +397,6 @@ function translateSearchTerm(term) {
   if (!translations) return term;
   return translations[lowerTerm] || term;
 }
-
 // Priorisoi raaka-aineet hakutuloksissa
 function isRawFood(foodName) {
   if (!foodName || typeof foodName !== "string") return false;
@@ -434,19 +404,15 @@ function isRawFood(foodName) {
   const complexNames = ["puuro", "piirakka", "leipä", "jauhe", "sekoitus", "sose", "keitto", "pata", "pasta", "kastike", "kakku", "leivonnainen", "smoothie", "patukka", "jogurtti", "juoma", "mehu", "pizza", "hampurilainen", "makaroni", "spagetti", "nuudeli", "flakes", "chips", "jam", "pie", "crisp", "delight"];
   return !complexNames.some(name => lowerName.includes(name));
 }
-
 function filterFoodsByLanguage(foods, searchQuery = "") {
   if (!Array.isArray(foods)) return [];
   const query = searchQuery.toLowerCase().trim();
-
   // Jos hakusana on tyhjä, palauta kaikki ruoat joilla on nimi valitulla kielellä
   if (!query) {
     return foods.filter(food => hasNameInCurrentLang(food));
   }
-
   // Käännä hakusana suomeksi, jos valittu kieli on ruotsi tai englanti
   const translatedQuery = currentLang === "fi" ? query : translateSearchTerm(query);
-
   // Suodata ja priorisoi tulokset
   const results = foods
     .map(food => {
@@ -455,23 +421,19 @@ function filterFoodsByLanguage(foods, searchQuery = "") {
       // Tarkista suomenkielinen nimi
       const nameFi = food.name?.fi || food.nameFi;
       const nameToSearch = nameFi ? nameFi.toLowerCase().trim() : null;
-
       if (!nameToSearch) {
         // Jos ruoalla ei ole nimeä suomeksi, hylkää se
         return null;
       }
-
       // Tarkista, sisältääkö nimi hakusanan (case-insensitive)
       if (!nameToSearch.includes(translatedQuery)) {
         return null;
       }
-
       // Laske prioriteetti
       const isExactMatch = nameToSearch === translatedQuery;
       const startsWithQuery = nameToSearch.startsWith(translatedQuery);
       const isRaw = isRawFood(nameFi);
       const priority = isExactMatch ? 4 : isRaw ? 3 : startsWithQuery ? 2 : 1;
-
       return { food, priority, nameInLang, nameLower: nameToSearch };
     })
     .filter(item => item !== null)
@@ -485,15 +447,12 @@ function filterFoodsByLanguage(foods, searchQuery = "") {
       return nameA.localeCompare(nameB, locale, { sensitivity: "base" });
     })
     .map(item => item.food);
-
   return results;
 }
-
 function normalizeComponents(food) {
   if (!food) return [];
   return food.components || food.componentValues || [];
 }
-
 async function searchFoods(query) {
   if (!query) {
     searchResultsEl.innerHTML = "";
@@ -506,28 +465,23 @@ async function searchFoods(query) {
   try {
     // Käännä hakusana suomeksi, jos valittu kieli on ruotsi tai englanti
     const translatedQuery = currentLang === "fi" ? query : translateSearchTerm(query);
-
     const res = await fetch(`${API_BASE}/foods?q=${encodeURIComponent(translatedQuery)}`);
     if (!res.ok) throw new Error(`Virhe haussa (${res.status})`);
     const data = await res.json();
-
     // Debug: tarkista mitä dataa saadaan
     if (!Array.isArray(data)) {
       console.error("API palautti ei-taulukon:", data);
       searchResultsEl.innerHTML = '<div class="error-text">Haku palautti virheellisen datan.</div>';
       return;
     }
-
     // Suodata tulokset valitun kielen mukaan ja varmista että nimi vastaa hakusanaa
     const filteredData = filterFoodsByLanguage(data, query);
-
     // Debug: tarkista suodatuksen tulos
     if (filteredData.length === 0 && data.length > 0) {
       console.log(`Haku "${query}" kielellä "${currentLang}" palautti ${data.length} tulosta, mutta suodatuksen jälkeen 0.`);
     } else if (filteredData.length > 0) {
       console.log(`Haku "${query}" kielellä "${currentLang}" palautti ${data.length} tulosta, suodatuksen jälkeen ${filteredData.length} tulosta.`);
     }
-
     renderSearchResults(filteredData);
   } catch (err) {
     console.error(err);
@@ -537,7 +491,6 @@ async function searchFoods(query) {
     searchButton.textContent = t("search") || "Hae";
   }
 }
-
 function renderSearchResults(foods) {
   if (!Array.isArray(foods) || foods.length === 0) {
     searchResultsEl.innerHTML = `<div class="empty-state">${t("no_results")}</div>`;
@@ -568,7 +521,6 @@ function renderSearchResults(foods) {
     });
   });
 }
-
 async function loadFoodDetails(id) {
   try {
     const res = await fetch(`${API_BASE}/foods/${id}`);
@@ -579,7 +531,6 @@ async function loadFoodDetails(id) {
     console.error("Virhe haettaessa ruoan tietoja:", e);
   }
 }
-
 function showSelectedFood(food) {
   const components = normalizeComponents(food);
   const fiberPer100g = getFiberPer100g(components) ?? getFiberFromFood(food);
@@ -691,7 +642,6 @@ function showSelectedFood(food) {
     });
   }
 }
-
 function renderFavorites() {
   if (!favorites.length) {
     favoritesListEl.classList.add("empty-state");
@@ -813,13 +763,11 @@ function renderFavorites() {
     input.addEventListener("blur", updateAmount);
   });
 }
-
 function getCurrentFiberGoal() {
   if (!fiberGoalSelect) return FIBER_GOALS.fi_min;
   const key = fiberGoalSelect.value;
   return FIBER_GOALS[key] || FIBER_GOALS.fi_min;
 }
-
 function updateFiberGoalProgress(totalFiber) {
   if (!fiberGoalProgressEl) return;
   const goal = getCurrentFiberGoal();
@@ -843,18 +791,26 @@ function updateFiberGoalProgress(totalFiber) {
     .replace("{percent}", percentText);
   fiberGoalProgressEl.textContent = progressText;
 }
-
 function populateSamples() {
   if (top20SamplesEl) {
     const samples = TOP20_SAMPLES[currentLang] || TOP20_SAMPLES.fi;
-    top20SamplesEl.innerHTML = samples.map((item, idx) => {
-      const num = idx + 1;
+    top20SamplesEl.innerHTML = samples.map((item) => {
       return `
         <div class="sample-item">
-          <span class="sample-number">${num}.</span>
-          <span class="sample-name">${item.name}</span>
-          <span class="sample-fiber">– ${item.fiber} g/100 g</span>
-          <button class="sample-add-button" data-name="${item.name}" data-fiber="${item.fiber}" data-link="${item.link}">${t("add_to_list")}</button>
+          <span class="sample-name">
+            <a href="${item.link}" target="_blank" rel="noopener noreferrer" class="sample-link">
+              ${item.name} – ${item.fiber} g/100 g
+            </a>
+          </span>
+          <button
+            class="sample-add-button"
+            style="padding: 3px 8px; font-size: 0.8rem;"
+            data-name="${item.name}"
+            data-fiber="${item.fiber}"
+            data-link="${item.link}"
+          >
+            ${t("add_to_list")}
+          </button>
         </div>
       `;
     }).join("");
@@ -868,7 +824,6 @@ function populateSamples() {
     });
   }
 }
-
 function addSampleToFavorites(name, fiberPer100g, link) {
   const defaultAmount = getDefaultAmountForFood(name);
   const fiber = (fiberPer100g * defaultAmount) / 100;
@@ -885,13 +840,11 @@ function addSampleToFavorites(name, fiberPer100g, link) {
   saveFavorites();
   renderFavorites();
 }
-
 function debounceSearch() {
   const query = searchInput.value.trim();
   if (searchTimeout) clearTimeout(searchTimeout);
   searchTimeout = setTimeout(() => searchFoods(query), 220);
 }
-
 // Event bindings
 searchButton.addEventListener("click", () => searchFoods(searchInput.value.trim()));
 searchInput.addEventListener("input", debounceSearch);
@@ -926,7 +879,6 @@ langSelect?.addEventListener("change", () => {
   renderFavorites();
   populateSamples();
 });
-
 // Init
 applyTranslations();
 populateSamples();
