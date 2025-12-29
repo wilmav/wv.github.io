@@ -1,22 +1,28 @@
 const API_BASE = "https://fineli.fi/fineli/api/v1";
+
 // Kokonaiskuitu (fibre, total dietary)
 const FIBER_COMPONENT_ID = 2168;
+
 // Energia (kcal) – Finelin komponenttilistassa energia (laskennallinen) = id 2331.
 // Lisätään varmuuden vuoksi fallback-lista, mutta ensisijainen on 2331.
 const ENERGY_COMPONENT_IDS = [2331, 1008, 1003, 238, 1009];
+
 // Oletusannokset (g) erityisille ryhmille
 const DEFAULT_SERVINGS = {
   nuts: 30, // pähkinät
   default: 100,
 };
+
 // Pähkinämäisiä tunnisteita nimen perusteella (yksinkertainen heuristiikka)
 const NUT_KEYWORDS = ["pähkinä", "pähkina", "nut", "cashew", "manteli", "almond", "walnut", "pecan", "pista", "hazel"];
+
 // Kuitutavoitteet
 const FIBER_GOALS = {
   fi_min: { grams: 25, label: { fi: "Suomen vähimmäistaso (~25 g/vrk)", sv: "Finlands minimumnivå (~25 g/dag)", en: "Finland minimum level (~25 g/day)" } },
   avg: { grams: 30, label: { fi: "Hyvä keskimääräinen taso (~30 g/vrk)", sv: "Bra genomsnittlig nivå (~30 g/dag)", en: "Good average level (~30 g/day)" } },
   high: { grams: 40, label: { fi: "Korkea kuitutaso (~40 g/vrk, painonhallinnan tueksi)", sv: "Hög fibernivå (~40 g/dag, för viktkontroll)", en: "High fiber level (~40 g/day, for weight management)" } }
 };
+
 // Käännökset UI-teksteille
 const I18N = {
   fi: {
@@ -107,6 +113,7 @@ const I18N = {
     progress_text: "Daily fiber total {total} g / goal {goal} g ({percent}% of goal).",
   },
 };
+
 // Kielikohtaiset Top 20 -listat
 const TOP20_SAMPLES = {
   fi: [
@@ -170,6 +177,7 @@ const TOP20_SAMPLES = {
     { name: "Chickpeas in unsalted water", fiber: 1.0, link: "https://fineli.fi/fineli/fi/foods?q=kikherne" },
   ]
 };
+
 // Yksinkertaiset käännökset yleisimmille hakusanoille
 const SEARCH_TRANSLATIONS = {
   sv: {
@@ -203,6 +211,7 @@ const SEARCH_TRANSLATIONS = {
     "egg": "muna",
   }
 };
+
 const searchInput = document.getElementById("searchInput");
 const searchButton = document.getElementById("searchButton");
 const suggestionsEl = document.getElementById("suggestions");
@@ -218,9 +227,11 @@ const fiberGoalSelect = document.getElementById("fiberGoalSelect");
 const fiberGoalProgressEl = document.getElementById("fiberGoalProgress");
 const langSelect = document.getElementById("langSelect");
 const top20SamplesEl = document.getElementById("top20Samples");
+
 let favorites = [];
 let currentLang = "fi";
 let searchTimeout = null;
+
 function loadFavorites() {
   try {
     const raw = window.localStorage.getItem("fiberFavorites_v2");
@@ -234,6 +245,7 @@ function loadFavorites() {
     console.error("Virhe luettaessa localStoragea", e);
   }
 }
+
 function saveFavorites() {
   try {
     window.localStorage.setItem("fiberFavorites_v2", JSON.stringify(favorites));
@@ -241,32 +253,42 @@ function saveFavorites() {
     console.error("Virhe tallennettaessa localStorageen", e);
   }
 }
+
 function formatNumber(value, decimals = 1) {
-  return Number(value).toLocaleString(currentLang === "fi" ? "fi-FI" : currentLang === "sv" ? "sv-SE" : "en-US", {
-    minimumFractionDigits: decimals,
-    maximumFractionDigits: decimals,
-  });
+  return Number(value).toLocaleString(
+    currentLang === "fi" ? "fi-FI" : currentLang === "sv" ? "sv-SE" : "en-US",
+    {
+      minimumFractionDigits: decimals,
+      maximumFractionDigits: decimals,
+    }
+  );
 }
+
 function t(key) {
   return (I18N[currentLang] && I18N[currentLang][key]) || I18N.fi[key] || "";
 }
+
 function applyTranslations() {
   document.querySelectorAll("[data-i18n]").forEach((el) => {
     const key = el.getAttribute("data-i18n");
     const translated = t(key);
     if (translated) el.textContent = translated;
   });
+
   // Update placeholders
   document.querySelectorAll("[data-i18n-placeholder]").forEach((el) => {
     const key = el.getAttribute("data-i18n-placeholder");
     const translated = t(key);
     if (translated) el.placeholder = translated;
   });
+
   searchButton.textContent = t("search") || "Hae";
+
   // Update search placeholder (fallback)
   if (searchInput && !searchInput.hasAttribute("data-i18n-placeholder")) {
     searchInput.placeholder = t("search_placeholder") || "Esim. omena, ruisleipä...";
   }
+
   // Update dropdown options
   if (fiberGoalSelect) {
     const options = fiberGoalSelect.querySelectorAll("option");
@@ -277,44 +299,54 @@ function applyTranslations() {
       }
     });
   }
+
   // Update app title and description
   const titleEl = document.querySelector("h1");
   if (titleEl) titleEl.textContent = t("app_title") || "Kuitulaskuri";
+
   const descEl = document.querySelector(".lead");
   if (descEl) descEl.textContent = t("app_description") || "";
+
   // Update source info
   const sourceEl = document.querySelector("[data-i18n='source_info']");
   if (sourceEl) {
     sourceEl.textContent = t("source_info") || "";
   }
+
   // Update clear button visibility
   if (clearAllButton) {
     clearAllButton.style.display = favorites.length > 0 ? "" : "none";
   }
 }
+
 function isNutProduct(foodName = "") {
   const lower = foodName.toLowerCase();
   return NUT_KEYWORDS.some((kw) => lower.includes(kw));
 }
+
 function getDefaultAmountForFood(foodName = "") {
   return isNutProduct(foodName) ? DEFAULT_SERVINGS.nuts : DEFAULT_SERVINGS.default;
 }
+
 function getFiberPer100g(components = []) {
   // 1) Suora komponentti-id
   let comp = components.find((c) => c.componentId === FIBER_COMPONENT_ID);
   if (comp && typeof comp.value === "number") return comp.value;
+
   // 2) Varakomponentti: etsi FIBRE-tyyppiä
   comp = components.find(
     (c) =>
       c?.type?.code === "FIBRE" && typeof c.value === "number"
   );
   if (comp) return comp.value;
+
   // 3) Nimen perusteella (kuitu/fibre)
   comp = components.find((c) => {
     const n = (c?.name?.fi || c?.name?.en || c?.name?.sv || c?.shortName?.fi || c?.shortName?.en || "").toLowerCase();
     return typeof c.value === "number" && (n.includes("kuitu") || n.includes("fibre") || n.includes("fiber"));
   });
   if (comp) return comp.value;
+
   return null;
 }
 
@@ -397,10 +429,12 @@ function getFiberFromFood(food) {
   if (food && typeof food.fiber === "number") return food.fiber;
   return null;
 }
+
 function getEnergyKcalFromFood(food) {
   if (food && typeof food.energyKcal === "number") return food.energyKcal;
   return null;
 }
+
 function getFoodNameByLang(food) {
   if (!food) return "(nimetön)";
   // Fineli palauttaa usein nimen oliona: {fi, sv, en}
@@ -420,6 +454,7 @@ function getFoodNameByLang(food) {
   if (typeof food.name === "string") return food.name;
   return food.nameFi || food.nameSv || food.nameEn || "(nimetön)";
 }
+
 function getGroupNameByLang(food) {
   if (!food) return "";
   const g = food.foodGroupName;
@@ -429,17 +464,15 @@ function getGroupNameByLang(food) {
   if (typeof g === "string") return g;
   return "";
 }
+
 function getNameInCurrentLang(food) {
   if (!food) return null;
-  // Tarkista ensin, onko ruoalla nimi-objekti (useimmiten Fineli palauttaa tämän muodossa)
-  // Nimi-objekti on muodossa: {fi: "Porkkana", sv: "Morot", en: "Carrot"}
+  // Tarkista ensin, onko ruoalla nimi-objekti
   if (food.name && typeof food.name === "object" && food.name !== null) {
-    // Palauta nimi valitulla kielellä, jos se on olemassa
     const nameInLang = food.name[currentLang];
     if (nameInLang && typeof nameInLang === "string" && nameInLang.trim().length > 0) {
       return nameInLang.trim();
     }
-    // Jos nimeä ei löydy valitulla kielellä, palauta null
     return null;
   }
   // Tarkista varakentät (nameFi, nameSv, nameEn)
@@ -448,12 +481,12 @@ function getNameInCurrentLang(food) {
     return byLangKey.trim();
   }
   // Jos nimi on string-muodossa (ei objekti), se on todennäköisesti suomeksi
-  // Palauta vain jos valittu kieli on suomi
   if (food.name && typeof food.name === "string" && food.name.trim().length > 0) {
     return currentLang === "fi" ? food.name.trim() : null;
   }
   return null;
 }
+
 function hasNameInCurrentLang(food) {
   return getNameInCurrentLang(food) !== null;
 }
@@ -465,13 +498,20 @@ function translateSearchTerm(term) {
   if (!translations) return term;
   return translations[lowerTerm] || term;
 }
+
 // Priorisoi raaka-aineet hakutuloksissa
 function isRawFood(foodName) {
   if (!foodName || typeof foodName !== "string") return false;
   const lowerName = foodName.toLowerCase();
-  const complexNames = ["puuro", "piirakka", "leipä", "jauhe", "sekoitus", "sose", "keitto", "pata", "pasta", "kastike", "kakku", "leivonnainen", "smoothie", "patukka", "jogurtti", "juoma", "mehu", "pizza", "hampurilainen", "makaroni", "spagetti", "nuudeli", "flakes", "chips", "jam", "pie", "crisp", "delight"];
+  const complexNames = [
+    "puuro", "piirakka", "leipä", "jauhe", "sekoitus", "sose", "keitto", "pata",
+    "pasta", "kastike", "kakku", "leivonnainen", "smoothie", "patukka", "jogurtti",
+    "juoma", "mehu", "pizza", "hampurilainen", "makaroni", "spagetti", "nuudeli",
+    "flakes", "chips", "jam", "pie", "crisp", "delight"
+  ];
   return !complexNames.some(name => lowerName.includes(name));
 }
+
 // Korjattu haku: käyttää valitun kielen nimeä ja priorisoi oikein
 function filterFoodsByLanguage(foods, searchQuery = "") {
   if (!Array.isArray(foods)) return [];
@@ -487,7 +527,6 @@ function filterFoodsByLanguage(foods, searchQuery = "") {
       if (!nameInLang) return null;
 
       const nameLower = nameInLang.toLowerCase();
-
       if (!nameLower.includes(query)) return null;
 
       const isExact = nameLower === query;
@@ -515,6 +554,7 @@ function normalizeComponents(food) {
   if (!food) return [];
   return food.components || food.componentValues || [];
 }
+
 async function searchFoods(query) {
   if (!query) {
     searchResultsEl.innerHTML = "";
@@ -522,29 +562,31 @@ async function searchFoods(query) {
     suggestionsEl.innerHTML = "";
     return;
   }
+
   searchButton.disabled = true;
   searchButton.textContent = t("search") || "Hae";
+
   try {
-    // Käännä hakusana suomeksi, jos valittu kieli on ruotsi tai englanti
-    const translatedQuery = query; // ei käännöksiä, haku vain valitulla kielellä
+    // Tällä hetkellä ei käännöksiä hakusanaan, haku valitulla kielellä
     const res = await fetch(`${API_BASE}/foods?q=${encodeURIComponent(query)}`);
 
     if (!res.ok) throw new Error(`Virhe haussa (${res.status})`);
     const data = await res.json();
-    // Debug: tarkista mitä dataa saadaan
+
     if (!Array.isArray(data)) {
       console.error("API palautti ei-taulukon:", data);
       searchResultsEl.innerHTML = '<div class="error-text">Haku palautti virheellisen datan.</div>';
       return;
     }
-    // Suodata tulokset valitun kielen mukaan ja varmista että nimi vastaa hakusanaa
+
     const filteredData = filterFoodsByLanguage(data, query);
-    // Debug: tarkista suodatuksen tulos
+
     if (filteredData.length === 0 && data.length > 0) {
       console.log(`Haku "${query}" kielellä "${currentLang}" palautti ${data.length} tulosta, mutta suodatuksen jälkeen 0.`);
     } else if (filteredData.length > 0) {
       console.log(`Haku "${query}" kielellä "${currentLang}" palautti ${data.length} tulosta, suodatuksen jälkeen ${filteredData.length} tulosta.`);
     }
+
     renderSearchResults(filteredData);
   } catch (err) {
     console.error(err);
@@ -554,6 +596,7 @@ async function searchFoods(query) {
     searchButton.textContent = t("search") || "Hae";
   }
 }
+
 // Korjattu renderöinti: näyttää nimen valitulla kielellä
 function renderSearchResults(foods) {
   if (!Array.isArray(foods) || foods.length === 0) {
@@ -604,6 +647,7 @@ async function loadFoodDetails(id) {
     console.error("Virhe haettaessa ruoan tietoja:", e);
   }
 }
+
 function showSelectedFood(food) {
   const components = normalizeComponents(food);
   const fiberPer100g = getFiberPer100g(components) ?? getFiberFromFood(food);
@@ -613,6 +657,7 @@ function showSelectedFood(food) {
   const name = getFoodNameByLang(food);
   const group = getGroupNameByLang(food);
   const defaultAmount = getDefaultAmountForFood(name);
+
   selectedFoodEl.innerHTML = `
     <div class="selected-simple">
       <div class="selected-row">
@@ -645,21 +690,26 @@ function showSelectedFood(food) {
       </div>
     </div>
   `;
+
   selectedFoodEl.classList.remove("hidden");
   searchResultsEl.innerHTML = "";
   searchResultsEl.classList.add("hidden");
+
   const amountInput = document.getElementById("amountInput");
   const calculatedFiberEl = document.getElementById("calculatedFiber");
   const calculatedEnergyEl = document.getElementById("calculatedEnergy");
   const addFavoriteButton = document.getElementById("addFavoriteButton");
   const amountButtons = selectedFoodEl.querySelectorAll(".amount-btn");
+
   const warningPlaceholder =
     fiberPer100g == null
       ? `<div class="warning-banner">${t("no_fiber")}</div>`
       : "";
+
   if (warningPlaceholder) {
     selectedFoodEl.insertAdjacentHTML("beforeend", warningPlaceholder);
   }
+
   if (amountInput && calculatedFiberEl) {
     const updateCalc = () => {
       const amount = Number(amountInput.value);
@@ -668,20 +718,24 @@ function showSelectedFood(food) {
         if (calculatedEnergyEl) calculatedEnergyEl.textContent = "-";
         return;
       }
+
       if (fiberPer100g != null) {
         const fiber = (fiberPer100g * amount) / 100;
         calculatedFiberEl.textContent = `${formatNumber(fiber)} g`;
       } else {
         calculatedFiberEl.textContent = "-";
       }
+
       if (energyPer100g != null && calculatedEnergyEl) {
         calculatedEnergyEl.textContent = `${formatNumber((energyPer100g * amount) / 100)} kcal`;
       } else if (calculatedEnergyEl) {
         calculatedEnergyEl.textContent = "-";
       }
     };
+
     amountInput.addEventListener("input", updateCalc);
     updateCalc();
+
     amountButtons.forEach((btn) => {
       btn.addEventListener("click", () => {
         const step = Number(btn.getAttribute("data-step")) || 0;
@@ -691,6 +745,7 @@ function showSelectedFood(food) {
         updateCalc();
       });
     });
+
     addFavoriteButton?.addEventListener("click", () => {
       if (!canAdd) {
         alert(t("no_fiber"));
@@ -698,8 +753,11 @@ function showSelectedFood(food) {
       }
       const amount = Number(amountInput.value);
       if (!amount || amount <= 0) return;
+
+      // Käytetään samaa energyPer100g-arvoa kuin headerissa (komponentit + top-level energyKcal)
       const fiber = (fiberPer100g * amount) / 100;
-      const energy = energyPer100g != null ? (energyPer100g * amount) / 100 : null;
+      const energy = energyPer100g != null ? (energyPer100g * amount) / 100 : 0;
+
       favorites.push({
         id: food.id,
         name,
@@ -710,6 +768,7 @@ function showSelectedFood(food) {
         fiber,
         energy,
       });
+
       saveFavorites();
       renderFavorites();
     });
@@ -729,10 +788,13 @@ function renderFavorites() {
     }
     return;
   }
+
   if (clearAllButton) {
     clearAllButton.style.display = "";
   }
+
   favoritesListEl.classList.remove("empty-state");
+
   const rows = favorites
     .map(
       (item, index) => `
@@ -751,7 +813,13 @@ function renderFavorites() {
           <span>g</span>
         </div>
         <div class="favorite-fiber">
-          <strong class="fiber-value">${formatNumber(item.fiber)}</strong> ${currentLang === "sv" ? "g fiber" : currentLang === "en" ? "g fiber" : "g kuitua"}
+          <strong class="fiber-value">${formatNumber(item.fiber)}</strong> ${
+            currentLang === "sv"
+              ? "g fiber"
+              : currentLang === "en"
+              ? "g fiber"
+              : "g kuitua"
+          }
         </div>
         <div class="favorite-cal">
           ${
@@ -761,18 +829,29 @@ function renderFavorites() {
           }
         </div>
         <button class="danger-button" data-index="${index}">
-          ${currentLang === "sv" ? "Ta bort" : currentLang === "en" ? "Remove" : "Poista"}
+          ${
+            currentLang === "sv"
+              ? "Ta bort"
+              : currentLang === "en"
+              ? "Remove"
+              : "Poista"
+          }
         </button>
       </div>
     `
     )
     .join("");
+
   favoritesListEl.innerHTML = rows;
+
   const totalFiber = favorites.reduce((sum, item) => sum + (item.fiber || 0), 0);
   const totalEnergy = favorites.reduce((sum, item) => sum + (item.energy || 0), 0);
+
+  totalCaloriesEl.textContent = `${formatNumber(totalEnergy, 0)} kcal`;
   totalFiberEl.textContent = `${formatNumber(totalFiber)} g`;
   totalCaloriesEl.textContent = `${formatNumber(totalEnergy, 0)} kcal`;
   updateFiberGoalProgress(totalFiber);
+
   favoritesListEl.querySelectorAll("button[data-index]").forEach((btn) => {
     btn.addEventListener("click", () => {
       const idx = Number(btn.getAttribute("data-index"));
@@ -781,67 +860,75 @@ function renderFavorites() {
       renderFavorites();
     });
   });
+
   // Add event listeners for amount inputs
   favoritesListEl.querySelectorAll(".amount-input").forEach((input) => {
     const updateAmount = (e) => {
       const index = Number(e.target.getAttribute("data-index"));
       const item = favorites[index];
       if (!item) return;
+
       let newAmount = Number(e.target.value);
-      // Validate and clamp amount
       if (!newAmount || newAmount <= 0) {
         newAmount = 1;
       } else if (newAmount > 2000) {
         newAmount = 2000;
       }
-      // Update input value if it was clamped
+
       if (newAmount !== Number(e.target.value)) {
         e.target.value = newAmount;
       }
+
       const oldAmount = item.amount;
-      // Calculate energyPer100g from existing data if not stored (for old items)
+
+      // Laske energyPer100g vanhoille riveille tarvittaessa
       if (item.energyPer100g == null && item.energy != null && oldAmount > 0) {
         item.energyPer100g = (item.energy * 100) / oldAmount;
       }
-      // Update amount
+
       item.amount = newAmount;
-      // Recalculate fiber
+
       if (item.fiberPer100g != null) {
         item.fiber = (item.fiberPer100g * newAmount) / 100;
       }
-      // Recalculate energy
+
       if (item.energyPer100g != null) {
         item.energy = (item.energyPer100g * newAmount) / 100;
       }
-      // Update display in the row
+
       const row = e.target.closest(".favorite-row");
       const fiberValueEl = row.querySelector(".fiber-value");
       const energyValueEl = row.querySelector(".energy-value");
+
       if (fiberValueEl) {
         fiberValueEl.textContent = formatNumber(item.fiber);
       }
       if (energyValueEl && item.energy != null) {
         energyValueEl.textContent = formatNumber(item.energy);
       }
-      // Update totals
+
       const totalFiber = favorites.reduce((sum, item) => sum + (item.fiber || 0), 0);
       const totalEnergy = favorites.reduce((sum, item) => sum + (item.energy || 0), 0);
+
       totalFiberEl.textContent = `${formatNumber(totalFiber)} g`;
       totalCaloriesEl.textContent = `${formatNumber(totalEnergy, 0)} kcal`;
       updateFiberGoalProgress(totalFiber);
-      // Save to localStorage
+
       saveFavorites();
     };
+
     input.addEventListener("input", updateAmount);
     input.addEventListener("blur", updateAmount);
   });
 }
+
 function getCurrentFiberGoal() {
   if (!fiberGoalSelect) return FIBER_GOALS.fi_min;
   const key = fiberGoalSelect.value;
   return FIBER_GOALS[key] || FIBER_GOALS.fi_min;
 }
-// Päivittää tavoitteen, jäljellä- ja ylitysmäärät, vaikka tekstialuetta ei olisi
+
+// Päivittää tavoitteen, jäljellä- ja ylitysmäärät
 function updateFiberGoalProgress(totalFiber) {
   const goal = getCurrentFiberGoal();
   const goalGrams = goal.grams || 0;
@@ -877,8 +964,9 @@ function updateFiberGoalProgress(totalFiber) {
 function populateSamples() {
   if (top20SamplesEl) {
     const samples = TOP20_SAMPLES[currentLang] || TOP20_SAMPLES.fi;
-    top20SamplesEl.innerHTML = samples.map((item) => {
-      return `
+    top20SamplesEl.innerHTML = samples
+      .map((item) => {
+        return `
         <div class="sample-item">
           <span class="sample-name">
             <a href="${item.link}" target="_blank" rel="noopener noreferrer" class="sample-link">
@@ -896,7 +984,9 @@ function populateSamples() {
           </button>
         </div>
       `;
-    }).join("");
+      })
+      .join("");
+
     top20SamplesEl.querySelectorAll(".sample-add-button").forEach((btn) => {
       btn.addEventListener("click", () => {
         const name = btn.getAttribute("data-name");
@@ -907,11 +997,13 @@ function populateSamples() {
     });
   }
 }
+
 function addSampleToFavorites(name, fiberPer100g, link) {
   const defaultAmount = getDefaultAmountForFood(name);
   const fiber = (fiberPer100g * defaultAmount) / 100;
+
   favorites.push({
-    id: Date.now(), // Käytetään timestampia id:nä, koska ei ole oikeaa id:tä
+    id: Date.now(), // ei oikeaa id:tä → timestamp
     name,
     group: "",
     amount: defaultAmount,
@@ -920,14 +1012,17 @@ function addSampleToFavorites(name, fiberPer100g, link) {
     fiber,
     energy: null,
   });
+
   saveFavorites();
   renderFavorites();
 }
+
 function debounceSearch() {
   const query = searchInput.value.trim();
   if (searchTimeout) clearTimeout(searchTimeout);
   searchTimeout = setTimeout(() => searchFoods(query), 220);
 }
+
 // Event bindings
 searchButton.addEventListener("click", () => searchFoods(searchInput.value.trim()));
 searchInput.addEventListener("input", debounceSearch);
@@ -937,6 +1032,7 @@ searchInput.addEventListener("keydown", (e) => {
     searchFoods(searchInput.value.trim());
   }
 });
+
 clearAllButton.addEventListener("click", () => {
   if (!favorites.length) return;
   const ok = window.confirm(t("clear_all") + "?");
@@ -945,23 +1041,28 @@ clearAllButton.addEventListener("click", () => {
   saveFavorites();
   renderFavorites();
 });
+
 fiberGoalSelect?.addEventListener("change", () => {
   const total = favorites.reduce((sum, item) => sum + (item.fiber || 0), 0);
   updateFiberGoalProgress(total);
 });
+
 langSelect?.addEventListener("change", () => {
   currentLang = langSelect.value || "fi";
   applyTranslations();
-  // Nollaa haku ja valinta, ettei vanha kieli jää hakukenttään/valintaan
+
+  // Nollaa haku ja valinta
   searchInput.value = "";
   searchResultsEl.innerHTML = "";
   suggestionsEl.innerHTML = "";
   suggestionsEl.classList.remove("active");
   selectedFoodEl.innerHTML = "";
   selectedFoodEl.classList.add("hidden");
+
   renderFavorites();
   populateSamples();
 });
+
 // Init
 applyTranslations();
 populateSamples();
