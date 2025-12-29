@@ -998,19 +998,43 @@ function populateSamples() {
   }
 }
 
-function addSampleToFavorites(name, fiberPer100g, link) {
+async function addSampleToFavorites(name, fiberPer100g) {
   const defaultAmount = getDefaultAmountForFood(name);
   const fiber = (fiberPer100g * defaultAmount) / 100;
 
+  // 1) Hae Finelistä oikea tuote nimellä
+  let energyPer100g = 0;
+
+  try {
+    const res = await fetch(`${API_BASE}/foods?q=${encodeURIComponent(name)}`);
+    if (res.ok) {
+      const data = await res.json();
+      if (Array.isArray(data) && data.length > 0) {
+        const food = data[0]; // otetaan paras osuma
+        const comps = normalizeComponents(food);
+
+        // hae energia kuten muuallakin
+        const kcal = getEnergyPer100g(comps) ?? getEnergyKcalFromFood(food);
+        if (typeof kcal === "number") {
+          energyPer100g = kcal;
+        }
+      }
+    }
+  } catch (e) {
+    console.error("Energiahaun virhe sample-tuotteelle:", e);
+  }
+
+  const energy = (energyPer100g * defaultAmount) / 100;
+
   favorites.push({
-    id: Date.now(), // ei oikeaa id:tä → timestamp
+    id: Date.now(),
     name,
     group: "",
     amount: defaultAmount,
     fiberPer100g,
-    energyPer100g: null,
+    energyPer100g,
     fiber,
-    energy: null,
+    energy,
   });
 
   saveFavorites();
