@@ -404,51 +404,45 @@ function isRawFood(foodName) {
   const complexNames = ["puuro", "piirakka", "leipä", "jauhe", "sekoitus", "sose", "keitto", "pata", "pasta", "kastike", "kakku", "leivonnainen", "smoothie", "patukka", "jogurtti", "juoma", "mehu", "pizza", "hampurilainen", "makaroni", "spagetti", "nuudeli", "flakes", "chips", "jam", "pie", "crisp", "delight"];
   return !complexNames.some(name => lowerName.includes(name));
 }
+// Korjattu haku: käyttää valitun kielen nimeä ja priorisoi oikein
 function filterFoodsByLanguage(foods, searchQuery = "") {
   if (!Array.isArray(foods)) return [];
+
   const query = searchQuery.toLowerCase().trim();
-  // Jos hakusana on tyhjä, palauta kaikki ruoat joilla on nimi valitulla kielellä
   if (!query) {
     return foods.filter(food => hasNameInCurrentLang(food));
   }
-  // Käännä hakusana suomeksi, jos valittu kieli on ruotsi tai englanti
-  const translatedQuery = currentLang === "fi" ? query : translateSearchTerm(query);
-  // Suodata ja priorisoi tulokset
-  const results = foods
+
+  return foods
     .map(food => {
-      // Tarkista, onko ruoalla nimi valitulla kielellä
-      const nameInLang = getNameInCurrentLang(food);
-      // Tarkista suomenkielinen nimi
-      const nameFi = food.name?.fi || food.nameFi;
-      const nameToSearch = nameFi ? nameFi.toLowerCase().trim() : null;
-      if (!nameToSearch) {
-        // Jos ruoalla ei ole nimeä suomeksi, hylkää se
-        return null;
-      }
-      // Tarkista, sisältääkö nimi hakusanan (case-insensitive)
-      if (!nameToSearch.includes(translatedQuery)) {
-        return null;
-      }
-      // Laske prioriteetti
-      const isExactMatch = nameToSearch === translatedQuery;
-      const startsWithQuery = nameToSearch.startsWith(translatedQuery);
-      const isRaw = isRawFood(nameFi);
-      const priority = isExactMatch ? 4 : isRaw ? 3 : startsWithQuery ? 2 : 1;
-      return { food, priority, nameInLang, nameLower: nameToSearch };
+      const nameInLang = getFoodNameByLang(food);
+      if (!nameInLang) return null;
+
+      const nameLower = nameInLang.toLowerCase();
+
+      if (!nameLower.includes(query)) return null;
+
+      const isExact = nameLower === query;
+      const startsWith = nameLower.startsWith(query);
+      const isRaw = isRawFood(nameLower);
+
+      const priority =
+        isExact ? 5 :
+        startsWith ? 4 :
+        isRaw ? 3 :
+        nameLower.includes(query) ? 2 :
+        1;
+
+      return { food, priority, nameLower };
     })
-    .filter(item => item !== null)
+    .filter(Boolean)
     .sort((a, b) => {
-      if (b.priority !== a.priority) {
-        return b.priority - a.priority;
-      }
-      const locale = currentLang === "fi" ? "fi" : currentLang === "sv" ? "sv" : "en";
-      const nameA = getFoodNameByLang(a.food);
-      const nameB = getFoodNameByLang(b.food);
-      return nameA.localeCompare(nameB, locale, { sensitivity: "base" });
+      if (b.priority !== a.priority) return b.priority - a.priority;
+      return a.nameLower.localeCompare(b.nameLower, currentLang);
     })
     .map(item => item.food);
-  return results;
 }
+
 function normalizeComponents(food) {
   if (!food) return [];
   return food.components || food.componentValues || [];
@@ -464,8 +458,9 @@ async function searchFoods(query) {
   searchButton.textContent = t("search") || "Hae";
   try {
     // Käännä hakusana suomeksi, jos valittu kieli on ruotsi tai englanti
-    const translatedQuery = currentLang === "fi" ? query : translateSearchTerm(query);
-    const res = await fetch(`${API_BASE}/foods?q=${encodeURIComponent(translatedQuery)}`);
+    const translatedQuery = query; // ei käännöksiä, haku vain valitulla kielellä
+    const res = await fetch(`${API_BASE}/foods?q=${encodeURIComponent(query)}`);
+
     if (!res.ok) throw new Error(`Virhe haussa (${res.status})`);
     const data = await res.json();
     // Debug: tarkista mitä dataa saadaan
@@ -491,36 +486,46 @@ async function searchFoods(query) {
     searchButton.textContent = t("search") || "Hae";
   }
 }
+// Korjattu renderöinti: näyttää nimen valitulla kielellä
 function renderSearchResults(foods) {
   if (!Array.isArray(foods) || foods.length === 0) {
     searchResultsEl.innerHTML = `<div class="empty-state">${t("no_results")}</div>`;
     return;
   }
+
   const items = foods
-    .map((food) => {
+    .map(food => {
       const comps = normalizeComponents(food);
       const fiber = getFiberPer100g(comps) ?? getFiberFromFood(food);
-      const fiberText = fiber != null ? `${formatNumber(fiber)} g / 100 g` : t("no_fiber") || "ei kuitutietoa";
+      const fiberText = fiber != null
+        ? `${formatNumber(fiber)} g / 100 g`
+        : t("no_fiber");
+
+      const name = getFoodNameByLang(food);
+      const group = getGroupNameByLang(food);
+
       return `
         <div class="result-item" data-id="${food.id}">
           <div class="result-main">
-            <div class="food-name">${getFoodNameByLang(food)}</div>
-            <div class="food-meta">${getGroupNameByLang(food)} · ${fiberText}</div>
+            <div class="food-name">${name}</div>
+            <div class="food-meta">${group} · ${fiberText}</div>
           </div>
         </div>
       `;
     })
     .join("");
+
   searchResultsEl.innerHTML = items;
   searchResultsEl.classList.remove("hidden");
-  Array.from(searchResultsEl.querySelectorAll(".result-item")).forEach((el) => {
+
+  searchResultsEl.querySelectorAll(".result-item").forEach(el => {
     el.addEventListener("click", () => {
       const id = Number(el.getAttribute("data-id"));
-      if (!id) return;
-      loadFoodDetails(id);
+      if (id) loadFoodDetails(id);
     });
   });
 }
+
 async function loadFoodDetails(id) {
   try {
     const res = await fetch(`${API_BASE}/foods/${id}`);
