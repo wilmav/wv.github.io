@@ -317,13 +317,81 @@ function getFiberPer100g(components = []) {
   if (comp) return comp.value;
   return null;
 }
+
+// Palauttaa energian (kcal/100g) aina kun mahdollista
 function getEnergyPer100g(components = []) {
+
+  // 1) Suora Fineli kcal-komponentti
   for (const id of ENERGY_COMPONENT_IDS) {
     const comp = components.find((c) => c.componentId === id);
-    if (comp && typeof comp.value === "number") return comp.value;
+    if (comp && typeof comp.value === "number") {
+      console.log("ENERGY SOURCE: direct kcal component", comp.value);
+      return comp.value;
+    }
   }
+
+  // 2) Fallback: energia-nimiset komponentit (kcal tai kJ)
+  const fallback = components.find(c =>
+    typeof c.value === "number" &&
+    (
+      (c.name?.fi || "").toLowerCase().includes("energia") ||
+      (c.name?.en || "").toLowerCase().includes("energy") ||
+      (c.shortName?.fi || "").toLowerCase().includes("energia") ||
+      (c.shortName?.en || "").toLowerCase().includes("energy") ||
+      (c.name?.fi || "").toLowerCase().includes("kcal") ||
+      (c.name?.en || "").toLowerCase().includes("kcal")
+    )
+  );
+
+  if (fallback) {
+    const name = (fallback.name?.fi || fallback.name?.en || "").toLowerCase();
+
+    // 2a) Jos arvo on kJ → muunna kcal
+    if (name.includes("kj")) {
+      const kcal = fallback.value / 4.184;
+      console.log("ENERGY SOURCE: kJ → kcal", fallback.value, "→", kcal);
+      return kcal;
+    }
+
+    // 2b) Muuten käytä suoraan
+    console.log("ENERGY SOURCE: fallback kcal", fallback.value);
+    return fallback.value;
+  }
+
+  // 3) Laske energia makroista (proteiini, hiilarit, rasva)
+  let protein = null;
+  let carbs = null;
+  let fat = null;
+
+  for (const c of components) {
+    const name = (c.name?.fi || c.name?.en || "").toLowerCase();
+
+    if (name.includes("proteiini") || name.includes("protein")) {
+      protein = typeof c.value === "number" ? c.value : protein;
+    }
+    if (name.includes("hiilihydraatti") || name.includes("carbohydrate")) {
+      carbs = typeof c.value === "number" ? c.value : carbs;
+    }
+    if (name.includes("rasva") || name.includes("fat")) {
+      fat = typeof c.value === "number" ? c.value : fat;
+    }
+  }
+
+  if (protein != null || carbs != null || fat != null) {
+    const kcal =
+      (protein || 0) * 4 +
+      (carbs || 0) * 4 +
+      (fat || 0) * 9;
+
+    console.log("ENERGY SOURCE: macros → kcal", { protein, carbs, fat, kcal });
+    return kcal;
+  }
+
+  // 4) Ei energiaa saatavilla
+  console.log("ENERGY SOURCE: none found");
   return null;
 }
+
 // Fineli /foods/{id} palauttaa usein myös top-level kentät fiber, energyKcal jne.
 function getFiberFromFood(food) {
   if (food && typeof food.fiber === "number") return food.fiber;
@@ -773,29 +841,39 @@ function getCurrentFiberGoal() {
   const key = fiberGoalSelect.value;
   return FIBER_GOALS[key] || FIBER_GOALS.fi_min;
 }
+// Päivittää tavoitteen, jäljellä- ja ylitysmäärät, vaikka tekstialuetta ei olisi
 function updateFiberGoalProgress(totalFiber) {
-  if (!fiberGoalProgressEl) return;
   const goal = getCurrentFiberGoal();
   const goalGrams = goal.grams || 0;
+
   if (!goalGrams) {
-    fiberGoalProgressEl.textContent = "";
     remainingFiberEl.textContent = "0 g";
     excessFiberEl.textContent = "0 g";
+    if (fiberGoalProgressEl) {
+      fiberGoalProgressEl.textContent = "";
+    }
     return;
   }
+
   const remaining = Math.max(0, goalGrams - totalFiber);
   const excess = Math.max(0, totalFiber - goalGrams);
   const ratio = totalFiber / goalGrams;
   const percent = Number.isFinite(ratio) ? ratio * 100 : 0;
   const percentText = `${formatNumber(percent, 0)}`;
+
   remainingFiberEl.textContent = `${formatNumber(remaining)} g`;
   excessFiberEl.textContent = `${formatNumber(excess)} g`;
+
   const progressText = t("progress_text")
     .replace("{total}", formatNumber(totalFiber))
     .replace("{goal}", goalGrams)
     .replace("{percent}", percentText);
-  fiberGoalProgressEl.textContent = progressText;
+
+  if (fiberGoalProgressEl) {
+    fiberGoalProgressEl.textContent = progressText;
+  }
 }
+
 function populateSamples() {
   if (top20SamplesEl) {
     const samples = TOP20_SAMPLES[currentLang] || TOP20_SAMPLES.fi;
