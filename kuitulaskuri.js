@@ -1121,6 +1121,7 @@ fiberGoalSelect?.addEventListener("change", () => {
 langSelect?.addEventListener("change", () => {
   currentLang = langSelect.value || "fi";
   applyTranslations();
+  renderFavorites(); // Re-render favorites to update language
 
   // Nollaa haku ja valinta
   searchInput.value = "";
