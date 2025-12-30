@@ -35,6 +35,7 @@ const I18N = {
     step3_desc: "Valitse tavoite ja seuraa, kuinka lähelle pääset päivän aikana.",
     search: "Hae",
     search_placeholder: "Esim. omena, ruisleipä...",
+    search_hint: "Haku toimii valitulla kielellä [LANG] (esim. 'porkkana' suomeksi).",
     api_hint: "Hakukenttä käyttää Finelin avointa ohjelmointirajapintaa (/api/v1/foods?q=).",
     empty_list: "Et ole vielä lisännyt yhtään ruokaa.",
     goal_label: "Päivittäinen kuitutavoite",
@@ -81,6 +82,7 @@ const I18N = {
     step3_desc: "Välj mål och följ hur nära du kommer under dagen.",
     search: "Sök",
     search_placeholder: "Ex. äpple, rågbröd...",
+    search_hint: "Sökning fungerar på valt språk [LANG] (t.ex. 'morot' för sv).",
     api_hint: "Sökfältet använder Finelis öppna API (/api/v1/foods?q=).",
     empty_list: "Du har ännu inte lagt till något livsmedel.",
     goal_label: "Dagligt fibermål",
@@ -127,6 +129,7 @@ const I18N = {
     step3_desc: "Choose a target and track your progress during the day.",
     search: "Search",
     search_placeholder: "E.g. apple, rye bread...",
+    search_hint: "Search operates in selected language [LANG] (e.g., 'carrot' for en).",
     api_hint: "Search uses Fineli open API (/api/v1/foods?q=).",
     empty_list: "You have not added any foods yet.",
     goal_label: "Daily fiber goal",
@@ -232,6 +235,7 @@ const SAMPLE_LISTS = {
 // Yksinkertaiset käännökset yleisimmille hakusanoille
 const SEARCH_TRANSLATIONS = {
   sv: {
+    "mor": "porkkana",
     "morot": "porkkana",
     "äpple": "omena",
     "banan": "banaani",
@@ -247,6 +251,7 @@ const SEARCH_TRANSLATIONS = {
     "ägg": "muna",
   },
   en: {
+    "app": "omena",
     "apple": "omena",
     "carrot": "porkkana",
     "banana": "banaani",
@@ -282,6 +287,9 @@ const sampleListEl = document.getElementById("sampleList");
 let favorites = [];
 let currentLang = "fi";
 let searchTimeout = null;
+
+// Global variables for caching foods
+let searchCache = {};
 
 function loadFavorites() {
   try {
@@ -375,6 +383,14 @@ function applyTranslations() {
   // Update clear button visibility
   if (clearAllButton) {
     clearAllButton.style.display = favorites.length > 0 ? "" : "none";
+  }
+
+  // Update search hint with current language
+  const searchHintEl = document.querySelector("[data-i18n='search_hint']");
+  if (searchHintEl) {
+    let hintText = t("search_hint") || "";
+    hintText = hintText.replace("[LANG]", currentLang.toUpperCase());
+    searchHintEl.textContent = hintText;
   }
 }
 
@@ -559,6 +575,19 @@ function translateSearchTerm(term) {
 }
 
 // Priorisoi raaka-aineet hakutuloksissa
+function isFuzzyMatch(str, query) {
+  if (str.includes(query) || query.includes(str)) return true;
+  // Check if differ by one insertion/deletion
+  if (Math.abs(str.length - query.length) === 1) {
+    const longer = str.length > query.length ? str : query;
+    const shorter = str.length > query.length ? query : str;
+    let i = 0;
+    while (i < shorter.length && longer[i] === shorter[i]) i++;
+    if (i === shorter.length || longer.slice(i + 1) === shorter.slice(i)) return true;
+  }
+  return false;
+}
+
 function isRawFood(foodName) {
   if (!foodName || typeof foodName !== "string") return false;
   const lowerName = foodName.toLowerCase();
@@ -566,12 +595,12 @@ function isRawFood(foodName) {
     "puuro", "piirakka", "leipä", "jauhe", "sekoitus", "sose", "keitto", "pata",
     "pasta", "kastike", "kakku", "leivonnainen", "smoothie", "patukka", "jogurtti",
     "juoma", "mehu", "pizza", "hampurilainen", "makaroni", "spagetti", "nuudeli",
-    "flakes", "chips", "jam", "pie", "crisp", "delight"
+    "flakes", "chips", "jam", "pie", "crisp", "delight", "paisto", "paahdet", "grill"
   ];
   return !complexNames.some(name => lowerName.includes(name));
 }
 
-// Korjattu haku: käyttää valitun kielen nimeä ja priorisoi oikein
+// Korjattu haku: käyttää kaikkia kieliä haussa, mutta näyttää ja järjestää valitulla kielellä
 function filterFoodsByLanguage(foods, searchQuery = "") {
   if (!Array.isArray(foods)) return [];
 
@@ -582,24 +611,44 @@ function filterFoodsByLanguage(foods, searchQuery = "") {
 
   return foods
     .map(food => {
-      const nameInLang = getFoodNameByLang(food);
-      if (!nameInLang) return null;
+      // Check all name fields for matching
+      const names = [];
+      if (food.name && typeof food.name === "object") {
+        names.push(food.name.fi, food.name.sv, food.name.en);
+      } else if (typeof food.name === "string") {
+        names.push(food.name);
+      }
+      if (food.nameFi) names.push(food.nameFi);
+      if (food.nameSv) names.push(food.nameSv);
+      if (food.nameEn) names.push(food.nameEn);
 
-      const nameLower = nameInLang.toLowerCase();
-      if (!nameLower.includes(query)) return null;
+      const matchingName = names.find(n => n && n.toLowerCase().includes(query));
+      if (!matchingName) return null;
 
-      const isExact = nameLower === query;
-      const startsWith = nameLower.startsWith(query);
-      const isRaw = isRawFood(nameLower);
+      // Use current lang name for display and sorting
+      const displayName = getFoodNameByLang(food) || matchingName;
+      const displayLower = displayName.toLowerCase();
+      const matchLower = matchingName.toLowerCase();
 
-      const priority =
-        isExact ? 5 :
-        startsWith ? 4 :
-        isRaw ? 3 :
-        nameLower.includes(query) ? 2 :
-        1;
+      // Prioritize based on the matching name
+      const isExact = matchLower === query;
+      const startsWith = matchLower.startsWith(query);
+      const isRaw = isRawFood(matchLower);
 
-      return { food, priority, nameLower };
+      // Calculate common prefix length for better prioritization
+      let commonPrefix = 0;
+      const minLen = Math.min(matchLower.length, query.length);
+      while (commonPrefix < minLen && matchLower[commonPrefix] === query[commonPrefix]) {
+        commonPrefix++;
+      }
+
+      let priority = commonPrefix * 0.5;  // Longer common prefix = higher priority
+      if (isRaw) priority += 3;  // Raw foods get +3
+      if (isExact) priority += 2;  // Exact match +2
+      else if (startsWith) priority += 1;  // Starts with +1
+      else if (matchLower.includes(query)) priority += 0.5;  // Contains +0.5
+
+      return { food, priority, nameLower: displayLower };
     })
     .filter(Boolean)
     .sort((a, b) => {
@@ -623,33 +672,58 @@ async function searchFoods(query) {
   }
 
   searchButton.disabled = true;
-  searchButton.textContent = t("search") || "Hae";
+  searchButton.textContent = t("searching") || "Haetaan...";
 
   try {
-    // Tällä hetkellä ei käännöksiä hakusanaan, haku valitulla kielellä
-    const res = await fetch(`${API_BASE}/foods?q=${encodeURIComponent(query)}`);
+    // Check for common translations
+    let searchQuery = query;
+    const translations = SEARCH_TRANSLATIONS[currentLang];
+    if (translations) {
+      const queryLower = query.toLowerCase();
+      if (translations[queryLower]) {
+        searchQuery = translations[queryLower];
+      } else {
+        // Check fuzzy matches in translation keys
+        for (const [key, value] of Object.entries(translations)) {
+          if (isFuzzyMatch(key, queryLower)) {
+            searchQuery = value;
+            break;
+          }
+        }
+      }
+    }
 
-    if (!res.ok) throw new Error(`Virhe haussa (${res.status})`);
-    const data = await res.json();
-
-    if (!Array.isArray(data)) {
-      console.error("API palautti ei-taulukon:", data);
-      searchResultsEl.innerHTML = '<div class="error-text">Haku palautti virheellisen datan.</div>';
+    // Check cache
+    if (searchCache[searchQuery]) {
+      const data = searchCache[searchQuery];
+      const filteredData = filterFoodsByLanguage(data, searchQuery);
+      console.log(`Search "${query}" in "${currentLang}" returned ${data.length} cached foods, ${filteredData.length} after filtering.`);
+      renderSearchResults(filteredData);
       return;
     }
 
-    const filteredData = filterFoodsByLanguage(data, query);
+    // Fetch from API
+    const res = await fetch(`${API_BASE}/foods?q=${encodeURIComponent(searchQuery)}`);
+    if (!res.ok) throw new Error(`Search failed (${res.status})`);
+    const data = await res.json();
 
-    if (filteredData.length === 0 && data.length > 0) {
-      console.log(`Haku "${query}" kielellä "${currentLang}" palautti ${data.length} tulosta, mutta suodatuksen jälkeen 0.`);
-    } else if (filteredData.length > 0) {
-      console.log(`Haku "${query}" kielellä "${currentLang}" palautti ${data.length} tulosta, suodatuksen jälkeen ${filteredData.length} tulosta.`);
+    if (!Array.isArray(data)) {
+      console.error("API returned invalid data:", data);
+      searchResultsEl.innerHTML = '<div class="error-text">Search returned invalid data.</div>';
+      return;
     }
+
+    // Cache the results
+    searchCache[searchQuery] = data;
+
+    const filteredData = filterFoodsByLanguage(data, searchQuery);
+
+    console.log(`Search "${query}" in "${currentLang}" returned ${data.length} foods, ${filteredData.length} after filtering.`);
 
     renderSearchResults(filteredData);
   } catch (err) {
     console.error(err);
-    searchResultsEl.innerHTML = '<div class="error-text">Haku epäonnistui.</div>';
+    searchResultsEl.innerHTML = '<div class="error-text">Search failed. Check your network connection and try again.</div>';
   } finally {
     searchButton.disabled = false;
     searchButton.textContent = t("search") || "Hae";
