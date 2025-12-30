@@ -114,8 +114,8 @@ const I18N = {
   },
 };
 
-// Kielikohtaiset Top 20 -listat
-const TOP20_SAMPLES = {
+// Kielikohtaiset esimerkkilistat
+const SAMPLE_LISTS = {
   fi: [
     { name: "Psyllium", fiber: 40.0, link: "https://fineli.fi/fineli/fi/foods?q=psyllium" },
     { name: "Kaurakuitunen", fiber: 35.0, link: "https://fineli.fi/fineli/fi/foods?q=kaurakuitunen" },
@@ -226,7 +226,7 @@ const clearAllButton = document.getElementById("clearAllButton");
 const fiberGoalSelect = document.getElementById("fiberGoalSelect");
 const fiberGoalProgressEl = document.getElementById("fiberGoalProgress");
 const langSelect = document.getElementById("langSelect");
-const top20SamplesEl = document.getElementById("top20Samples");
+const sampleListEl = document.getElementById("sampleList");
 
 let favorites = [];
 let currentLang = "fi";
@@ -962,9 +962,9 @@ function updateFiberGoalProgress(totalFiber) {
 }
 
 function populateSamples() {
-  if (top20SamplesEl) {
-    const samples = TOP20_SAMPLES[currentLang] || TOP20_SAMPLES.fi;
-    top20SamplesEl.innerHTML = samples
+  if (sampleListEl) {
+    const samples = SAMPLE_LISTS[currentLang] || SAMPLE_LISTS.fi;
+    sampleListEl.innerHTML = samples
       .map((item) => {
         return `
         <div class="sample-item">
@@ -987,7 +987,7 @@ function populateSamples() {
       })
       .join("");
 
-    top20SamplesEl.querySelectorAll(".sample-add-button").forEach((btn) => {
+    sampleListEl.querySelectorAll(".sample-add-button").forEach((btn) => {
       btn.addEventListener("click", () => {
         const name = btn.getAttribute("data-name");
         const fiber = Number(btn.getAttribute("data-fiber"));
