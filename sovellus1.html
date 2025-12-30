@@ -8,24 +8,24 @@
 </head>
 <body>
 <header>
-  <div class="app-title">Sovelluksia</div>
+  <div class="app-title" data-i18n="nav_apps">Sovelluksia</div>
   <nav>
     <ul>
-      <li><a href="index.html">Etusivu</a></li>
-      <li><a href="sovellus1.html">Kuitulaskuri</a></li>
-      <li><a href="sovellus2.html">Sovellus2</a></li>
-      <li><a href="blogi.html">Blogi</a></li>
-      <li><a href="yhteystiedot.html">Yhteystiedot</a></li>
+      <li><a href="index.html" data-i18n="nav_home">Etusivu</a></li>
+      <li><a href="sovellus1.html" data-i18n="nav_kuitulaskuri">Kuitulaskuri</a></li>
+      <li><a href="sovellus2.html" data-i18n="nav_app2">Sovellus2</a></li>
+      <li><a href="blogi.html" data-i18n="nav_blog">Blogi</a></li>
+      <li><a href="yhteystiedot.html" data-i18n="nav_contact">Yhteystiedot</a></li>
     </ul>
   </nav>
 </header>
 <div class="content-wrapper">
 <main>
 <div class="content-padding">
-  <div class="top-bar">
+    <div class="top-bar">
     <div>
-      <h1>Kuitulaskuri</h1>
-      <p class="lead">Laske päivän kuitu- ja kalorimäärät helposti.</p>
+      <h1 data-i18n="app_title">Kuitulaskuri</h1>
+      <p class="lead" data-i18n="lead">Laske päivän kuitu-ja kalorimäärät helposti.</p>
     </div>
     <div class="lang-select">
       <select id="langSelect" class="no-arrow">
@@ -40,69 +40,50 @@
     <section class="main-col">
       <!-- Haku -->
       <section class="card">
-        <h2>Hae ruoka-aine</h2>
+        <h2 data-i18n="search_section_title">Hae ruoka-aine</h2>
         <div class="search-row">
-          <input id="searchInput" type="search" autocomplete="off" placeholder="Esim. omena, ruisleipä">
-          <button id="searchButton">Hae</button>
+          <input id="searchInput" type="search" autocomplete="off" data-i18n-placeholder="search_placeholder" placeholder="Esim. omena, ruisleipä">
+          <button id="searchButton" data-i18n="search">Hae</button>
         </div>
-        <p class="hint">Tieto perustuu Fineli-tietokantaan.</p>
+        <p class="hint" data-i18n="api_hint">Tieto perustuu Fineli-tietokantaan.</p>
         <div id="searchResults" class="search-results"></div>
         <div id="selectedFood" class="selected-food hidden"></div>
       </section>
       <!-- Yhteenveto -->
       <section class="card">
-        <h2>Päivän kuitu- ja kaloriyhteenveto</h2>
-        <p class="hint">Valitse tavoite ja seuraa edistymistä päivän aikana.</p>
+        <h2 data-i18n="step3_title">Päivän kuitu- ja kaloriyhteenveto</h2>
+        <p class="hint" data-i18n="step3_desc">Valitse tavoite ja seuraa edistymistä päivän aikana.</p>
         <div class="goal-row">
-          <label for="fiberGoalSelect" class="field-label">Päivittäinen kuitutavoite</label>
+          <label for="fiberGoalSelect" class="field-label" data-i18n="goal_label">Päivittäinen kuitutavoite</label>
           <select id="fiberGoalSelect">
             <option value="fi_min">Suomen vähimmäistaso (~25 g/vrk)</option>
             <option value="avg">Hyvä keskitavoite (~30 g/vrk)</option>
             <option value="high">Korkea kuitutaso (~40 g/vrk)</option>
           </select>
         </div>
-        <div id="favoritesList">
-          <div class="favorite-row">
-            <div>Lese, kauralese</div>
-            <div class="favorite-amount">
-              <input type="number" value="2000">
-              <span>g</span>
-            </div>
-            <div class="favorite-fiber">230,0 g kuitua</div>
-            <button class="danger-button">Poista</button>
-          </div>
-          <div class="favorite-row">
-            <div>Lese, vehnälese</div>
-            <div class="favorite-amount">
-              <input type="number" value="100">
-              <span>g</span>
-            </div>
-            <div class="favorite-fiber">10,0 g kuitua</div>
-            <button class="danger-button">Poista</button>
-          </div>
-        </div>
+          <div id="favoritesList"></div>
         <div class="summary-row">
           <div class="summary-block">
-            <span class="summary-label">Päivän kokonaiskuitu:</span>
+            <span class="summary-label" data-i18n="total_fiber_label">Päivän kokonaiskuitu:</span>
             <span id="totalFiber" class="summary-value">240,0 g</span>
           </div>
           <div class="summary-block">
-            <span class="summary-label">Jäljellä tavoitteesta:</span>
+            <span class="summary-label" data-i18n="remaining_label">Jäljellä tavoitteesta:</span>
             <span id="remainingFiber" class="summary-value">0 g</span>
           </div>
           <div class="summary-block">
-            <span class="summary-label">Ylitys:</span>
+            <span class="summary-label" data-i18n="excess_label">Ylitys:</span>
             <span id="excessFiber" class="summary-value">215,0 g</span>
           </div>
         </div>
         <div class="summary-row">
           <div class="summary-block">
-            <span class="summary-label">Päivän kalorit:</span>
+            <span class="summary-label" data-i18n="total_cal_label">Päivän kalorit:</span>
             <span id="totalCalories" class="summary-value">0 kcal</span>
           </div>
-          <button id="clearAllButton" class="secondary-button">Tyhjennä kaikki</button>
+          <button id="clearAllButton" class="secondary-button" data-i18n="clear_all">Tyhjennä kaikki</button>
         </div>
-        <p class="hint small">Suositeltu kuidun saanti aikuisille on 25–30 g/vrk.</p>
+        <p class="hint small" data-i18n="guidance">Suositeltu kuidun saanti aikuisille on 25–30 g/vrk.</p>
       </section>
     </section>
     <!-- Oikea sivukolumni -->

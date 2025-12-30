@@ -45,6 +45,7 @@ const I18N = {
     clear_all: "Tyhjennä kaikki",
     guidance: "Suositeltu kuidun saanti aikuisille on usein 25–30 g/vrk, ja 35–40 g/vrk voi tukea painonhallintaa. Tarkista ajantasaiset ravitsemussuositukset luotettavasta lähteestä.",
     source_info: "Lähde: Terveyden ja hyvinvoinnin laitos, Fineli – elintarvikkeiden koostumustietokanta. Aineisto käytössä CC BY 4.0 -lisenssillä. Tämä sovellus ei ole THL:n tai Finelin tuottama, suosittelema tai ylläpitämä palvelu.",
+    source: "Lähde: Terveyden ja hyvinvoinnin laitos, Fineli – elintarvikkeiden koostumustietokanta. Aineisto käytössä CC BY 4.0 -lisenssillä. Tämä sovellus ei ole THL:n tai Finelin tuottama, suosittelema tai ylläpitämä palvelu.",
     samples_title: "Korkean kuidun esimerkit",
     top20_title: "Esimerkkejä runsaskuituisista elintarvikkeista (Fineli, eniten ravintotekijää, g/100 g)",
     add_to_list: "Lisää päivän listalle",
@@ -53,6 +54,22 @@ const I18N = {
     no_fiber: "Kuitutietoa ei löytynyt tälle ruoalle. Valitse jokin toinen ruoka.",
     no_results: "Ei hakutuloksia. Kokeile toista hakusanaa.",
     progress_text: "Päivän kuitu yhteensä {total} g / tavoite {goal} g ({percent}% tavoitteesta).",
+    searching: "Haetaan...",
+    search_error: "Haku epäonnistui. Tarkista verkkoyhteys ja yritä uudelleen.",
+    anonymous: "(nimetön)",
+    empty_list_hint: "Et ole vielä lisännyt yhtään ruokaa. Hae jokin ruoka ja lisää se listalle.",
+    eaten_label: "syöty",
+    fiber_word: "kuitua",
+    remove_button: "Poista",
+    confirm_clear: "Tyhjennetäänkö kaikki päivän ruoat?",
+    lead: "Laske päivän kuitu- ja kalorimäärät helposti.",
+    search_section_title: "Hae ruoka-aine",
+    nav_apps: "Sovelluksia",
+    nav_home: "Etusivu",
+    nav_kuitulaskuri: "Kuitulaskuri",
+    nav_app2: "Sovellus2",
+    nav_blog: "Blogi",
+    nav_contact: "Yhteystiedot",
   },
   sv: {
     app_title: "Fiberräknare",
@@ -74,6 +91,7 @@ const I18N = {
     clear_all: "Rensa alla",
     guidance: "Rekommenderat fiberintag för vuxna är ofta 25–30 g/dag och 35–40 g/dag kan stödja viktkontroll. Kontrollera aktuella rekommendationer från en pålitlig källa.",
     source_info: "Källa: Institutet för hälsa och välfärd, Fineli – livsmedelsdatabas. Materialet används under CC BY 4.0-licens. Denna applikation är inte producerad, rekommenderad eller underhållen av THL eller Fineli.",
+    source: "Källa: Institutet för hälsa och välfärd, Fineli – livsmedelsdatabas. Materialet används under CC BY 4.0-licens. Denna applikation är inte producerad, rekommenderad eller underhållen av THL eller Fineli.",
     samples_title: "Exempel på fiberrika livsmedel",
     top20_title: "Exempel på fiberrika livsmedel (Fineli, mest näringsämne, g/100 g)",
     add_to_list: "Lägg till på dagens lista",
@@ -82,6 +100,22 @@ const I18N = {
     no_fiber: "Ingen fiberdata för detta livsmedel. Välj ett annat.",
     no_results: "Inga träffar. Prova en annan sökning.",
     progress_text: "Dagens fiber totalt {total} g / mål {goal} g ({percent}% av målet).",
+    searching: "Söker...",
+    search_error: "Sökningen misslyckades. Kontrollera internetanslutningen och försök igen.",
+    anonymous: "(namnlös)",
+    empty_list_hint: "Du har ännu inte lagt till något livsmedel. Sök efter ett livsmedel och lägg till det i listan.",
+    eaten_label: "ätit",
+    fiber_word: "fiber",
+    remove_button: "Ta bort",
+    confirm_clear: "Rensa alla dagens livsmedel?",
+    lead: "Räkna enkelt dagens fiber- och kaloriintag.",
+    search_section_title: "Sök livsmedel",
+    nav_apps: "Appar",
+    nav_home: "Startsida",
+    nav_kuitulaskuri: "Fiberräknare",
+    nav_app2: "App2",
+    nav_blog: "Blogg",
+    nav_contact: "Kontakt",
   },
   en: {
     app_title: "Fiber Calculator",
@@ -103,6 +137,7 @@ const I18N = {
     clear_all: "Clear all",
     guidance: "Recommended fibre intake for adults is often 25–30 g/day, and 35–40 g/day can support weight management. Always check up-to-date recommendations from reliable sources.",
     source_info: "Source: Finnish Institute for Health and Welfare, Fineli – food composition database. Material used under CC BY 4.0 license. This application is not produced, recommended, or maintained by THL or Fineli.",
+    source: "Source: Finnish Institute for Health and Welfare, Fineli – food composition database. Material used under CC BY 4.0 license. This application is not produced, recommended, or maintained by THL or Fineli.",
     samples_title: "High-fibre examples",
     top20_title: "Examples of high-fibre foods (Fineli, highest nutrient, g/100 g)",
     add_to_list: "Add to day list",
@@ -111,6 +146,22 @@ const I18N = {
     no_fiber: "No fibre data for this food. Please select another.",
     no_results: "No results. Try another search.",
     progress_text: "Daily fiber total {total} g / goal {goal} g ({percent}% of goal).",
+    searching: "Searching...",
+    search_error: "Search failed. Check your network connection and try again.",
+    anonymous: "(unnamed)",
+    empty_list_hint: "You have not added any foods yet. Search for a food and add it to the list.",
+    eaten_label: "eaten",
+    fiber_word: "fiber",
+    remove_button: "Remove",
+    confirm_clear: "Clear all foods for the day?",
+    lead: "Calculate daily fiber and calorie totals easily.",
+    search_section_title: "Search food item",
+    nav_apps: "Apps",
+    nav_home: "Home",
+    nav_kuitulaskuri: "Fiber Calculator",
+    nav_app2: "App2",
+    nav_blog: "Blog",
+    nav_contact: "Contact",
   },
 };
 
@@ -306,11 +357,19 @@ function applyTranslations() {
 
   const descEl = document.querySelector(".lead");
   if (descEl) descEl.textContent = t("app_description") || "";
+  // Document title
+  try {
+    document.title = t("app_title") || document.title;
+  } catch (e) {}
 
   // Update source info
-  const sourceEl = document.querySelector("[data-i18n='source_info']");
-  if (sourceEl) {
-    sourceEl.textContent = t("source_info") || "";
+  const sourceEl1 = document.querySelector("[data-i18n='source_info']");
+  if (sourceEl1) {
+    sourceEl1.textContent = t("source_info") || t("source") || "";
+  }
+  const sourceEl2 = document.querySelector("[data-i18n='source']");
+  if (sourceEl2) {
+    sourceEl2.textContent = t("source") || t("source_info") || "";
   }
 
   // Update clear button visibility
@@ -777,11 +836,11 @@ function showSelectedFood(food) {
 function renderFavorites() {
   if (!favorites.length) {
     favoritesListEl.classList.add("empty-state");
-    favoritesListEl.innerHTML = t("empty_list");
-    totalFiberEl.textContent = "0 g";
-    remainingFiberEl.textContent = "0 g";
-    excessFiberEl.textContent = "0 g";
-    totalCaloriesEl.textContent = "0 kcal";
+    favoritesListEl.innerHTML = t("empty_list_hint") || t("empty_list");
+    totalFiberEl.textContent = `0 g`;
+    remainingFiberEl.textContent = `0 g`;
+    excessFiberEl.textContent = `0 g`;
+    totalCaloriesEl.textContent = `0 kcal`;
     updateFiberGoalProgress(0);
     if (clearAllButton) {
       clearAllButton.style.display = "none";
@@ -813,13 +872,7 @@ function renderFavorites() {
           <span>g</span>
         </div>
         <div class="favorite-fiber">
-          <strong class="fiber-value">${formatNumber(item.fiber)}</strong> ${
-            currentLang === "sv"
-              ? "g fiber"
-              : currentLang === "en"
-              ? "g fiber"
-              : "g kuitua"
-          }
+          <strong class="fiber-value">${formatNumber(item.fiber)}</strong> ${t("fiber_word") || (currentLang === "sv" || currentLang === "en" ? "g fiber" : "g kuitua")}
         </div>
         <div class="favorite-cal">
           ${
@@ -829,13 +882,7 @@ function renderFavorites() {
           }
         </div>
         <button class="danger-button" data-index="${index}">
-          ${
-            currentLang === "sv"
-              ? "Ta bort"
-              : currentLang === "en"
-              ? "Remove"
-              : "Poista"
-          }
+          ${t("remove_button")}
         </button>
       </div>
     `
@@ -1059,7 +1106,7 @@ searchInput.addEventListener("keydown", (e) => {
 
 clearAllButton.addEventListener("click", () => {
   if (!favorites.length) return;
-  const ok = window.confirm(t("clear_all") + "?");
+  const ok = window.confirm(t("confirm_clear") || (t("clear_all") + "?"));
   if (!ok) return;
   favorites = [];
   saveFavorites();
