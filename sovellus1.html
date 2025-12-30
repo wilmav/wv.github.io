@@ -25,7 +25,7 @@
     <div class="top-bar">
     <div>
       <h1 data-i18n="app_title">Kuitulaskuri</h1>
-      <p class="lead" data-i18n="lead">Laske päivän kuitu-ja kalorimäärät helposti.</p>
+      <p class="lead" data-i18n="app_description">Hae ruokia Finelistä, lisää määrät ja seuraa kuitu- ja kalorikertymää suhteessa tavoitteeseen.</p>
     </div>
     <div class="lang-select">
       <select id="langSelect" class="no-arrow">
@@ -45,8 +45,7 @@
           <input id="searchInput" type="search" autocomplete="off" data-i18n-placeholder="search_placeholder" placeholder="Esim. omena, ruisleipä">
           <button id="searchButton" data-i18n="search">Hae</button>
         </div>
-        <p class="hint small" data-i18n="search_hint">Haku toimii valitulla kielellä (esim. 'porkkana' suomeksi).</p>
-        <p class="hint" data-i18n="api_hint">Tieto perustuu Fineli-tietokantaan.</p>
+        <p class="hint" data-i18n="api_hint">Hakukenttä käyttää Finelin avointa ohjelmointirajapintaa (/api/v1/foods?q=).</p>
         <div id="searchResults" class="search-results"></div>
         <div id="selectedFood" class="selected-food hidden"></div>
       </section>
@@ -84,7 +83,8 @@
           </div>
           <button id="clearAllButton" class="secondary-button" data-i18n="clear_all">Tyhjennä kaikki</button>
         </div>
-        <p class="hint small" data-i18n="guidance">Suositeltu kuidun saanti aikuisille on 25–30 g/vrk.</p>
+        <p class="hint small" data-i18n="guidance">Suositeltu kuidun saanti aikuisille on usein 25–30 g/vrk, ja 35–40 g/vrk voi tukea painonhallintaa. Tarkista ajantasaiset ravitsemussuositukset luotettavasta lähteestä.</p>
+        <p class="hint small source-info" data-i18n="source">Lähde: Terveyden ja hyvinvoinnin laitos, Fineli – elintarvikkeiden koostumustietokanta. Aineisto käytössä CC BY 4.0 -lisenssillä. Tämä sovellus ei ole THL:n tai Finelin tuottama, suosittelema tai ylläpitämä palvelu.</p>
       </section>
     </section>
     <!-- Oikea sivukolumni -->
@@ -100,9 +100,7 @@
 </div>
 </main>
 </div>
-<script src="kuitulaskuri.js"></script>
-</body>
-</html>
 
 
 
+<script src="kuitulaskuri.js"></script></body></html>

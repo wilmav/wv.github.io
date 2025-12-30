@@ -35,7 +35,6 @@ const I18N = {
     step3_desc: "Valitse tavoite ja seuraa, kuinka lähelle pääset päivän aikana.",
     search: "Hae",
     search_placeholder: "Esim. omena, ruisleipä...",
-    search_hint: "Haku toimii valitulla kielellä [LANG] (esim. 'porkkana' suomeksi).",
     api_hint: "Hakukenttä käyttää Finelin avointa ohjelmointirajapintaa (/api/v1/foods?q=).",
     empty_list: "Et ole vielä lisännyt yhtään ruokaa.",
     goal_label: "Päivittäinen kuitutavoite",
@@ -82,7 +81,6 @@ const I18N = {
     step3_desc: "Välj mål och följ hur nära du kommer under dagen.",
     search: "Sök",
     search_placeholder: "Ex. äpple, rågbröd...",
-    search_hint: "Sökning fungerar på valt språk [LANG] (t.ex. 'morot' för sv).",
     api_hint: "Sökfältet använder Finelis öppna API (/api/v1/foods?q=).",
     empty_list: "Du har ännu inte lagt till något livsmedel.",
     goal_label: "Dagligt fibermål",
@@ -129,7 +127,6 @@ const I18N = {
     step3_desc: "Choose a target and track your progress during the day.",
     search: "Search",
     search_placeholder: "E.g. apple, rye bread...",
-    search_hint: "Search operates in selected language [LANG] (e.g., 'carrot' for en).",
     api_hint: "Search uses Fineli open API (/api/v1/foods?q=).",
     empty_list: "You have not added any foods yet.",
     goal_label: "Daily fiber goal",
@@ -383,14 +380,6 @@ function applyTranslations() {
   // Update clear button visibility
   if (clearAllButton) {
     clearAllButton.style.display = favorites.length > 0 ? "" : "none";
-  }
-
-  // Update search hint with current language
-  const searchHintEl = document.querySelector("[data-i18n='search_hint']");
-  if (searchHintEl) {
-    let hintText = t("search_hint") || "";
-    hintText = hintText.replace("[LANG]", currentLang.toUpperCase());
-    searchHintEl.textContent = hintText;
   }
 }
 
