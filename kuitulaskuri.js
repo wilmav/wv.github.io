@@ -834,6 +834,16 @@ function showSelectedFood(food) {
   }
 }
 function renderFavorites() {
+  if (!favoritesListEl) return;
+
+  // Update sample names to current language
+  favorites.forEach(fav => {
+    const fiIndex = SAMPLE_LISTS.fi.findIndex(item => item.name === fav.name);
+    if (fiIndex !== -1) {
+      fav.name = SAMPLE_LISTS[currentLang][fiIndex].name;
+    }
+  });
+
   if (!favorites.length) {
     favoritesListEl.classList.add("empty-state");
     favoritesListEl.innerHTML = t("empty_list_hint") || t("empty_list");
@@ -1118,22 +1128,26 @@ fiberGoalSelect?.addEventListener("change", () => {
   updateFiberGoalProgress(total);
 });
 
-langSelect?.addEventListener("change", () => {
+langSelect.onchange = () => {
   currentLang = langSelect.value || "fi";
   applyTranslations();
   renderFavorites(); // Re-render favorites to update language
 
   // Nollaa haku ja valinta
-  searchInput.value = "";
-  searchResultsEl.innerHTML = "";
-  suggestionsEl.innerHTML = "";
-  suggestionsEl.classList.remove("active");
-  selectedFoodEl.innerHTML = "";
-  selectedFoodEl.classList.add("hidden");
+  if (searchInput) searchInput.value = "";
+  if (searchResultsEl) searchResultsEl.innerHTML = "";
+  if (suggestionsEl) {
+    suggestionsEl.innerHTML = "";
+    suggestionsEl.classList.remove("active");
+  }
+  if (selectedFoodEl) {
+    selectedFoodEl.innerHTML = "";
+    selectedFoodEl.classList.add("hidden");
+  }
 
   renderFavorites();
   populateSamples();
-});
+};
 
 // Init
 applyTranslations();
