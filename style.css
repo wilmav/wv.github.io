@@ -221,6 +221,16 @@ button {
   font-size: 0.8rem;
   color: var(--text-soft);
 }
+.selected-meta {
+  margin-top: 0.5rem;
+}
+.selected-meta div {
+  font-size: 0.85rem;
+  margin-bottom: 0.2rem;
+}
+.selected-meta div:last-child {
+  margin-bottom: 0;
+}
 .selected-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));

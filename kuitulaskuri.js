@@ -784,15 +784,13 @@ function showSelectedFood(food) {
     <div class="selected-simple">
       <div class="selected-row">
         <div class="selected-left">
-          <div class="selected-title">${name}</div>
-          <div class="selected-sub">${group}</div>
+          <div class="selected-title">${name}, ${group} ${fiberText}</div>
           <div class="selected-meta">
-            <span>${t("calc_for_amount")}: <strong id="calculatedFiber">${canAdd ? `${formatNumber((fiberPer100g * defaultAmount) / 100)} g` : "-"}</strong></span>
-            <span>· Kalorit: <strong id="calculatedEnergy">${energyPer100g != null ? `${formatNumber((energyPer100g * defaultAmount) / 100)} kcal` : "–"}</strong></span>
+            <div>Laskettu kuitu määrälle: <strong id="calculatedFiber">${canAdd ? `${formatNumber((fiberPer100g * defaultAmount) / 100)} g` : "-"}</strong></div>
+            <div>Kalorit: <strong id="calculatedEnergy">${energyPer100g != null ? `${formatNumber((energyPer100g * defaultAmount) / 100)} kcal` : "–"}</strong></div>
           </div>
         </div>
         <div class="selected-right">
-          <div class="fiber-badge">${fiberText}</div>
           <div class="amount-row compact">
             <button class="amount-btn" type="button" data-step="-10">-10</button>
             <button class="amount-btn" type="button" data-step="-1">-</button>
