@@ -1,4 +1,4 @@
-/* Poistaa nuoli-ikonin kielivalinnasta */
+/* Poistaa nuolen kielivalinnasta */
 .no-arrow {
   appearance: none;
   -webkit-appearance: none;
@@ -9,242 +9,462 @@
 .no-arrow::-ms-expand {
   display: none;
 }
-/* --- LISTARIVI: NIMI – MÄÄRÄ – KUITU – POISTA --- */
-.favorite-row {
-  display: grid;
-  grid-template-columns: minmax(0,1.9fr) auto auto auto;
-  gap: 0.5rem;
-  padding: 0.5rem;
-  border-radius: 12px;
-  background: var(--k-card-alt);
-  border: 1px solid var(--k-border);
-  margin-bottom: 0.35rem;
-  align-items: center;
-}
-/* Määräkenttä + g */
-.favorite-amount {
-  display: flex;
-  align-items: center;
-  gap: 0.3rem;
-  white-space: nowrap;
-}
-.favorite-amount input[type="number"] {
-  width: 70px;
-  min-width: 70px;
-  max-width: 70px;
-  font-size: 1rem;
-  font-weight: 600;
-  padding: 0.4rem 0.5rem;
-  box-sizing: border-box;
-  border-radius: 10px;
-  border: 1px solid var(--k-border);
-  background: var(--k-card);
-  color: var(--k-text);
-}
-.favorite-amount span {
-  font-size: 0.95rem;
-  font-weight: 500;
-  color: var(--k-text-soft);
-}
-/* Kuitumäärä samalle riville, musta ja bold */
-.favorite-fiber {
-  font-size: 0.95rem;
-  font-weight: 700;
-  color: #000;
-  white-space: nowrap;
-}
-/* Poista-painike ei skaalaudu */
-.danger-button {
-  background: rgba(220,38,38,0.18);
-  color: var(--k-danger);
-  border: 1px solid rgba(220,38,38,0.45);
-  border-radius: 999px;
-  padding: 0.6rem 1.1rem;
-  font-size: 0.9rem;
-  font-weight: 600;
-  cursor: pointer;
-  flex-shrink: 0;
-}
-/* --- YLEISET TYYLIT (alkuperäiset) --- */
+
+/* --- Teema kuitulaskurille (vaalea + saffron) --- */
+
 :root {
-  --k-bg: #e6edf2;
+  --k-bg: #ffffff;
   --k-card: #ffffff;
-  --k-card-alt: #f0f4f8;
-  --k-text: #1f2937;
-  --k-text-soft: #4b5563;
-  --k-accent: #0f766e;
-  --k-accent-strong: #115e59;
-  --k-border: #cbd5e1;
-  --k-danger: #dc2626;
-  --k-radius: 14px;
-  --k-shadow: 0 16px 38px rgba(0,0,0,0.06);
+  --k-card-alt: #f8f9fb;
+  --k-text: #111111;
+  --k-text-soft: #555555;
+  --k-accent: #DFAF2B;
+  --k-accent-strong: #B8871F;
+  --k-border: #e5e5e5;
+  --k-danger: #b91c1c;
+  --k-radius: 12px;
+  --k-shadow: 0 10px 30px rgba(0,0,0,0.06);
 }
+
 body {
   background: var(--k-bg);
   color: var(--k-text);
-  font-family: sans-serif;
 }
-.content-padding {
-  background: linear-gradient(180deg, rgba(230,237,242,0.8) 0%, var(--k-bg) 12%);
-  border-radius: 12px;
-  padding-top: 24px;
+
+/* Kuori sovelluksen ympärille */
+.fiber-app-shell {
+  background: linear-gradient(180deg, #ffffff 0%, #f8f9fb 14%);
+  border-radius: 16px;
+  padding: 24px 28px 28px;
+  box-shadow: 0 18px 45px rgba(15, 23, 42, 0.06);
+  box-sizing: border-box;
 }
+
+/* Ylärivi: otsikko + kuvaus + kieli */
 .top-bar {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: 1rem;
+  gap: 1.5rem;
+  margin-bottom: 1.4rem;
 }
+
 .lead {
-  color: #374151;
-  margin-top: 0.2rem;
+  margin: 0.25rem 0 0;
+  color: var(--k-text-soft);
+  font-size: 0.96rem;
 }
-.lang-select {
-  min-width: 180px;
+
+.lang-select-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.25rem;
+  min-width: 170px;
 }
-/* Kaksi kolumnia */
-.two-col {
+
+.lang-label {
+  font-size: 0.8rem;
+  color: var(--k-text-soft);
+}
+
+#langSelect {
+  padding: 0.35rem 0.75rem;
+  font-size: 0.9rem;
+  border-radius: 999px;
+  border: 1px solid var(--k-border);
+  background: #ffffff;
+}
+
+/* Kahden sarakkeen layout: vasen = kaikki logiikka, oikea = sampleList */
+.fiber-layout {
   display: grid;
-  grid-template-columns: minmax(0, 2.1fr) minmax(320px, 1.2fr);
-  gap: 1.1rem;
-  margin-top: 0.8rem;
-  align-items: start;
+  grid-template-columns: minmax(0, 2.2fr) minmax(260px, 1.1fr);
+  gap: 1.2rem;
+  align-items: flex-start;
 }
+
 /* Kortit */
 .card {
   background: var(--k-card);
   border-radius: var(--k-radius);
   padding: 1.1rem 1rem;
   box-shadow: var(--k-shadow);
-  border: 1px solid rgba(203,213,225,0.5);
+  border: 1px solid rgba(229,231,235,0.8);
   max-width: 100%;
-  overflow-wrap: break-word;
 }
-.card h2, .card h3 {
-  margin-top: 0;
-  margin-bottom: 0.5rem;
+
+.card h2,
+.card h3 {
+  margin: 0 0 0.5rem;
 }
+
 .hint {
-  margin: 0.25rem 0 0.6rem;
+  margin: 0 0 0.7rem;
   color: var(--k-text-soft);
   font-size: 0.9rem;
 }
-.hint.small {
-  font-size: 0.82rem;
+
+/* Haku + tulokset + valittu ruoka vasemmalla */
+
+.search-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+  margin-bottom: 0.9rem;
 }
-/* Haku */
+
 .search-row {
   display: flex;
-  gap: 0.6rem;
-  margin-bottom: 0.35rem;
+  gap: 0.5rem;
 }
+
+#searchInput {
+  flex: 1;
+}
+
 input[type="search"],
 input[type="number"],
 select {
-  flex: 1;
   padding: 0.55rem 0.75rem;
   border-radius: 10px;
   border: 1px solid var(--k-border);
-  background: var(--k-card);
+  background: var(--k-card-alt);
   color: var(--k-text);
   font-size: 0.95rem;
   max-width: 100%;
   box-sizing: border-box;
-  white-space: normal;
 }
-/* Pudotusvalikko */
-#fiberGoalSelect {
-  width: 100%;
-  max-width: 100%;
-  box-sizing: border-box;
-  white-space: normal;
-}
+
 input[type="search"]:focus,
 input[type="number"]:focus,
 select:focus {
   border-color: var(--k-accent);
-  box-shadow: 0 0 0 2px rgba(15,118,110,0.3);
-  background: var(--k-card-alt);
+  box-shadow: 0 0 0 2px rgba(223,175,43,0.25);
+  background: #ffffff;
+  outline: none;
 }
+
 /* Napit */
+
 button {
   cursor: pointer;
   border-radius: 999px;
   border: none;
-  font-size: 0.9rem;
+  font-size: 0.86rem;
   font-weight: 600;
-  padding: 0.6rem 1.1rem;
+  padding: 0.55rem 1.05rem;
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  transition: background 0.15s ease, transform 0.08s ease, box-shadow 0.12s ease;
 }
+
+button:active {
+  transform: translateY(1px);
+}
+
 #searchButton {
   background: linear-gradient(135deg, var(--k-accent), var(--k-accent-strong));
-  color: #fff;
+  color: #1a1304;
+  box-shadow: 0 8px 18px rgba(223,175,43,0.35);
 }
+
+#searchButton:hover {
+  filter: brightness(1.04);
+}
+
 .secondary-button {
   background: var(--k-card-alt);
   color: var(--k-text-soft);
   border: 1px solid var(--k-border);
 }
-/* Hakutulokset */
-.search-results,
-.suggestions {
-  margin-top: 0.2rem;
+
+.secondary-button:hover {
+  background: #ffffff;
+}
+
+/* 🔴 Poistopainikkeet */
+.danger-button {
+  background: rgba(185,28,28,0.06);
+  color: var(--k-danger);
+  border: 1px solid rgba(185,28,28,0.35);
+}
+
+.danger-button:hover {
+  background: rgba(185,28,28,0.12);
+}
+
+/* Hakutulokset + suggestions */
+
+#searchResults,
+#suggestions {
+  margin-top: 0.25rem;
   border-radius: 12px;
-  border: 1px solid rgba(59,130,246,0.3);
+  border: 1px solid rgba(223,175,43,0.4);
   background: var(--k-card-alt);
-  max-height: 240px;
+  max-height: 260px;
   overflow-y: auto;
 }
+
 .result-item {
   padding: 0.45rem 0.6rem;
-  border-bottom: 1px solid rgba(203,213,225,0.2);
+  border-bottom: 1px solid rgba(229,231,235,0.6);
   cursor: pointer;
+  display: flex;
+  gap: 0.7rem;
 }
+
+.result-item:last-child {
+  border-bottom: none;
+}
+
+.result-item:hover {
+  background: #ffffff;
+}
+
+.food-name {
+  font-size: 0.92rem;
+  font-weight: 500;
+}
+
+.food-meta {
+  font-size: 0.8rem;
+  color: var(--k-text-soft);
+}
+
 /* Valittu ruoka */
-.selected-food {
-  padding: 0.8rem;
+
+#selectedFood {
+  margin-top: 0.7rem;
+}
+
+#selectedFood.hidden {
+  display: none;
+}
+
+.selected-simple {
   border-radius: 12px;
   border: 1px solid var(--k-border);
   background: var(--k-card-alt);
+  padding: 0.7rem 0.7rem 0.8rem;
 }
-.selected-food.hidden {
-  display: none;
-}
-/* Yhteenveto */
-.summary-row {
+
+.selected-row {
   display: flex;
-  flex-wrap: wrap;
-  gap: 1rem;
+  gap: 0.8rem;
   justify-content: space-between;
-  padding-top: 0.45rem;
-  border-top: 1px dashed rgba(203,213,225,0.25);
+  align-items: flex-start;
 }
-.summary-block {
-  flex: 1 1 30%;
-  min-width: 120px;
+
+.selected-title {
+  font-size: 0.96rem;
+  font-weight: 600;
+  margin-bottom: 0.2rem;
 }
+
+.selected-meta {
+  font-size: 0.84rem;
+  color: var(--k-text-soft);
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+}
+
+.amount-row.compact {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  margin-bottom: 0.4rem;
+}
+
+.amount-btn {
+  background: #ffffff;
+  border: 1px solid var(--k-border);
+  padding: 0.35rem 0.55rem;
+  min-width: 32px;
+}
+
+/* Päivän lista + yhteenveto */
+
+.favorites-list-wrapper {
+  margin-top: 0.6rem;
+}
+
+#favoritesList {
+  margin-top: 0.4rem;
+}
+
+.favorite-row {
+  display: grid;
+  grid-template-columns: minmax(0,1.6fr) auto auto auto auto;
+  gap: 0.45rem;
+  padding: 0.5rem 0.45rem;
+  border-radius: 10px;
+  background: var(--k-card-alt);
+  border: 1px solid var(--k-border);
+  align-items: center;
+  margin-bottom: 0.35rem;
+}
+
+.favorite-name {
+  font-size: 0.86rem;
+}
+
+.favorite-amount {
+  display: flex;
+  align-items: center;
+  gap: 0.2rem;
+  font-size: 0.8rem;
+  color: var(--k-text-soft);
+}
+
+.favorite-fiber {
+  font-size: 0.82rem;
+  color: #7a5a10;
+}
+
+.favorite-cal {
+  font-size: 0.8rem;
+  color: var(--k-text-soft);
+}
+
+.amount-input {
+  width: 70px;
+}
+
+/* Yhteenveto */
+
+.summary-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 0.8rem;
+  margin-top: 0.7rem;
+  padding-top: 0.6rem;
+  border-top: 1px dashed rgba(203,213,225,0.7);
+}
+
+.summary-label {
+  font-size: 0.86rem;
+  color: var(--k-text-soft);
+  margin-bottom: 0.1rem;
+}
+
 .summary-value {
-  font-size: 1.1rem;
+  font-size: 1.08rem;
   font-weight: 700;
-  color: var(--k-accent);
+  color: var(--k-accent-strong);
 }
-/* Oikea palsta */
-.sample-list {
-  list-style: none;
-  padding-left: 1rem;
+
+.summary-note {
+  font-size: 0.78rem;
+  color: var(--k-text-soft);
+  margin-top: 0.3rem;
 }
-.sample-list a {
-  color: var(--k-accent);
-  text-decoration: none;
+
+/* Tyhjät tilat ja virheet */
+
+.empty-state {
+  font-size: 0.86rem;
+  color: var(--k-text-soft);
 }
-.sample-list a:hover {
-  text-decoration: underline;
+
+.error-text {
+  font-size: 0.82rem;
+  color: var(--k-danger);
+  padding: 0.3rem 0.1rem;
 }
+
+.warning-banner {
+  margin-top: 0.6rem;
+  font-size: 0.8rem;
+  padding: 0.4rem 0.5rem;
+  border-radius: 8px;
+  background: rgba(185,28,28,0.06);
+  color: var(--k-danger);
+}
+
+/* Sample-lista oikeassa sarakkeessa */
+
+.sample-card {
+  background: var(--k-card);
+  border-radius: var(--k-radius);
+  padding: 1rem 0.9rem;
+  box-shadow: var(--k-shadow);
+  border: 1px solid rgba(229,231,235,0.8);
+}
+
+.sample-header {
+  margin-bottom: 0.5rem;
+}
+
+.sample-title {
+  font-size: 1rem;
+  font-weight: 600;
+  margin: 0 0 0.3rem;
+}
+
+.sample-subtitle {
+  font-size: 0.85rem;
+  color: var(--k-text-soft);
+}
+
+#sampleList {
+  margin-top: 0.4rem;
+}
+
+.sample-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+  padding: 0.4rem 0;
+  border-bottom: 1px solid rgba(229,231,235,0.6);
+}
+
+.sample-item:last-child {
+  border-bottom: none;
+}
+
+.sample-link {
+  font-size: 0.86rem;
+}
+
+.sample-add-button {
+  background: var(--k-card-alt);
+  border: 1px solid var(--k-border);
+  border-radius: 999px;
+  font-size: 0.8rem;
+}
+
+/* Alareunan lisätekstit */
+
+.app-footer-note {
+  margin-top: 1.3rem;
+  font-size: 0.78rem;
+  color: var(--k-text-soft);
+}
+
 /* Responsiivisuus */
-@media (max-width: 768px) {
-  .two-col {
+
+@media (max-width: 900px) {
+  .fiber-layout {
     grid-template-columns: 1fr;
+  }
+  .selected-row {
+    flex-direction: column;
+  }
+  .favorite-row {
+    grid-template-columns: minmax(0,1.4fr) minmax(0,1.2fr);
+    grid-auto-rows: auto;
+    row-gap: 0.4rem;
+  }
+  .favorite-row .danger-button {
+    grid-column: span 2;
+    justify-self: flex-start;
+  }
+  .fiber-app-shell {
+    padding: 18px 16px 22px;
+    border-radius: 12px;
   }
 }
