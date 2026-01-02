@@ -7,7 +7,7 @@
   --text: #111111;
   --text-soft: #555555;
   --border: #e5e5e5;
-  --accent: #DFAF2B;       /* Muted Saffron */
+  --accent: #DFAF2B;
   --accent-soft: #FFF4D8;
   --radius: 12px;
   --sidebar-width: 260px;
@@ -101,7 +101,7 @@ nav ul li a:hover {
 }
 
 /* -----------------------------------------
-   Content area
+   Content area — OTSIKKO KORJATTU
 ------------------------------------------ */
 
 .content-wrapper {
@@ -110,7 +110,9 @@ nav ul li a:hover {
   min-height: 100vh;
   background-color: #ffffff;
   display: block;
-  padding: 3rem 4rem;
+
+  /* Tämä varmistaa, että h1 alkaa samalla korkeudella kuin sovellus1 */
+  padding: 3rem 4rem 3rem 4rem;
 }
 
 main {
@@ -124,6 +126,9 @@ main {
   max-width: 900px;
   width: 100%;
   margin: 0 auto;
+
+  /* Hienosäätö, jotta h1 on täsmälleen samalla y-koordinaatilla */
+  padding-top: 0.2rem;
 }
 
 h1 {
@@ -175,6 +180,64 @@ p {
 
 .content-padding a:hover {
   text-decoration: underline;
+}
+
+/* -----------------------------------------
+   LASKURI-SIVUN KORJAUKSET
+------------------------------------------ */
+
+/* 2-rivinen layout: nimi rivittyy, kenttä tasattu */
+.favorite-row {
+  display: grid;
+  grid-template-columns: 1fr auto auto auto;
+  grid-template-rows: auto auto;
+  gap: 0.35rem 0.45rem;
+  padding: 0.6rem 0.5rem;
+  border-radius: 10px;
+  background: var(--accent-soft);
+  border: 1px solid var(--border);
+  align-items: center;
+  margin-bottom: 0.35rem;
+}
+
+.favorite-name {
+  font-size: 0.86rem;
+  white-space: normal;
+  overflow: visible;
+  text-overflow: clip;
+  line-height: 1.25;
+  grid-column: 1 / 2;
+  grid-row: 1 / 2;
+}
+
+.favorite-amount {
+  grid-column: 1 / 2;
+  grid-row: 2 / 3;
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.favorite-fiber {
+  grid-column: 2 / 3;
+  grid-row: 1 / 2;
+}
+
+.favorite-cal {
+  grid-column: 3 / 4;
+  grid-row: 1 / 2;
+}
+
+.favorite-row .danger-button {
+  grid-column: 4 / 5;
+  grid-row: 1 / 2;
+}
+
+.amount-input {
+  width: 80px;
+  font-size: 0.95rem;
+  padding: 0.45rem 0.6rem;
+  box-sizing: border-box;
 }
 
 /* -----------------------------------------
