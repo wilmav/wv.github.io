@@ -5,13 +5,9 @@
   <title>Kuitulaskuri</title>
   <link rel="stylesheet" href="tyyli.css">
   <link rel="stylesheet" href="kuitulaskuri.css">
-  <style>
-    html, body {
-      background: #ffffff !important;
-    }
-  </style>
 </head>
 <body>
+
 <header>
   <div class="app-title" data-i18n="nav_apps">Sovelluksia</div>
   <nav>
@@ -24,88 +20,137 @@
     </ul>
   </nav>
 </header>
+
 <div class="content-wrapper">
-<main>
-<div class="content-padding">
-    <div class="top-bar">
-    <div>
-      <h1 data-i18n="app_title">Kuitulaskuri</h1>
-      <p class="lead" data-i18n="app_description">Hae ruokia Finelistä, lisää määrät ja seuraa kuitu- ja kalorikertymää suhteessa tavoitteeseen.</p>
+  <main>
+    <div class="content-padding">
+      <section class="fiber-app-shell">
+
+        <!-- Ylärivi -->
+        <div class="top-bar">
+          <div>
+            <h1>Kuitulaskuri</h1>
+            <p class="lead" data-i18n="app_description">
+              Laske päivän kuitu- ja kalorimäärät helposti.
+            </p>
+          </div>
+
+          <div class="lang-select-wrapper">
+            <span class="lang-label">Kieli / Språk / Language</span>
+            <select id="langSelect" class="no-arrow">
+              <option value="fi">Suomi</option>
+              <option value="sv">Svenska</option>
+              <option value="en">English</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- KAKSI SARAKETTA -->
+        <div class="fiber-layout">
+
+          <!-- VASEN SARAKE -->
+          <div>
+
+            <!-- Haku -->
+            <div class="card">
+              <h2 data-i18n="step1_title">Hae ruoka Finelistä</h2>
+              <p class="hint" data-i18n="api_hint">
+                Hakukenttä käyttää Finelin avointa ohjelmointirajapintaa.
+              </p>
+
+              <div class="search-section">
+                <div class="search-row">
+                  <input
+                    id="searchInput"
+                    type="search"
+                    data-i18n-placeholder="search_placeholder"
+                    placeholder="Esim. omena, ruisleipä..."
+                  />
+                  <button id="searchButton" type="button" data-i18n="search">
+                    Hae
+                  </button>
+                </div>
+
+                <div id="searchResults"></div>
+                <div id="suggestions"></div>
+              </div>
+
+              <div id="selectedFood" class="hidden"></div>
+            </div>
+
+            <!-- Päivän lista + yhteenveto -->
+            <div class="card favorites-list-wrapper">
+              <h2 data-i18n="step3_title">Päivän kuitu- ja kaloriyhteenveto</h2>
+
+              <label for="fiberGoalSelect" class="summary-label" data-i18n="goal_label">
+                Päivittäinen kuitutavoite
+              </label>
+              <select id="fiberGoalSelect" class="no-arrow">
+                <option value="fi_min">Suomen vähimmäistaso (~25 g/vrk)</option>
+                <option value="avg">Hyvä keskimääräinen taso (~30 g/vrk)</option>
+                <option value="high">Korkea kuitutaso (~40 g/vrk)</option>
+              </select>
+
+              <div id="favoritesList" class="empty-state">
+                Et ole vielä lisännyt yhtään ruokaa.
+              </div>
+
+              <div class="summary-grid">
+                <div>
+                  <div class="summary-label" data-i18n="total_fiber_label">Päivän kokonaiskuitu:</div>
+                  <div id="totalFiber" class="summary-value">0 g</div>
+                </div>
+                <div>
+                  <div class="summary-label" data-i18n="remaining_label">Jäljellä tavoitteesta:</div>
+                  <div id="remainingFiber" class="summary-value">0 g</div>
+                </div>
+                <div>
+                  <div class="summary-label" data-i18n="excess_label">Ylitys:</div>
+                  <div id="excessFiber" class="summary-value">0 g</div>
+                </div>
+                <div>
+                  <div class="summary-label" data-i18n="total_cal_label">Päivän kalorit:</div>
+                  <div id="totalCalories" class="summary-value">0 kcal</div>
+                </div>
+              </div>
+
+              <p id="fiberGoalProgress" class="summary-note"></p>
+
+              <!-- 🔴 PUNAINEN TYHJENNÄ-PAINIKE -->
+              <button id="clearAllButton" class="danger-button" type="button" data-i18n="clear_all">
+                Tyhjennä kaikki
+              </button>
+
+              <p class="app-footer-note" data-i18n="guidance">
+                Suositeltu kuidun saanti aikuisille on usein 25–30 g/vrk.
+              </p>
+            </div>
+          </div>
+
+          <!-- OIKEA SARKEKE: sample-list -->
+          <div>
+            <div class="sample-card">
+              <div class="sample-header">
+                <div class="sample-title" data-i18n="samples_title">Korkean kuidun esimerkit</div>
+                <div class="sample-subtitle" data-i18n="top20_title">
+                  Esimerkkejä runsaskuituisista elintarvikkeista (Fineli, g/100 g)
+                </div>
+              </div>
+
+              <div id="sampleList"></div>
+            </div>
+
+            <p class="app-footer-note" data-i18n="source_info">
+              Lähde: Terveyden ja hyvinvoinnin laitos, Fineli – elintarvikkeiden koostumustietokanta.
+            </p>
+          </div>
+
+        </div>
+      </section>
     </div>
-    <div class="lang-select">
-      <select id="langSelect" class="no-arrow">
-        <option value="fi">🇫🇮 Suomi</option>
-        <option value="sv">🇸🇪 Svenska</option>
-        <option value="en">🇬🇧 English</option>
-      </select>
-    </div>
-  </div>
-  <div class="two-col">
-    <!-- Vasen pääkolumni -->
-    <section class="main-col">
-      <!-- Haku -->
-      <section class="card">
-        <h2 data-i18n="search_section_title">Hae ruoka-aine</h2>
-        <div class="search-row">
-          <input id="searchInput" type="search" autocomplete="off" data-i18n-placeholder="search_placeholder" placeholder="Esim. omena, ruisleipä">
-          <button id="searchButton" data-i18n="search">Hae</button>
-        </div>
-        <p class="hint" data-i18n="api_hint">Hakukenttä käyttää Finelin avointa ohjelmointirajapintaa (/api/v1/foods?q=).</p>
-        <div id="searchResults" class="search-results"></div>
-        <div id="selectedFood" class="selected-food hidden"></div>
-      </section>
-      <!-- Yhteenveto -->
-      <section class="card">
-        <h2 data-i18n="step3_title">Päivän kuitu- ja kaloriyhteenveto</h2>
-        <p class="hint" data-i18n="step3_desc">Valitse tavoite ja seuraa edistymistä päivän aikana.</p>
-        <div class="goal-row">
-          <label for="fiberGoalSelect" class="field-label" data-i18n="goal_label">Päivittäinen kuitutavoite</label>
-          <select id="fiberGoalSelect">
-            <option value="fi_min">Suomen vähimmäistaso (~25 g/vrk)</option>
-            <option value="avg">Hyvä keskitavoite (~30 g/vrk)</option>
-            <option value="high">Korkea kuitutaso (~40 g/vrk)</option>
-          </select>
-        </div>
-          <div id="favoritesList"></div>
-        <div class="summary-row">
-          <div class="summary-block">
-            <span class="summary-label" data-i18n="total_fiber_label">Päivän kokonaiskuitu:</span>
-            <span id="totalFiber" class="summary-value">240,0 g</span>
-          </div>
-          <div class="summary-block">
-            <span class="summary-label" data-i18n="remaining_label">Jäljellä tavoitteesta:</span>
-            <span id="remainingFiber" class="summary-value">0 g</span>
-          </div>
-          <div class="summary-block">
-            <span class="summary-label" data-i18n="excess_label">Ylitys:</span>
-            <span id="excessFiber" class="summary-value">215,0 g</span>
-          </div>
-        </div>
-        <div class="summary-row">
-          <div class="summary-block">
-            <span class="summary-label" data-i18n="total_cal_label">Päivän kalorit:</span>
-            <span id="totalCalories" class="summary-value">0 kcal</span>
-          </div>
-          <button id="clearAllButton" class="secondary-button" data-i18n="clear_all">Tyhjennä kaikki</button>
-        </div>
-        <p class="hint small" data-i18n="guidance">Suositeltu kuidun saanti aikuisille on usein 25–30 g/vrk, ja 35–40 g/vrk voi tukea painonhallintaa. Tarkista ajantasaiset ravitsemussuositukset luotettavasta lähteestä.</p>
-        <p class="hint small source-info" data-i18n="source">Lähde: Terveyden ja hyvinvoinnin laitos, Fineli – elintarvikkeiden koostumustietokanta. Aineisto käytössä CC BY 4.0 -lisenssillä. Tämä sovellus ei ole THL:n tai Finelin tuottama, suosittelema tai ylläpitämä palvelu.</p>
-      </section>
-    </section>
-    <!-- Oikea sivukolumni -->
-    <aside class="side-col">
-      <section class="card sticky-card">
-        <div class="sample-group">
-          <h3 data-i18n="top20_title">Esimerkkejä runsaskuituisista elintarvikkeista (Fineli, eniten ravintotekijää, g/100 g)</h3>
-          <ul id="sampleList" class="sample-list"></ul>
-        </div>
-      </section>
-    </aside>
-  </div>
-</div>
-</main>
+  </main>
 </div>
 
-
-
-<script src="kuitulaskuri.js"></script></body></html>
+<script src="kuitulaskuri.js"></script>
+</body>
+</html>
