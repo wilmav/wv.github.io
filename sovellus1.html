@@ -10,14 +10,14 @@
 <body>
 
 <header>
-  <div class="app-title" data-i18n="nav_apps">Sovelluksia</div>
+  <div class="app-title">Sovelluksia</div>
   <nav>
     <ul>
-      <li><a href="index.html" data-i18n="nav_home">Etusivu</a></li>
-      <li><a href="sovellus1.html" data-i18n="nav_kuitulaskuri">Kuitulaskuri</a></li>
-      <li><a href="sovellus2.html" data-i18n="nav_app2">Sovellus2</a></li>
-      <li><a href="blogi.html" data-i18n="nav_blog">Blogi</a></li>
-      <li><a href="yhteystiedot.html" data-i18n="nav_contact">Yhteystiedot</a></li>
+      <li><a href="index.html">Etusivu</a></li>
+      <li><a href="sovellus1.html">Kuitulaskuri</a></li>
+      <li><a href="sovellus2.html">Sovellus2</a></li>
+      <li><a href="blogi.html">Blogi</a></li>
+      <li><a href="yhteystiedot.html">Yhteystiedot</a></li>
     </ul>
   </nav>
 </header>
@@ -31,9 +31,7 @@
         <div class="top-bar">
           <div>
             <h1>Kuitulaskuri</h1>
-            <p class="lead" data-i18n="app_description">
-              Laske päivän kuitu- ja kalorimäärät helposti.
-            </p>
+            <p class="lead">Laske päivän kuitu- ja kalorimäärät helposti.</p>
           </div>
 
           <div class="lang-select-wrapper">
@@ -54,22 +52,17 @@
 
             <!-- Haku -->
             <div class="card">
-              <h2 data-i18n="step1_title">Hae ruoka Finelistä</h2>
-              <p class="hint" data-i18n="api_hint">
-                Hakukenttä käyttää Finelin avointa ohjelmointirajapintaa.
-              </p>
+              <h2>Hae ruoka Finelistä</h2>
+              <p class="hint">Hakukenttä käyttää Finelin avointa ohjelmointirajapintaa.</p>
 
               <div class="search-section">
                 <div class="search-row">
                   <input
                     id="searchInput"
                     type="search"
-                    data-i18n-placeholder="search_placeholder"
                     placeholder="Esim. omena, ruisleipä..."
                   />
-                  <button id="searchButton" type="button" data-i18n="search">
-                    Hae
-                  </button>
+                  <button id="searchButton" type="button">Hae</button>
                 </div>
 
                 <div id="searchResults"></div>
@@ -81,12 +74,10 @@
 
             <!-- Päivän lista + yhteenveto -->
             <div class="card favorites-list-wrapper">
-              <h2 data-i18n="step3_title">Päivän kuitu- ja kaloriyhteenveto</h2>
+              <h2>Päivän kuitu- ja kaloriyhteenveto</h2>
 
-              <label for="fiberGoalSelect" class="summary-label" data-i18n="goal_label">
-                Päivittäinen kuitutavoite
-              </label>
-              <select id="fiberGoalSelect" class="no-arrow">
+              <h3 class="summary-subtitle">Päivittäinen kuitutavoite</h3>
+              <select id="fiberGoalSelect" class="styled-select">
                 <option value="fi_min">Suomen vähimmäistaso (~25 g/vrk)</option>
                 <option value="avg">Hyvä keskimääräinen taso (~30 g/vrk)</option>
                 <option value="high">Korkea kuitutaso (~40 g/vrk)</option>
@@ -98,32 +89,31 @@
 
               <div class="summary-grid">
                 <div>
-                  <div class="summary-label" data-i18n="total_fiber_label">Päivän kokonaiskuitu:</div>
+                  <div class="summary-label">Päivän kokonaiskuitu:</div>
                   <div id="totalFiber" class="summary-value">0 g</div>
                 </div>
                 <div>
-                  <div class="summary-label" data-i18n="remaining_label">Jäljellä tavoitteesta:</div>
+                  <div class="summary-label">Jäljellä tavoitteesta:</div>
                   <div id="remainingFiber" class="summary-value">0 g</div>
                 </div>
                 <div>
-                  <div class="summary-label" data-i18n="excess_label">Ylitys:</div>
+                  <div class="summary-label">Ylitys:</div>
                   <div id="excessFiber" class="summary-value">0 g</div>
                 </div>
                 <div>
-                  <div class="summary-label" data-i18n="total_cal_label">Päivän kalorit:</div>
+                  <div class="summary-label">Päivän kalorit:</div>
                   <div id="totalCalories" class="summary-value">0 kcal</div>
                 </div>
               </div>
 
               <p id="fiberGoalProgress" class="summary-note"></p>
 
-              <button id="clearAllButton" class="danger-button" type="button" data-i18n="clear_all">
+              <button id="clearAllButton" class="danger-button" type="button">
                 Tyhjennä kaikki
               </button>
             </div>
 
-            <!-- Lähdeteksti vasemmalla -->
-            <p class="app-footer-note" data-i18n="source_info">
+            <p class="app-footer-note">
               Lähde: Terveyden ja hyvinvoinnin laitos, Fineli – elintarvikkeiden koostumustietokanta.
               Aineisto käytössä CC BY 4.0 -lisenssillä.
               Tämä sovellus ei ole THL:n tai Finelin tuottama, suosittelema tai ylläpitämä palvelu.
@@ -131,12 +121,12 @@
 
           </div>
 
-          <!-- OIKEA SARKEKE: sample-list -->
+          <!-- OIKEA SARAKE -->
           <div>
             <div class="sample-card">
               <div class="sample-header">
-                <div class="sample-title" data-i18n="samples_title">Korkean kuidun esimerkit</div>
-                <div class="sample-subtitle" data-i18n="top20_title">
+                <div class="sample-title">Korkean kuidun esimerkit</div>
+                <div class="sample-subtitle">
                   Esimerkkejä runsaskuituisista elintarvikkeista (Fineli, g/100 g)
                 </div>
               </div>
