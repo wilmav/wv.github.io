@@ -18,8 +18,16 @@
   --k-card-alt: #f8f9fb;
   --k-text: #111111;
   --k-text-soft: #555555;
+
+  /* Saffron-teema */
   --k-accent: #DFAF2B;
   --k-accent-strong: #B8871F;
+
+  /* Sample-listan tummempi keltainen (ei enää käytössä taustana) */
+  --k-sample-bg: #F4D27A;
+  --k-sample-bg-hover: #E9C45F;
+  --k-sample-text: #5A4508;
+
   --k-border: #e5e5e5;
   --k-danger: #b91c1c;
   --k-radius: 12px;
@@ -40,7 +48,7 @@ body {
   box-sizing: border-box;
 }
 
-/* Ylärivi: otsikko + kuvaus + kieli */
+/* Ylärivi */
 .top-bar {
   display: flex;
   align-items: flex-start;
@@ -76,7 +84,7 @@ body {
   background: #ffffff;
 }
 
-/* Kahden sarakkeen layout: vasen = kaikki logiikka, oikea = sampleList */
+/* Kaksi saraketta */
 .fiber-layout {
   display: grid;
   grid-template-columns: minmax(0, 2.2fr) minmax(260px, 1.1fr);
@@ -105,8 +113,7 @@ body {
   font-size: 0.9rem;
 }
 
-/* Haku + tulokset + valittu ruoka vasemmalla */
-
+/* Haku */
 .search-section {
   display: flex;
   flex-direction: column;
@@ -145,46 +152,46 @@ select:focus {
   outline: none;
 }
 
-/* Napit */
-
+/* Yhtenäinen moderni saffron-painike */
 button {
   cursor: pointer;
-  border-radius: 999px;
+  border-radius: 10px;
   border: none;
-  font-size: 0.86rem;
+  font-size: 0.88rem;
   font-weight: 600;
-  padding: 0.55rem 1.05rem;
+  padding: 0.55rem 1.1rem;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   transition: background 0.15s ease, transform 0.08s ease, box-shadow 0.12s ease;
+  white-space: nowrap;
 }
 
 button:active {
   transform: translateY(1px);
 }
 
-#searchButton {
+/* Moderni saffron-painike */
+.primary-button,
+#searchButton,
+#addFavoriteButton,
+.sample-add-button {
   background: linear-gradient(135deg, var(--k-accent), var(--k-accent-strong));
   color: #1a1304;
-  box-shadow: 0 8px 18px rgba(223,175,43,0.35);
+  box-shadow: 0 6px 14px rgba(223,175,43,0.35);
+  border: none;
+  min-width: 150px;
+  text-align: center;
 }
 
-#searchButton:hover {
-  filter: brightness(1.04);
+.primary-button:hover,
+#searchButton:hover,
+#addFavoriteButton:hover,
+.sample-add-button:hover {
+  filter: brightness(1.05);
 }
 
-.secondary-button {
-  background: var(--k-card-alt);
-  color: var(--k-text-soft);
-  border: 1px solid var(--k-border);
-}
-
-.secondary-button:hover {
-  background: #ffffff;
-}
-
-/* 🔴 Poistopainikkeet */
+/* Punaiset poistopainikkeet */
 .danger-button {
   background: rgba(185,28,28,0.06);
   color: var(--k-danger);
@@ -195,8 +202,7 @@ button:active {
   background: rgba(185,28,28,0.12);
 }
 
-/* Hakutulokset + suggestions */
-
+/* Hakutulokset */
 #searchResults,
 #suggestions {
   margin-top: 0.25rem;
@@ -234,7 +240,6 @@ button:active {
 }
 
 /* Valittu ruoka */
-
 #selectedFood {
   margin-top: 0.7rem;
 }
@@ -285,8 +290,7 @@ button:active {
   min-width: 32px;
 }
 
-/* Päivän lista + yhteenveto */
-
+/* Päivän lista */
 .favorites-list-wrapper {
   margin-top: 0.6rem;
 }
@@ -329,12 +333,12 @@ button:active {
   color: var(--k-text-soft);
 }
 
+/* Amount-input (alkuperäinen + korjaus) */
 .amount-input {
-  width: 70px;
+  width: 80px; /* korjaus: 2000 mahtuu */
 }
 
 /* Yhteenveto */
-
 .summary-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
@@ -362,30 +366,7 @@ button:active {
   margin-top: 0.3rem;
 }
 
-/* Tyhjät tilat ja virheet */
-
-.empty-state {
-  font-size: 0.86rem;
-  color: var(--k-text-soft);
-}
-
-.error-text {
-  font-size: 0.82rem;
-  color: var(--k-danger);
-  padding: 0.3rem 0.1rem;
-}
-
-.warning-banner {
-  margin-top: 0.6rem;
-  font-size: 0.8rem;
-  padding: 0.4rem 0.5rem;
-  border-radius: 8px;
-  background: rgba(185,28,28,0.06);
-  color: var(--k-danger);
-}
-
-/* Sample-lista oikeassa sarakkeessa */
-
+/* Sample-lista — KORJATUT MUUTOKSET */
 .sample-card {
   background: var(--k-card);
   border-radius: var(--k-radius);
@@ -413,32 +394,47 @@ button:active {
   margin-top: 0.4rem;
 }
 
+/* SAMPLE-ITEM KORJATTU: valkoinen tausta + pystysuunta */
 .sample-item {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.6rem;
-  padding: 0.4rem 0;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.4rem;
+  padding: 0.6rem 0.5rem;
   border-bottom: 1px solid rgba(229,231,235,0.6);
+  background: #ffffff;
 }
 
-.sample-item:last-child {
-  border-bottom: none;
-}
-
+/* SAMPLE-NIMI: tummempi saffron */
 .sample-link {
-  font-size: 0.86rem;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--k-accent-strong);
+  text-decoration: none;
 }
 
+.sample-link:hover {
+  text-decoration: underline;
+}
+
+/* SAMPLE-PAINIKE: 100% leveä, kulmikas, sama tyyli kuin vasemmalla */
 .sample-add-button {
-  background: var(--k-card-alt);
-  border: 1px solid var(--k-border);
-  border-radius: 999px;
-  font-size: 0.8rem;
+  background: linear-gradient(135deg, var(--k-accent), var(--k-accent-strong));
+  color: #1a1304;
+  box-shadow: 0 6px 14px rgba(223,175,43,0.35);
+  border-radius: 10px;
+  width: 100%;
+  padding: 0.55rem 1.1rem;
+  font-size: 0.88rem;
+  border: none;
+  text-align: center;
+}
+
+.sample-add-button:hover {
+  filter: brightness(1.05);
 }
 
 /* Alareunan lisätekstit */
-
 .app-footer-note {
   margin-top: 1.3rem;
   font-size: 0.78rem;
@@ -446,7 +442,6 @@ button:active {
 }
 
 /* Responsiivisuus */
-
 @media (max-width: 900px) {
   .fiber-layout {
     grid-template-columns: 1fr;

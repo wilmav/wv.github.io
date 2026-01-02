@@ -6,6 +6,7 @@
   <link rel="stylesheet" href="tyyli.css">
   <link rel="stylesheet" href="kuitulaskuri.css">
 </head>
+
 <body>
 
 <header>
@@ -116,15 +117,18 @@
 
               <p id="fiberGoalProgress" class="summary-note"></p>
 
-              <!-- 🔴 PUNAINEN TYHJENNÄ-PAINIKE -->
               <button id="clearAllButton" class="danger-button" type="button" data-i18n="clear_all">
                 Tyhjennä kaikki
               </button>
-
-              <p class="app-footer-note" data-i18n="guidance">
-                Suositeltu kuidun saanti aikuisille on usein 25–30 g/vrk.
-              </p>
             </div>
+
+            <!-- Lähdeteksti vasemmalla -->
+            <p class="app-footer-note" data-i18n="source_info">
+              Lähde: Terveyden ja hyvinvoinnin laitos, Fineli – elintarvikkeiden koostumustietokanta.
+              Aineisto käytössä CC BY 4.0 -lisenssillä.
+              Tämä sovellus ei ole THL:n tai Finelin tuottama, suosittelema tai ylläpitämä palvelu.
+            </p>
+
           </div>
 
           <!-- OIKEA SARKEKE: sample-list -->
@@ -139,10 +143,6 @@
 
               <div id="sampleList"></div>
             </div>
-
-            <p class="app-footer-note" data-i18n="source_info">
-              Lähde: Terveyden ja hyvinvoinnin laitos, Fineli – elintarvikkeiden koostumustietokanta.
-            </p>
           </div>
 
         </div>
