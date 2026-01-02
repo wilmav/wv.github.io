@@ -1191,8 +1191,12 @@ fiberGoalSelect?.addEventListener("change", () => {
 
 langSelect.onchange = () => {
   currentLang = langSelect.value || "fi";
+
+  // Tallenna kieli
+  localStorage.setItem("fiberLang", currentLang);
+
   applyTranslations();
-  renderFavorites(); // Re-render favorites to update language
+  renderFavorites();
 
   // Nollaa haku ja valinta
   if (searchInput) searchInput.value = "";
@@ -1210,7 +1214,14 @@ langSelect.onchange = () => {
   populateSamples();
 };
 
-// Init
+// Init — KORJATTU
+const savedLang = localStorage.getItem("fiberLang");
+currentLang = savedLang || "fi";
+
+if (langSelect) {
+  langSelect.value = currentLang;
+}
+
 applyTranslations();
 populateSamples();
 loadFavorites();
