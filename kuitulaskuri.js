@@ -328,8 +328,10 @@ function applyTranslations() {
   document.querySelectorAll("[data-i18n]").forEach((el) => {
     const key = el.getAttribute("data-i18n");
     const translated = t(key);
-    if (translated) el.textContent = translated;
+    if (translated) el.innerHTML = translated;
   });
+}
+
 
   // Update placeholders
   document.querySelectorAll("[data-i18n-placeholder]").forEach((el) => {
@@ -381,7 +383,6 @@ function applyTranslations() {
   if (clearAllButton) {
     clearAllButton.style.display = favorites.length > 0 ? "" : "none";
   }
-}
 
 function isNutProduct(foodName = "") {
   const lower = foodName.toLowerCase();

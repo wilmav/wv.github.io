@@ -333,3 +333,30 @@ p {
     font-size: 2.1rem;
   }
 }
+
+.app-title {
+    font-size: 1.85rem;
+    font-weight: 600;
+}
+
+.app-title-com {
+    color: #F4D03F;
+    font-size: 1.85rem;
+    font-weight: 600;
+}
+
+/* -----------------------------------------
+   LOGO FIX — override header + app-title
+------------------------------------------ */
+
+.app-title .app-title-com {
+    color: var(--accent) !important;
+    font-size: 1.85rem;
+    font-weight: 600;
+}
+header .app-title .app-title-com {
+    color: var(--accent) !important;
+}
+
+
+
