@@ -35,7 +35,7 @@ body {
 }
 
 /* -----------------------------------------
-   Sidebar — nostettu ylemmäksi
+   Sidebar
 ------------------------------------------ */
 
 header {
@@ -101,7 +101,7 @@ nav ul li a:hover {
 }
 
 /* -----------------------------------------
-   Content area — otsikon sijoittelu
+   Content area
 ------------------------------------------ */
 
 .content-wrapper {
@@ -127,6 +127,7 @@ main {
   padding-top: 0;
 }
 
+/* Sovellus1:n h1 on referenssi */
 h1 {
   font-size: 2.5rem;
   margin-top: 0;
@@ -135,9 +136,17 @@ h1 {
   font-weight: 800;
 }
 
-/* 🔧 Yhtenäinen otsikkokorkeus muille sivuille */
+/* -----------------------------------------
+   🔧 Täsmällinen linjaus muille sivuille
+------------------------------------------ */
+
 .page-default h1 {
-  margin-top: 1.4rem; /* sama offset kuin sovellus1:n top-bar */
+  margin-top: 1.4rem;
+  margin-left: 0.85rem; /* tarkka siirto oikealle */
+}
+
+.page-default .content-padding {
+  padding-left: 0.85rem; /* sisältö linjassa otsikon kanssa */
 }
 
 p {
@@ -147,7 +156,7 @@ p {
 }
 
 /* -----------------------------------------
-   Blog and generic content
+   Blog content
 ------------------------------------------ */
 
 .blog-post {
