@@ -149,6 +149,18 @@ h1 {
   padding-left: 0.85rem;
 }
 
+/* Tasaa leipätekstit otsikon (h1) kanssa */
+.page-default .content-padding>p,
+.page-default .content-padding>h2,
+.page-default .content-padding>h3,
+.page-default .content-padding>ul,
+.page-default .content-padding>ol,
+.page-default .content-padding>dl,
+.page-default .content-padding>blockquote,
+.page-default .content-padding>.blog-post {
+  margin-left: 0.85rem;
+}
+
 p {
   font-size: 1.05rem;
   color: var(--text-soft);
@@ -177,7 +189,7 @@ p {
   margin-bottom: 0.6rem;
 }
 
-.date + h2 {
+.date+h2 {
   margin-top: 0.3rem;
 }
 
@@ -335,14 +347,14 @@ p {
 }
 
 .app-title {
-    font-size: 1.85rem;
-    font-weight: 600;
+  font-size: 1.85rem;
+  font-weight: 600;
 }
 
 .app-title-com {
-    color: #F4D03F;
-    font-size: 1.85rem;
-    font-weight: 600;
+  color: #F4D03F;
+  font-size: 1.85rem;
+  font-weight: 600;
 }
 
 /* -----------------------------------------
@@ -350,13 +362,11 @@ p {
 ------------------------------------------ */
 
 .app-title .app-title-com {
-    color: var(--accent) !important;
-    font-size: 1.85rem;
-    font-weight: 600;
+  color: var(--accent) !important;
+  font-size: 1.85rem;
+  font-weight: 600;
 }
+
 header .app-title .app-title-com {
-    color: var(--accent) !important;
+  color: var(--accent) !important;
 }
-
-
-
