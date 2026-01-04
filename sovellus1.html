@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="fi">
+
 <head>
   <meta charset="UTF-8">
   <title data-i18n="nav_kuitulaskuri">Kuitulaskuri</title>
@@ -9,144 +10,142 @@
 
 <body>
 
-<header>
+  <header>
     <div class="app-title">
-    Sovellukset<span class="app-title-com">.com</span>
+      Sovellukset<span class="app-title-com">.com</span>
     </div>
 
-  <nav>
-    <ul>
-      <li><a href="index.html" data-i18n="nav_home">Etusivu</a></li>
-      <li><a href="sovellus1.html" data-i18n="nav_kuitulaskuri">Kuitulaskuri</a></li>
-      <li><a href="sovellus2.html" data-i18n="nav_app2">Sovellus2</a></li>
-      <li><a href="blogi.html" data-i18n="nav_blog">Blogi</a></li>
-      <li><a href="yhteystiedot.html" data-i18n="nav_contact">Yhteystiedot</a></li>
-    </ul>
-  </nav>
-</header>
+    <nav>
+      <ul>
+        <li><a href="index.html" data-i18n="nav_home">Etusivu</a></li>
+        <li><a href="sovellus1.html" data-i18n="nav_kuitulaskuri">Kuitulaskuri</a></li>
+        <!-- <li><a href="sovellus2.html" data-i18n="nav_app2">Sovellus2</a></li> -->
+        <!-- <li><a href="blogi.html" data-i18n="nav_blog">Blogi</a></li> -->
+        <li><a href="yhteystiedot.html" data-i18n="nav_contact">Yhteystiedot</a></li>
+      </ul>
+    </nav>
+  </header>
 
-<div class="content-wrapper">
-  <main>
-    <div class="content-padding">
-      <section class="fiber-app-shell">
+  <div class="content-wrapper">
+    <main>
+      <div class="content-padding">
+        <section class="fiber-app-shell">
 
-        <!-- Ylärivi -->
-        <div class="top-bar">
-          <div>
-            <h1 data-i18n="app_title">Kuitulaskuri</h1>
-            <p class="lead" data-i18n="app_description">Laske päivän kuitu- ja kalorimäärät helposti.</p>
-          </div>
-
-          <div class="lang-select-wrapper">
-            <span class="lang-label">Kieli / Språk / Language</span>
-            <select id="langSelect" class="no-arrow">
-              <option value="fi">Suomi</option>
-              <option value="sv">Svenska</option>
-              <option value="en">English</option>
-            </select>
-          </div>
-        </div>
-
-        <!-- KAKSI SARAKETTA -->
-        <div class="fiber-layout">
-
-          <!-- VASEN SARAKE -->
-          <div>
-
-            <!-- Haku -->
-            <div class="card">
-              <h2 data-i18n="step1_title">Hae ruoka Finelistä</h2>
-
-              <div class="search-section">
-                <div class="search-row">
-                  <input
-                  id="searchInput"
-                  type="search"
-                  data-i18n-placeholder="search_placeholder"
-                  />
-
-                  <button id="searchButton" type="button" data-i18n="search">Hae</button>
-                </div>
-
-                <p class="hint" data-i18n="api_hint">
-                  Hakukenttä käyttää Finelin avointa ohjelmointirajapintaa (/api/v1/foods?q=).
-                </p>
-
-                <div id="searchResults"></div>
-                <div id="suggestions"></div>
-              </div>
-
-              <div id="selectedFood" class="hidden"></div>
+          <!-- Ylärivi -->
+          <div class="top-bar">
+            <div>
+              <h1 data-i18n="app_title">Kuitulaskuri</h1>
+              <p class="lead" data-i18n="app_description">Laske päivän kuitu- ja kalorimäärät helposti.</p>
             </div>
 
-            <!-- Päivän lista + yhteenveto -->
-            <div class="card favorites-list-wrapper">
-              <h2 data-i18n="step3_title">Päivän kuitu- ja kaloriyhteenveto</h2>
-
-              <h3 class="summary-subtitle" data-i18n="goal_label">Päivittäinen kuitutavoite</h3>
-              <select id="fiberGoalSelect" class="styled-select">
-                <option value="fi_min" data-i18n="goal_min"></option>
-                <option value="avg" data-i18n="goal_avg"></option>
-                <option value="high" data-i18n="goal_high"></option>
-
+            <div class="lang-select-wrapper">
+              <span class="lang-label">Kieli / Språk / Language</span>
+              <select id="langSelect" class="no-arrow">
+                <option value="fi">Suomi</option>
+                <option value="sv">Svenska</option>
+                <option value="en">English</option>
               </select>
-
-              <div id="favoritesList" class="empty-state" data-i18n="empty_list_hint">
-                Et ole vielä lisännyt yhtään ruokaa.
-              </div>
-
-              <div class="summary-grid">
-                <div>
-                  <div class="summary-label" data-i18n="total_fiber_label">Päivän kokonaiskuitu:</div>
-                  <div id="totalFiber" class="summary-value">0 g</div>
-                </div>
-                <div>
-                  <div class="summary-label" data-i18n="remaining_label">Jäljellä tavoitteesta:</div>
-                  <div id="remainingFiber" class="summary-value">0 g</div>
-                </div>
-                <div>
-                  <div class="summary-label" data-i18n="excess_label">Ylitys:</div>
-                  <div id="excessFiber" class="summary-value">0 g</div>
-                </div>
-                <div>
-                  <div class="summary-label" data-i18n="total_cal_label">Päivän arvioidut kalorit valintojesi perusteella:</div>
-                  <div id="totalCalories" class="summary-value">0 kcal</div>
-                </div>
-              </div>
-
-              <p id="fiberGoalProgress" class="summary-note"></p>
-
-              <button id="clearAllButton" class="danger-button" type="button" data-i18n="clear_all">
-                Tyhjennä kaikki
-              </button>
-            </div>
-
-            <p class="app-footer-note" data-i18n="source_info">
-              Lähde: Terveyden ja hyvinvoinnin laitos, Fineli – elintarvikkeiden koostumustietokanta.
-            </p>
-
-          </div>
-
-          <!-- OIKEA SARAKE -->
-          <div>
-            <div class="sample-card">
-              <div class="sample-header">
-                <div class="sample-title" data-i18n="samples_title">Korkean kuidun esimerkit</div>
-                <div class="sample-subtitle" data-i18n="top20_title">
-                  Esimerkkejä runsaskuituisista elintarvikkeista (Fineli, g/100 g)
-                </div>
-              </div>
-
-              <div id="sampleList"></div>
             </div>
           </div>
 
-        </div>
-      </section>
-    </div>
-  </main>
-</div>
+          <!-- KAKSI SARAKETTA -->
+          <div class="fiber-layout">
 
-<script src="kuitulaskuri.js"></script>
+            <!-- VASEN SARAKE -->
+            <div>
+
+              <!-- Haku -->
+              <div class="card">
+                <h2 data-i18n="step1_title">Hae ruoka Finelistä</h2>
+
+                <div class="search-section">
+                  <div class="search-row">
+                    <input id="searchInput" type="search" data-i18n-placeholder="search_placeholder" />
+
+                    <button id="searchButton" type="button" data-i18n="search">Hae</button>
+                  </div>
+
+                  <p class="hint" data-i18n="api_hint">
+                    Hakukenttä käyttää Finelin avointa ohjelmointirajapintaa (/api/v1/foods?q=).
+                  </p>
+
+                  <div id="searchResults"></div>
+                  <div id="suggestions"></div>
+                </div>
+
+                <div id="selectedFood" class="hidden"></div>
+              </div>
+
+              <!-- Päivän lista + yhteenveto -->
+              <div class="card favorites-list-wrapper">
+                <h2 data-i18n="step3_title">Päivän kuitu- ja kaloriyhteenveto</h2>
+
+                <h3 class="summary-subtitle" data-i18n="goal_label">Päivittäinen kuitutavoite</h3>
+                <select id="fiberGoalSelect" class="styled-select">
+                  <option value="fi_min" data-i18n="goal_min"></option>
+                  <option value="avg" data-i18n="goal_avg"></option>
+                  <option value="high" data-i18n="goal_high"></option>
+
+                </select>
+
+                <div id="favoritesList" class="empty-state" data-i18n="empty_list_hint">
+                  Et ole vielä lisännyt yhtään ruokaa.
+                </div>
+
+                <div class="summary-grid">
+                  <div>
+                    <div class="summary-label" data-i18n="total_fiber_label">Päivän kokonaiskuitu:</div>
+                    <div id="totalFiber" class="summary-value">0 g</div>
+                  </div>
+                  <div>
+                    <div class="summary-label" data-i18n="remaining_label">Jäljellä tavoitteesta:</div>
+                    <div id="remainingFiber" class="summary-value">0 g</div>
+                  </div>
+                  <div>
+                    <div class="summary-label" data-i18n="excess_label">Ylitys:</div>
+                    <div id="excessFiber" class="summary-value">0 g</div>
+                  </div>
+                  <div>
+                    <div class="summary-label" data-i18n="total_cal_label">Päivän arvioidut kalorit valintojesi
+                      perusteella:</div>
+                    <div id="totalCalories" class="summary-value">0 kcal</div>
+                  </div>
+                </div>
+
+                <p id="fiberGoalProgress" class="summary-note"></p>
+
+                <button id="clearAllButton" class="danger-button" type="button" data-i18n="clear_all">
+                  Tyhjennä kaikki
+                </button>
+              </div>
+
+              <p class="app-footer-note" data-i18n="source_info">
+                Lähde: Terveyden ja hyvinvoinnin laitos, Fineli – elintarvikkeiden koostumustietokanta.
+              </p>
+
+            </div>
+
+            <!-- OIKEA SARAKE -->
+            <div>
+              <div class="sample-card">
+                <div class="sample-header">
+                  <div class="sample-title" data-i18n="samples_title">Korkean kuidun esimerkit</div>
+                  <div class="sample-subtitle" data-i18n="top20_title">
+                    Esimerkkejä runsaskuituisista elintarvikkeista (Fineli, g/100 g)
+                  </div>
+                </div>
+
+                <div id="sampleList"></div>
+              </div>
+            </div>
+
+          </div>
+        </section>
+      </div>
+    </main>
+  </div>
+
+  <script src="kuitulaskuri.js"></script>
 </body>
+
 </html>
