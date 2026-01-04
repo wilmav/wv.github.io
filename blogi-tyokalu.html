@@ -44,7 +44,7 @@
             background-color: var(--accent);
             border: none;
             padding: 0.6rem 1.2rem;
-            font-权重: 600;
+            font-weight: 600;
             border-radius: 8px;
             cursor: pointer;
             font-size: 1rem;
@@ -52,6 +52,23 @@
 
         button:hover {
             filter: brightness(1.05);
+        }
+
+        .toolbar {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .toolbar button {
+            padding: 0.4rem 0.8rem;
+            font-size: 0.9rem;
+            background: #e5e5e5;
+            color: #333;
+        }
+
+        .toolbar button:hover {
+            background: #d4d4d4;
         }
 
         #output {
@@ -91,6 +108,18 @@
 
                     <div class="form-group">
                         <label for="content">Sisältö</label>
+                        <div class="toolbar">
+                            <button type="button" onclick="insertTag('<strong>', '</strong>')"
+                                title="Lihavointi"><b>B</b></button>
+                            <button type="button" onclick="insertTag('<em>', '</em>')"
+                                title="Kursivointi"><i>I</i></button>
+                            <button type="button" onclick="insertTag('<h2>', '</h2>')" title="Otsikko 2">H2</button>
+                            <button type="button" onclick="insertTag('<h3>', '</h3>')" title="Otsikko 3">H3</button>
+                            <button type="button"
+                                onclick="insertTag('<span style=&quot;color:#DFAF2B&quot;>', '</span>')"
+                                title="Korostusväri (Saffron)" style="color:#DFAF2B; font-weight:bold;">A</button>
+                            <button type="button" onclick="insertTag('<br>', '')" title="Pakota rivinvaihto">↵</button>
+                        </div>
                         <textarea id="content"
                             placeholder="Kirjoita teksti tähän. Tyhjät rivit erottavat kappaleet."></textarea>
                     </div>
@@ -115,6 +144,23 @@
         const m = String(now.getMonth() + 1).padStart(2, '0');
         const y = now.getFullYear();
         document.getElementById('date').value = `${d}.${m}.${y}`;
+
+        function insertTag(tagStart, tagEnd) {
+            const textarea = document.getElementById('content');
+            const start = textarea.selectionStart;
+            const end = textarea.selectionEnd;
+            const text = textarea.value;
+            const selectedText = text.substring(start, end);
+
+            const replacement = tagStart + selectedText + tagEnd;
+
+            textarea.value = text.substring(0, start) + replacement + text.substring(end);
+
+            // Palauta fokus ja valinta
+            textarea.focus();
+            textarea.selectionStart = start + tagStart.length;
+            textarea.selectionEnd = start + tagStart.length + selectedText.length;
+        }
 
         function generateHTML() {
             const date = document.getElementById('date').value;
