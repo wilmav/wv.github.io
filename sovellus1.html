@@ -14,8 +14,6 @@
     Sovellukset<span class="app-title-com">.com</span>
     </div>
 
-
-
   <nav>
     <ul>
       <li><a href="index.html" data-i18n="nav_home">Etusivu</a></li>
@@ -58,18 +56,21 @@
             <!-- Haku -->
             <div class="card">
               <h2 data-i18n="step1_title">Hae ruoka Finelistä</h2>
-              <p class="hint" data-i18n="api_hint">Hakukenttä käyttää Finelin avointa ohjelmointirajapintaa.</p>
 
               <div class="search-section">
                 <div class="search-row">
                   <input
-                    id="searchInput"
-                    type="search"
-                    data-i18n-placeholder="search_placeholder"
-                    placeholder="Esim. omena, ruisleipä..."
+                  id="searchInput"
+                  type="search"
+                  data-i18n-placeholder="search_placeholder"
                   />
+
                   <button id="searchButton" type="button" data-i18n="search">Hae</button>
                 </div>
+
+                <p class="hint" data-i18n="api_hint">
+                  Hakukenttä käyttää Finelin avointa ohjelmointirajapintaa (/api/v1/foods?q=).
+                </p>
 
                 <div id="searchResults"></div>
                 <div id="suggestions"></div>
@@ -84,9 +85,10 @@
 
               <h3 class="summary-subtitle" data-i18n="goal_label">Päivittäinen kuitutavoite</h3>
               <select id="fiberGoalSelect" class="styled-select">
-                <option value="fi_min"></option>
-                <option value="avg"></option>
-                <option value="high"></option>
+                <option value="fi_min" data-i18n="goal_min"></option>
+                <option value="avg" data-i18n="goal_avg"></option>
+                <option value="high" data-i18n="goal_high"></option>
+
               </select>
 
               <div id="favoritesList" class="empty-state" data-i18n="empty_list_hint">
@@ -107,7 +109,7 @@
                   <div id="excessFiber" class="summary-value">0 g</div>
                 </div>
                 <div>
-                  <div class="summary-label" data-i18n="total_cal_label">Päivän kalorit:</div>
+                  <div class="summary-label" data-i18n="total_cal_label">Päivän arvioidut kalorit valintojesi perusteella:</div>
                   <div id="totalCalories" class="summary-value">0 kcal</div>
                 </div>
               </div>

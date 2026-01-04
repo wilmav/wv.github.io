@@ -41,7 +41,7 @@ const I18N = {
     total_fiber_label: "Päivän kokonaiskuitu:",
     remaining_label: "Jäljellä tavoitteesta:",
     excess_label: "Ylitys:",
-    total_cal_label: "Päivän kalorit:",
+    total_cal_label: "Päivän arvioidut kalorit valintojesi perusteella:",
     clear_all: "Tyhjennä kaikki",
     guidance: "Suositeltu kuidun saanti aikuisille on usein 25–30 g/vrk, ja 35–40 g/vrk voi tukea painonhallintaa. Tarkista ajantasaiset ravitsemussuositukset luotettavasta lähteestä.",
     source_info: "Lähde: Terveyden ja hyvinvoinnin laitos, Fineli – elintarvikkeiden koostumustietokanta. Aineisto käytössä CC BY 4.0 -lisenssillä. Tämä sovellus ei ole THL:n tai Finelin tuottama, suosittelema tai ylläpitämä palvelu.",
@@ -87,7 +87,7 @@ const I18N = {
     total_fiber_label: "Dagens totalfiber:",
     remaining_label: "Kvar till målet:",
     excess_label: "Överskott:",
-    total_cal_label: "Dagens kalorier:",
+    total_cal_label: "Dagens uppskattade kalorier baserat på dina val:",
     clear_all: "Rensa alla",
     guidance: "Rekommenderat fiberintag för vuxna är ofta 25–30 g/dag och 35–40 g/dag kan stödja viktkontroll. Kontrollera aktuella rekommendationer från en pålitlig källa.",
     source_info: "Källa: Institutet för hälsa och välfärd, Fineli – livsmedelsdatabas. Materialet används under CC BY 4.0-licens. Denna applikation är inte producerad, rekommenderad eller underhållen av THL eller Fineli.",
@@ -130,7 +130,7 @@ const I18N = {
     api_hint: "Search uses Fineli open API (/api/v1/foods?q=).",
     empty_list: "You have not added any foods yet.",
     goal_label: "Daily fiber goal",
-    total_fiber_label: "Total daily fibre:",
+    total_fiber_label: "Estimated daily calories based on your selections:",
     remaining_label: "Remaining to target:",
     excess_label: "Excess:",
     total_cal_label: "Daily calories:",
@@ -330,8 +330,6 @@ function applyTranslations() {
     const translated = t(key);
     if (translated) el.innerHTML = translated;
   });
-}
-
 
   // Update placeholders
   document.querySelectorAll("[data-i18n-placeholder]").forEach((el) => {
@@ -367,7 +365,7 @@ function applyTranslations() {
   // Document title
   try {
     document.title = t("app_title") || document.title;
-  } catch (e) {}
+  } catch (e) { }
 
   // Update source info
   const sourceEl1 = document.querySelector("[data-i18n='source_info']");
@@ -383,6 +381,7 @@ function applyTranslations() {
   if (clearAllButton) {
     clearAllButton.style.display = favorites.length > 0 ? "" : "none";
   }
+}
 
 function isNutProduct(foodName = "") {
   const lower = foodName.toLowerCase();
@@ -867,6 +866,7 @@ function showSelectedFood(food) {
       });
     });
 
+
     addFavoriteButton?.addEventListener("click", () => {
       if (!canAdd) {
         alert(t("no_fiber"));
@@ -879,9 +879,25 @@ function showSelectedFood(food) {
       const fiber = (fiberPer100g * amount) / 100;
       const energy = energyPer100g != null ? (energyPer100g * amount) / 100 : 0;
 
+      // Create multilingual name object
+      let nameObj = {};
+
+      // If food.name is already an object, use it (or parts of it)
+      if (food.name && typeof food.name === "object") {
+        nameObj = { ...food.name };
+      }
+
+      // If we only derived a string, try to fill known languages if available in food object properties
+      if (!nameObj.fi && food.nameFi) nameObj.fi = food.nameFi;
+      if (!nameObj.sv && food.nameSv) nameObj.sv = food.nameSv;
+      if (!nameObj.en && food.nameEn) nameObj.en = food.nameEn;
+
+      // Fallbacks if still empty
+      if (!nameObj.fi) nameObj.fi = getNameInCurrentLang(food) || name; // Use whatever we have
+
       favorites.push({
         id: food.id,
-        name,
+        name: nameObj, // Store object instead of string
         group,
         amount,
         fiberPer100g,
@@ -898,13 +914,8 @@ function showSelectedFood(food) {
 function renderFavorites() {
   if (!favoritesListEl) return;
 
-  // Update sample names to current language
-  favorites.forEach(fav => {
-    const fiIndex = SAMPLE_LISTS.fi.findIndex(item => item.name === fav.name);
-    if (fiIndex !== -1) {
-      fav.name = SAMPLE_LISTS[currentLang][fiIndex].name;
-    }
-  });
+  // Note: We no longer need to update sample names here because we store multilingual objects.
+  // Legacy support: if favorites have string names, we leave them as is or could try to match them (risky).
 
   if (!favorites.length) {
     favoritesListEl.classList.add("empty-state");
@@ -928,9 +939,18 @@ function renderFavorites() {
 
   const rows = favorites
     .map(
-      (item, index) => `
+      (item, index) => {
+        // Resolve name for display
+        let displayName = "(nimetön)";
+        if (typeof item.name === "object" && item.name !== null) {
+          displayName = item.name[currentLang] || item.name.fi || item.name.sv || item.name.en || Object.values(item.name)[0] || "(nimetön)";
+        } else if (typeof item.name === "string") {
+          displayName = item.name;
+        }
+
+        return `
       <div class="favorite-row" data-index="${index}">
-        <div class="favorite-name">${item.name}</div>
+        <div class="favorite-name">${displayName}</div>
         <div class="favorite-amount">
           <input
             type="number"
@@ -947,18 +967,17 @@ function renderFavorites() {
           <strong class="fiber-value">${formatNumber(item.fiber)}</strong> ${t("fiber_word") || (currentLang === "sv" || currentLang === "en" ? "g fiber" : "g kuitua")}
         </div>
         <div class="favorite-cal">
-          ${
-            item.energy != null
-              ? `<strong class="energy-value">${formatNumber(item.energy)}</strong> kcal`
-              : "–"
+          ${item.energy != null
+            ? `<strong class="energy-value">${formatNumber(item.energy)}</strong> kcal`
+            : "–"
           }
         </div>
         <button class="danger-button" data-index="${index}">
           ${t("remove_button")}
         </button>
       </div>
-    `
-    )
+    `;
+      })
     .join("");
 
   favoritesListEl.innerHTML = rows;
@@ -968,7 +987,7 @@ function renderFavorites() {
 
   totalCaloriesEl.textContent = `${formatNumber(totalEnergy, 0)} kcal`;
   totalFiberEl.textContent = `${formatNumber(totalFiber)} g`;
-  totalCaloriesEl.textContent = `${formatNumber(totalEnergy, 0)} kcal`;
+  // totalCaloriesEl (duplicate assignment removed)
   updateFiberGoalProgress(totalFiber);
 
   favoritesListEl.querySelectorAll("button[data-index]").forEach((btn) => {
@@ -1082,9 +1101,11 @@ function updateFiberGoalProgress(totalFiber) {
 
 function populateSamples() {
   if (sampleListEl) {
+    // Uses current language for initial display list
     const samples = SAMPLE_LISTS[currentLang] || SAMPLE_LISTS.fi;
+
     sampleListEl.innerHTML = samples
-      .map((item) => {
+      .map((item, index) => {
         return `
         <div class="sample-item">
           <span class="sample-name">
@@ -1095,9 +1116,7 @@ function populateSamples() {
           <button
             class="sample-add-button"
             style="padding: 3px 8px; font-size: 0.8rem;"
-            data-name="${item.name}"
-            data-fiber="${item.fiber}"
-            data-link="${item.link}"
+            data-index="${index}"
           >
             ${t("add_to_list")}
           </button>
@@ -1108,24 +1127,43 @@ function populateSamples() {
 
     sampleListEl.querySelectorAll(".sample-add-button").forEach((btn) => {
       btn.addEventListener("click", () => {
-        const name = btn.getAttribute("data-name");
-        const fiber = Number(btn.getAttribute("data-fiber"));
-        const link = btn.getAttribute("data-link");
-        addSampleToFavorites(name, fiber, link);
+        const index = Number(btn.getAttribute("data-index"));
+        addSampleToFavorites(index);
       });
     });
   }
 }
 
-async function addSampleToFavorites(name, fiberPer100g) {
-  const defaultAmount = getDefaultAmountForFood(name);
+async function addSampleToFavorites(index) {
+  // Get sample items for all languages to construct multilingual name
+  const itemFi = SAMPLE_LISTS.fi[index];
+  const itemSv = SAMPLE_LISTS.sv && SAMPLE_LISTS.sv[index];
+  const itemEn = SAMPLE_LISTS.en && SAMPLE_LISTS.en[index];
+
+  // Base details from current lang (or fallback to FI)
+  // Ensure we have a valid reference item
+  const refItem = (SAMPLE_LISTS[currentLang] && SAMPLE_LISTS[currentLang][index]) || itemFi;
+
+  if (!refItem) return;
+
+  const nameObj = {
+    fi: itemFi ? itemFi.name : refItem.name,
+    sv: itemSv ? itemSv.name : refItem.name,
+    en: itemEn ? itemEn.name : refItem.name
+  };
+
+  const fiberPer100g = refItem.fiber;
+  const link = refItem.link;
+  const searchName = nameObj.fi; // Use Finnish name for API search consistency
+
+  const defaultAmount = getDefaultAmountForFood(searchName);
   const fiber = (fiberPer100g * defaultAmount) / 100;
 
-  // 1) Hae Finelistä oikea tuote nimellä
+  // 1) Hae Finelistä oikea tuote nimellä (käytetään suomenkielistä nimeä haussa)
   let energyPer100g = 0;
 
   try {
-    const res = await fetch(`${API_BASE}/foods?q=${encodeURIComponent(name)}`);
+    const res = await fetch(`${API_BASE}/foods?q=${encodeURIComponent(searchName)}`);
     if (res.ok) {
       const data = await res.json();
       if (Array.isArray(data) && data.length > 0) {
@@ -1147,7 +1185,7 @@ async function addSampleToFavorites(name, fiberPer100g) {
 
   favorites.push({
     id: Date.now(),
-    name,
+    name: nameObj, // Store multilingual object
     group: "",
     amount: defaultAmount,
     fiberPer100g,
