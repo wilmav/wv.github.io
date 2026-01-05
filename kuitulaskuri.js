@@ -18,8 +18,8 @@ const NUT_KEYWORDS = ["pähkinä", "pähkina", "nut", "cashew", "manteli", "almo
 
 // Kuitutavoitteet
 const FIBER_GOALS = {
-  fi_min: { grams: 25, label: { fi: "Suomen vähimmäistaso (~25 g/vrk)", sv: "Finlands minimumnivå (~25 g/dag)", en: "Finland minimum level (~25 g/day)" } },
-  avg: { grams: 30, label: { fi: "Hyvä keskimääräinen taso (~30 g/vrk)", sv: "Bra genomsnittlig nivå (~30 g/dag)", en: "Good average level (~30 g/day)" } },
+  fi_min: { grams: 25, label: { fi: "Vähimmäistaso, naiset (~25 g/vrk)", sv: "Miniminivå, kvinnor (~25 g/dag)", en: "Minimum level, women (~25 g/day)" } },
+  avg: { grams: 35, label: { fi: "Vähimmäistaso, miehet (~35 g/vrk)", sv: "Miniminivå, män (~35 g/dag)", en: "Minimum level, men (~35 g/day)" } },
   high: { grams: 40, label: { fi: "Korkea kuitutaso (~40 g/vrk, painonhallinnan tueksi)", sv: "Hög fibernivå (~40 g/dag, för viktkontroll)", en: "High fiber level (~40 g/day, for weight management)" } }
 };
 
@@ -168,43 +168,43 @@ const I18N = {
   },
 };
 
-// Kielikohtaiset esimerkkilistat
+// Kielikohtaiset esimerkkilistat (Fineli IDs)
 const SAMPLE_LISTS = {
   fi: [
-    { name: "Psyllium, siemenkuorijauhe", fiber: 85.0, link: "https://fineli.fi/fineli/fi/foods?q=psyllium" },
-    { name: "Lese, ruislese", fiber: 39.0, link: "https://fineli.fi/fineli/fi/foods?q=ruislese" },
-    { name: "Lese, vehnälese", fiber: 37.5, link: "https://fineli.fi/fineli/fi/foods?q=vehnälese" },
-    { name: "Hapankorppu", fiber: 23.0, link: "https://fineli.fi/fineli/fi/foods?q=hapankorppu" },
-    { name: "Lese, kauralese", fiber: 17.5, link: "https://fineli.fi/fineli/fi/foods?q=kauralese" },
-    { name: "Maa-artisokka", fiber: 16.4, link: "https://fineli.fi/fineli/fi/foods?q=maa-artisokka" },
-    { name: "Passionhedelmä", fiber: 10.4, link: "https://fineli.fi/fineli/fi/foods?q=passionhedelmä" },
-    { name: "Popcorn", fiber: 10.0, link: "https://fineli.fi/fineli/fi/foods?q=popcorn" },
-    { name: "Pähkinä, maapähkinä", fiber: 8.5, link: "https://fineli.fi/fineli/fi/foods?q=maapähkinä" },
-    { name: "Papu, kidneypapu, keitetty", fiber: 7.4, link: "https://fineli.fi/fineli/fi/foods?q=kidneypapu" },
+    { id: 31681, name: "Psyllium, siemenkuorijauhe" },
+    { id: 29237, name: "Lese, ruislese" },
+    { id: 116, name: "Lese, vehnälese" },
+    { id: 29772, name: "Hapankorppu" },
+    { id: 170, name: "Lese, kauralese" },
+    { id: 310, name: "Maa-artisokka" },
+    { id: 34680, name: "Passionhedelmä" },
+    { id: 33069, name: "Popcorn" },
+    { id: 378, name: "Pähkinä, maapähkinä" },
+    { id: 31214, name: "Papu, kidneypapu, keitetty" },
   ],
   sv: [
-    { name: "Psyllium fröskal", fiber: 85.0, link: "https://fineli.fi/fineli/fi/foods?q=psyllium" },
-    { name: "Kli, rågkli", fiber: 39.0, link: "https://fineli.fi/fineli/fi/foods?q=ruislese" },
-    { name: "Kli, vetekli", fiber: 37.5, link: "https://fineli.fi/fineli/fi/foods?q=vehnälese" },
-    { name: "Surskorpa", fiber: 23.0, link: "https://fineli.fi/fineli/fi/foods?q=hapankorppu" },
-    { name: "Kli, havrekli", fiber: 17.5, link: "https://fineli.fi/fineli/fi/foods?q=kauralese" },
-    { name: "Jordärtskocka", fiber: 16.4, link: "https://fineli.fi/fineli/fi/foods?q=maa-artisokka" },
-    { name: "Passionsfrukt", fiber: 10.4, link: "https://fineli.fi/fineli/fi/foods?q=passionhedelmä" },
-    { name: "Popcorn", fiber: 10.0, link: "https://fineli.fi/fineli/fi/foods?q=popcorn" },
-    { name: "Nöt, jordnöt", fiber: 8.5, link: "https://fineli.fi/fineli/fi/foods?q=maapähkinä" },
-    { name: "Bönor, kidneybönor, kokta", fiber: 7.4, link: "https://fineli.fi/fineli/fi/foods?q=kidneypapu" },
+    { id: 31681, name: "Psyllium fröskal" },
+    { id: 29237, name: "Kli, rågkli" },
+    { id: 116, name: "Kli, vetekli" },
+    { id: 29772, name: "Surskorpa" },
+    { id: 170, name: "Kli, havrekli" },
+    { id: 310, name: "Jordärtskocka" },
+    { id: 34680, name: "Passionsfrukt" },
+    { id: 33069, name: "Popcorn" },
+    { id: 378, name: "Nöt, jordnöt" },
+    { id: 31214, name: "Bönor, kidneybönor, kokta" },
   ],
   en: [
-    { name: "Psyllium Husks", fiber: 85.0, link: "https://fineli.fi/fineli/fi/foods?q=psyllium" },
-    { name: "Rye bran", fiber: 39.0, link: "https://fineli.fi/fineli/fi/foods?q=ruislese" },
-    { name: "Wheat bran", fiber: 37.5, link: "https://fineli.fi/fineli/fi/foods?q=vehnälese" },
-    { name: "Finn Crisp, Rye Crispbread", fiber: 23.0, link: "https://fineli.fi/fineli/fi/foods?q=hapankorppu" },
-    { name: "Oat bran", fiber: 17.5, link: "https://fineli.fi/fineli/fi/foods?q=kauralese" },
-    { name: "Jerusalem Artichoke", fiber: 16.4, link: "https://fineli.fi/fineli/fi/foods?q=maa-artisokka" },
-    { name: "Passion Fruit", fiber: 10.4, link: "https://fineli.fi/fineli/fi/foods?q=passionhedelmä" },
-    { name: "Popcorn", fiber: 10.0, link: "https://fineli.fi/fineli/fi/foods?q=popcorn" },
-    { name: "Nut, Peanut", fiber: 8.5, link: "https://fineli.fi/fineli/fi/foods?q=maapähkinä" },
-    { name: "Bean, Kidney Bean, Boiled", fiber: 7.4, link: "https://fineli.fi/fineli/fi/foods?q=kidneypapu" },
+    { id: 31681, name: "Psyllium Husks" },
+    { id: 29237, name: "Rye bran" },
+    { id: 116, name: "Wheat bran" },
+    { id: 29772, name: "Finn Crisp, Rye Crispbread" },
+    { id: 170, name: "Oat bran" },
+    { id: 310, name: "Jerusalem Artichoke" },
+    { id: 34680, name: "Passion Fruit" },
+    { id: 33069, name: "Popcorn" },
+    { id: 378, name: "Nut, Peanut" },
+    { id: 31214, name: "Bean, Kidney Bean, Boiled" },
   ]
 };
 
@@ -813,41 +813,45 @@ function showSelectedFood(food) {
       const amount = Number(amountInput.value);
       if (!amount || amount <= 0) return;
 
-      // Käytetään samaa energyPer100g-arvoa kuin headerissa (komponentit + top-level energyKcal)
-      const fiber = (fiberPer100g * amount) / 100;
-      const energy = energyPer100g != null ? (energyPer100g * amount) / 100 : 0;
-
-      // Create multilingual name object
-      let nameObj = {};
-
-      // If food.name is already an object, use it (or parts of it)
-      if (food.name && typeof food.name === "object") {
-        nameObj = { ...food.name };
-      }
-
-      // If we only derived a string, try to fill known languages if available in food object properties
-      if (!nameObj.fi && food.nameFi) nameObj.fi = food.nameFi;
-      if (!nameObj.sv && food.nameSv) nameObj.sv = food.nameSv;
-      if (!nameObj.en && food.nameEn) nameObj.en = food.nameEn;
-
-      // Fallbacks if still empty
-      if (!nameObj.fi) nameObj.fi = getNameInCurrentLang(food) || name; // Use whatever we have
-
-      favorites.push({
-        id: food.id,
-        name: nameObj, // Store object instead of string
-        group,
-        amount,
-        fiberPer100g,
-        energyPer100g,
-        fiber,
-        energy,
-      });
-
-      saveFavorites();
-      renderFavorites();
+      doAddFoodToFavorites(food, amount, fiberPer100g, energyPer100g);
     });
   }
+}
+
+function doAddFoodToFavorites(food, amount, fiberPer100g, energyPer100g) {
+  // Create multilingual name object
+  let nameObj = {};
+
+  // If food.name is already an object, use it (or parts of it)
+  if (food.name && typeof food.name === "object") {
+    nameObj = { ...food.name };
+  }
+
+  // If we only derived a string, try to fill known languages if available in food object properties
+  if (!nameObj.fi && food.nameFi) nameObj.fi = food.nameFi;
+  if (!nameObj.sv && food.nameSv) nameObj.sv = food.nameSv;
+  if (!nameObj.en && food.nameEn) nameObj.en = food.nameEn;
+
+  // Fallbacks if still empty
+  if (!nameObj.fi) nameObj.fi = getNameInCurrentLang(food) || getFoodNameByLang(food);
+
+  const fiber = (fiberPer100g * amount) / 100;
+  const energy = energyPer100g != null ? (energyPer100g * amount) / 100 : 0;
+  const group = getGroupNameByLang(food);
+
+  favorites.push({
+    id: food.id,
+    name: nameObj, // Store object instead of string
+    group,
+    amount,
+    fiberPer100g,
+    energyPer100g,
+    fiber,
+    energy,
+  });
+
+  saveFavorites();
+  renderFavorites();
 }
 function renderFavorites() {
   if (!favoritesListEl) return;
@@ -1037,24 +1041,47 @@ function updateFiberGoalProgress(totalFiber) {
   }
 }
 
-function populateSamples() {
-  if (sampleListEl) {
-    // Uses current language for initial display list
-    const samples = SAMPLE_LISTS[currentLang] || SAMPLE_LISTS.fi;
+async function populateSamples() {
+  if (!sampleListEl) return;
 
-    sampleListEl.innerHTML = samples
+  const samples = SAMPLE_LISTS[currentLang] || SAMPLE_LISTS.fi;
+  sampleListEl.innerHTML = `<div class="loading-samples">${t("searching") || "Haetaan..."}</div>`;
+
+  try {
+    // Haetaan kaikkien sample-tuotteiden tiedot rinnakkain
+    const promises = samples.map(async (s) => {
+      try {
+        const res = await fetch(`${API_BASE}/foods/${s.id}`);
+        if (!res.ok) return null;
+        const food = await res.json();
+        return {
+          id: s.id,
+          name: getFoodNameByLang(food) || s.name,
+          fiber: getFiberPer100g(normalizeComponents(food)) ?? getFiberFromFood(food),
+          link: `https://fineli.fi/fineli/${currentLang}/foods/${s.id}`
+        };
+      } catch (e) {
+        console.error(`Error fetching sample ${s.id}:`, e);
+        return null;
+      }
+    });
+
+    const results = (await Promise.all(promises)).filter(Boolean);
+
+    sampleListEl.innerHTML = results
       .map((item, index) => {
+        const fiberText = item.fiber != null ? `${formatNumber(item.fiber)} g/100 g` : t("no_fiber");
         return `
         <div class="sample-item">
           <span class="sample-name">
             <a href="${item.link}" target="_blank" rel="noopener noreferrer" class="sample-link">
-              ${item.name} – ${item.fiber} g/100 g
+              ${item.name} – ${fiberText}
             </a>
           </span>
           <button
             class="sample-add-button"
             style="padding: 3px 8px; font-size: 0.8rem;"
-            data-index="${index}"
+            data-id="${item.id}"
           >
             ${t("add_to_list")}
           </button>
@@ -1064,77 +1091,39 @@ function populateSamples() {
       .join("");
 
     sampleListEl.querySelectorAll(".sample-add-button").forEach((btn) => {
-      btn.addEventListener("click", () => {
-        const index = Number(btn.getAttribute("data-index"));
-        addSampleToFavorites(index);
+      btn.addEventListener("click", async () => {
+        const id = Number(btn.getAttribute("data-id"));
+        if (!id) return;
+
+        try {
+          const res = await fetch(`${API_BASE}/foods/${id}`);
+          if (!res.ok) throw new Error("Food fetch failed");
+          const food = await res.json();
+
+          const components = normalizeComponents(food);
+          const fiberPer100g = getFiberPer100g(components) ?? getFiberFromFood(food);
+          const energyPer100g = getEnergyPer100g(components) ?? getEnergyKcalFromFood(food);
+
+          if (fiberPer100g == null) {
+            alert(t("no_fiber"));
+            return;
+          }
+
+          const name = getFoodNameByLang(food);
+          const amount = getDefaultAmountForFood(name);
+
+          doAddFoodToFavorites(food, amount, fiberPer100g, energyPer100g);
+        } catch (e) {
+          console.error("Virhe lisättäessä suosikkia:", e);
+        }
       });
     });
+  } catch (err) {
+    console.error("Error populating samples:", err);
+    sampleListEl.innerHTML = `<div class="error-text">${t("search_error")}</div>`;
   }
 }
 
-async function addSampleToFavorites(index) {
-  // Get sample items for all languages to construct multilingual name
-  const itemFi = SAMPLE_LISTS.fi[index];
-  const itemSv = SAMPLE_LISTS.sv && SAMPLE_LISTS.sv[index];
-  const itemEn = SAMPLE_LISTS.en && SAMPLE_LISTS.en[index];
-
-  // Base details from current lang (or fallback to FI)
-  // Ensure we have a valid reference item
-  const refItem = (SAMPLE_LISTS[currentLang] && SAMPLE_LISTS[currentLang][index]) || itemFi;
-
-  if (!refItem) return;
-
-  const nameObj = {
-    fi: itemFi ? itemFi.name : refItem.name,
-    sv: itemSv ? itemSv.name : refItem.name,
-    en: itemEn ? itemEn.name : refItem.name
-  };
-
-  const fiberPer100g = refItem.fiber;
-  const link = refItem.link;
-  const searchName = nameObj.fi; // Use Finnish name for API search consistency
-
-  const defaultAmount = getDefaultAmountForFood(searchName);
-  const fiber = (fiberPer100g * defaultAmount) / 100;
-
-  // 1) Hae Finelistä oikea tuote nimellä (käytetään suomenkielistä nimeä haussa)
-  let energyPer100g = 0;
-
-  try {
-    const res = await fetch(`${API_BASE}/foods?q=${encodeURIComponent(searchName)}`);
-    if (res.ok) {
-      const data = await res.json();
-      if (Array.isArray(data) && data.length > 0) {
-        const food = data[0]; // otetaan paras osuma
-        const comps = normalizeComponents(food);
-
-        // hae energia kuten muuallakin
-        const kcal = getEnergyPer100g(comps) ?? getEnergyKcalFromFood(food);
-        if (typeof kcal === "number") {
-          energyPer100g = kcal;
-        }
-      }
-    }
-  } catch (e) {
-    console.error("Energiahaun virhe sample-tuotteelle:", e);
-  }
-
-  const energy = (energyPer100g * defaultAmount) / 100;
-
-  favorites.push({
-    id: Date.now(),
-    name: nameObj, // Store multilingual object
-    group: "",
-    amount: defaultAmount,
-    fiberPer100g,
-    energyPer100g,
-    fiber,
-    energy,
-  });
-
-  saveFavorites();
-  renderFavorites();
-}
 
 function debounceSearch() {
   const query = searchInput.value.trim();
