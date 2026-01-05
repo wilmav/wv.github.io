@@ -134,10 +134,10 @@ body {
 input[type="search"],
 input[type="number"],
 select {
-  padding: 0.55rem 0.75rem;
-  border-radius: 10px;
-  border: 1px solid var(--k-border);
-  background: var(--k-card-alt);
+  padding: 0.65rem 0.9rem;
+  border-radius: 12px;
+  border: 1px solid #d1d5db;
+  background: #ffffff;
   color: var(--k-text);
   font-size: 0.95rem;
   max-width: 100%;
@@ -156,15 +156,15 @@ select:focus {
 /* Yhtenäinen moderni saffron-painike */
 button {
   cursor: pointer;
-  border-radius: 10px;
+  border-radius: 12px;
   border: none;
-  font-size: 0.88rem;
+  font-size: 0.92rem;
   font-weight: 600;
-  padding: 0.55rem 1.1rem;
+  padding: 0.6rem 1.2rem;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  transition: background 0.15s ease, transform 0.08s ease, box-shadow 0.12s ease;
+  transition: all 0.2s ease;
   white-space: nowrap;
 }
 
@@ -177,10 +177,10 @@ button:active {
 #searchButton,
 #addFavoriteButton,
 .sample-add-button {
-  background: linear-gradient(135deg, var(--k-accent), var(--k-accent-strong));
+  background: var(--k-accent);
   color: #1a1304;
-  box-shadow: 0 6px 14px rgba(223, 175, 43, 0.35);
-  border: none;
+  box-shadow: 0 4px 6px -1px rgba(223, 175, 43, 0.2), 0 2px 4px -1px rgba(223, 175, 43, 0.1);
+  border: 1px solid rgba(0, 0, 0, 0.05);
   min-width: 150px;
   text-align: center;
 }
@@ -189,18 +189,22 @@ button:active {
 #searchButton:hover,
 #addFavoriteButton:hover,
 .sample-add-button:hover {
-  filter: brightness(1.05);
+  background: var(--k-accent-strong);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 8px -1px rgba(223, 175, 43, 0.3);
 }
 
 /* Punaiset poistopainikkeet */
 .danger-button {
-  background: rgba(185, 28, 28, 0.06);
-  color: var(--k-danger);
-  border: 1px solid rgba(185, 28, 28, 0.35);
+  background: #fff;
+  color: #ef4444;
+  border: 1px solid #fee2e2;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
 }
 
 .danger-button:hover {
-  background: rgba(185, 28, 28, 0.12);
+  background: #fef2f2;
+  border-color: #fecaca;
 }
 
 /* Hakutulokset */
@@ -426,9 +430,9 @@ button:active {
 
 /* SAMPLE-PAINIKE: 100% leveä, kulmikas, sama tyyli kuin vasemmalla */
 .sample-add-button {
-  background: linear-gradient(135deg, var(--k-accent), var(--k-accent-strong));
+  background: var(--k-accent);
   color: #1a1304;
-  box-shadow: 0 6px 14px rgba(223, 175, 43, 0.35);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
   border-radius: 10px;
   width: 100%;
   padding: 0.55rem 1.1rem;

@@ -370,3 +370,61 @@ p {
 header .app-title .app-title-com {
   color: var(--accent) !important;
 }
+
+/* -----------------------------------------
+   Shared UI Components (Buttons, Inputs)
+------------------------------------------ */
+
+/* Primary Button (Saffron) - Matches kuitulaskuri.css */
+.primary-button {
+  background: var(--accent);
+  color: #1a1304;
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  box-shadow: 0 4px 6px -1px rgba(223, 175, 43, 0.2), 0 2px 4px -1px rgba(223, 175, 43, 0.1);
+  cursor: pointer;
+  border-radius: 12px;
+  font-size: 1rem;
+  font-weight: 600;
+  padding: 0.7rem 1.4rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  min-width: 140px;
+  text-decoration: none;
+  /* In case it's an anchor */
+}
+
+.primary-button:hover {
+  background: #B8871F !important;
+  /* var(--accent-strong) manually resolved if variable issues occur, but var is better */
+  background: var(--accent) !important;
+  /* Using a slightly darker shade via filter/var */
+  filter: brightness(0.95);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 8px -1px rgba(223, 175, 43, 0.3);
+  color: #1a1304;
+  text-decoration: none;
+}
+
+.primary-button:active {
+  transform: translateY(1px);
+}
+
+/* Base Input Style */
+input[type="text"],
+input[type="email"],
+input[type="number"],
+textarea {
+  font-family: var(--font);
+  background: #ffffff;
+}
+
+input[type="text"]:focus,
+input[type="email"]:focus,
+input[type="number"]:focus,
+textarea:focus {
+  outline: none;
+  border-color: var(--accent) !important;
+  box-shadow: 0 0 0 3px rgba(223, 175, 43, 0.15) !important;
+}
