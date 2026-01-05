@@ -34,10 +34,15 @@
 
 
                 <div class="contact-form-container" style="margin-top: 2rem; max-width: 600px; margin-left: 0.85rem;">
-                    <form action="https://formspree.io/f/mqkvojgl" method="POST" id="contactForm">
+                    <form action="https://formsubmit.co/sovellukset.com@outlook.com" method="POST" id="contactForm">
+                        <!-- FormSubmit Configuration -->
+                        <input type="hidden" name="_subject" value="Yhteydenotto / Contact: Kuitulaskuri">
+                        <input type="hidden" name="_captcha" value="false">
+                        <input type="hidden" name="_template" value="table">
+
                         <!-- Honeypot field for spam bots -->
                         <div style="display: none;">
-                            <label>Älä täytä tätä / Do not fill this: <input type="text" name="_gotcha"></label>
+                            <input type="text" name="_gotcha" style="display:none">
                         </div>
 
                         <div class="form-group" style="margin-bottom: 1.2rem;">
@@ -80,24 +85,18 @@
                 <script>
                     const form = document.getElementById("contactForm");
                     form.addEventListener("submit", function (e) {
-                        e.preventDefault();
                         const spamCheck = document.getElementById("spam-check").value;
                         if (parseInt(spamCheck) !== 7) {
+                            e.preventDefault();
                             alert("Tarkista laskutoimitus / Please check the math.");
                             return;
                         }
 
-                        // Simulate sending for the demo or actually submit
-                        // For this static portfolio, we'll assume Formspree is setup or we can simulate.
-                        // We will allow the form to submit to the formspree generic demo or show alert.
-
-                        // If you want to use real formspree, the user needs to put their own ID.
-                        // We will just show a success message for now to not redirect away.
+                        // Form will now submit to FormSubmit.co
                         const status = document.getElementById("form-status");
                         status.style.display = "block";
                         status.style.color = "green";
-                        status.innerHTML = "Kiitos viestistäsi! (Demo: Lomake ei oikeasti lähetä viestiä ilman palvelinta) / Thank you! (Demo mode)";
-                        form.reset();
+                        status.innerHTML = "Kiitos viestistäsi! Lähetetään... / Thank you! Sending...";
                     });
                 </script>
         </main>
