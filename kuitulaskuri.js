@@ -18,9 +18,9 @@ const NUT_KEYWORDS = ["pähkinä", "pähkina", "nut", "cashew", "manteli", "almo
 
 // Kuitutavoitteet
 const FIBER_GOALS = {
-  fi_min: { grams: 25, label: { fi: "Vähimmäistaso, naiset (~25 g/vrk)", sv: "Miniminivå, kvinnor (~25 g/dag)", en: "Minimum level, women (~25 g/day)" } },
-  avg: { grams: 35, label: { fi: "Vähimmäistaso, miehet (~35 g/vrk)", sv: "Miniminivå, män (~35 g/dag)", en: "Minimum level, men (~35 g/day)" } },
-  high: { grams: 40, label: { fi: "Korkea kuitutaso (~40 g/vrk, painonhallinnan tueksi)", sv: "Hög fibernivå (~40 g/dag, för viktkontroll)", en: "High fiber level (~40 g/day, for weight management)" } }
+  fi_min: { grams: 25, label: { fi: "Saantisuositus, naiset (~25 g/vrk)", sv: "Rekommenderat intag, kvinnor (~25 g/dag)", en: "Recommended intake, women (~25 g/day)" } },
+  avg: { grams: 35, label: { fi: "Saantisuositus, miehet (~35 g/vrk)", sv: "Rekommenderat intag, män (~35 g/dag)", en: "Recommended intake, men (~35 g/day)" } },
+  high: { grams: 40, label: { fi: "Korkea taso (~40 g/vrk, painonhallinnan tueksi)", sv: "Hög nivå (~40 g/dag, för viktkontroll)", en: "High level (~40 g/day, for weight management)" } }
 };
 
 // Käännökset UI-teksteille
