@@ -84,9 +84,17 @@
 
                 <script>
                     const form = document.getElementById("contactForm");
+                    const spamLabel = document.getElementById("spamLabel");
+
+                    const num1 = Math.floor(Math.random() * 10) + 1;
+                    const num2 = Math.floor(Math.random() * 10) + 1;
+                    const correctSum = num1 + num2;
+
+                    spamLabel.innerHTML = `Tarkistus / Security check: ${num1} + ${num2} = ? <span style="color: #b91c1c;">*</span>`;
+
                     form.addEventListener("submit", function (e) {
-                        const spamCheck = document.getElementById("spam-check").value;
-                        if (parseInt(spamCheck) !== 7) {
+                        const userValue = document.getElementById("spam-check").value;
+                        if (parseInt(userValue) !== correctSum) {
                             e.preventDefault();
                             alert("Tarkista laskutoimitus / Please check the math.");
                             return;
