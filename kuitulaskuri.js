@@ -56,6 +56,7 @@ const I18N = {
     progress_text: "Päivän kuitu yhteensä {total} g / tavoite {goal} g ({percent}% tavoitteesta).",
     searching: "Haetaan...",
     search_error: "Haku epäonnistui. Tarkista verkkoyhteys ja yritä uudelleen.",
+    service_error: "Finelin palvelussa on häiriö (virhe {status}). Yritä myöhemmin uudelleen.",
     anonymous: "(nimetön)",
     empty_list_hint: "Et ole vielä lisännyt yhtään ruokaa. Hae jokin ruoka ja lisää se listalle.",
     eaten_label: "syöty",
@@ -102,6 +103,7 @@ const I18N = {
     progress_text: "Dagens fiber totalt {total} g / mål {goal} g ({percent}% av målet).",
     searching: "Söker...",
     search_error: "Sökningen misslyckades. Kontrollera internetanslutningen och försök igen.",
+    service_error: "Störning i Fineli-tjänsten (fel {status}). Försök igen senare.",
     anonymous: "(namnlös)",
     empty_list_hint: "Du har ännu inte lagt till något livsmedel. Sök efter ett livsmedel och lägg till det i listan.",
     eaten_label: "ätit",
@@ -148,6 +150,7 @@ const I18N = {
     progress_text: "Daily fiber total {total} g / goal {goal} g ({percent}% of goal).",
     searching: "Searching...",
     search_error: "Search failed. Check your network connection and try again.",
+    service_error: "Fineli service disruption (error {status}). Please try again later.",
     anonymous: "(unnamed)",
     empty_list_hint: "You have not added any foods yet. Search for a food and add it to the list.",
     eaten_label: "eaten",
@@ -229,41 +232,7 @@ const SAMPLE_LISTS = {
   ]
 };
 
-// Yksinkertaiset käännökset yleisimmille hakusanoille
-const SEARCH_TRANSLATIONS = {
-  sv: {
-    "mor": "porkkana",
-    "morot": "porkkana",
-    "äpple": "omena",
-    "banan": "banaani",
-    "potatis": "peruna",
-    "ris": "riisi",
-    "kyckling": "kana",
-    "nötkött": "nauta",
-    "fläsk": "sika",
-    "fisk": "kala",
-    "bröd": "leipä",
-    "mjölk": "maito",
-    "ost": "juusto",
-    "ägg": "muna",
-  },
-  en: {
-    "app": "omena",
-    "apple": "omena",
-    "carrot": "porkkana",
-    "banana": "banaani",
-    "potato": "peruna",
-    "rice": "riisi",
-    "chicken": "kana",
-    "beef": "nauta",
-    "pork": "sika",
-    "fish": "kala",
-    "bread": "leipä",
-    "milk": "maito",
-    "cheese": "juusto",
-    "egg": "muna",
-  }
-};
+
 
 const searchInput = document.getElementById("searchInput");
 const searchButton = document.getElementById("searchButton");
@@ -554,14 +523,7 @@ function getNameInCurrentLang(food) {
 function hasNameInCurrentLang(food) {
   return getNameInCurrentLang(food) !== null;
 }
-// Kääntää hakusanan suomeksi, jos valittu kieli on ruotsi tai englanti
-function translateSearchTerm(term) {
-  if (!term || typeof term !== "string") return term;
-  const lowerTerm = term.toLowerCase().trim();
-  const translations = SEARCH_TRANSLATIONS[currentLang];
-  if (!translations) return term;
-  return translations[lowerTerm] || term;
-}
+
 
 // Priorisoi raaka-aineet hakutuloksissa
 function isFuzzyMatch(str, query) {
@@ -664,36 +626,32 @@ async function searchFoods(query) {
   searchButton.textContent = t("searching") || "Haetaan...";
 
   try {
-    // Check for common translations
-    let searchQuery = query;
-    const translations = SEARCH_TRANSLATIONS[currentLang];
-    if (translations) {
-      const queryLower = query.toLowerCase();
-      if (translations[queryLower]) {
-        searchQuery = translations[queryLower];
-      } else {
-        // Check fuzzy matches in translation keys
-        for (const [key, value] of Object.entries(translations)) {
-          if (isFuzzyMatch(key, queryLower)) {
-            searchQuery = value;
-            break;
-          }
-        }
-      }
-    }
+    const searchQuery = query.trim();
+    const cacheKey = `${currentLang}:${searchQuery}`;
 
-    // Check cache
-    if (searchCache[searchQuery]) {
-      const data = searchCache[searchQuery];
+    // Check cache (key includes language)
+    if (searchCache[cacheKey]) {
+      const data = searchCache[cacheKey];
+      console.log(`Search "${searchQuery}" (lang: ${currentLang}) returned ${data.length} cached foods.`);
+      // Filter filtering is less critical now if API returns relevant stuff, 
+      // but we still keep it for UI consistency (sorting by match quality).
       const filteredData = filterFoodsByLanguage(data, searchQuery);
-      console.log(`Search "${query}" in "${currentLang}" returned ${data.length} cached foods, ${filteredData.length} after filtering.`);
       renderSearchResults(filteredData);
       return;
     }
 
-    // Fetch from API
-    const res = await fetch(`${API_BASE}/foods?q=${encodeURIComponent(searchQuery)}`);
-    if (!res.ok) throw new Error(`Search failed (${res.status})`);
+    // Fetch from API with lang parameter
+    const url = `${API_BASE}/foods?q=${encodeURIComponent(searchQuery)}&lang=${currentLang}`;
+    const res = await fetch(url);
+
+    if (!res.ok) {
+      if (res.status === 408 || res.status === 503 || res.status === 500) {
+        const msg = (t("service_error") || "Finelin palvelussa on häiriö").replace("{status}", res.status);
+        throw new Error(msg);
+      }
+      throw new Error(`Search failed (${res.status})`);
+    }
+
     const data = await res.json();
 
     if (!Array.isArray(data)) {
@@ -703,16 +661,20 @@ async function searchFoods(query) {
     }
 
     // Cache the results
-    searchCache[searchQuery] = data;
+    searchCache[cacheKey] = data;
 
     const filteredData = filterFoodsByLanguage(data, searchQuery);
-
-    console.log(`Search "${query}" in "${currentLang}" returned ${data.length} foods, ${filteredData.length} after filtering.`);
+    console.log(`Search "${searchQuery}" (lang: ${currentLang}) returned ${data.length} foods.`);
 
     renderSearchResults(filteredData);
   } catch (err) {
     console.error(err);
-    searchResultsEl.innerHTML = '<div class="error-text">Search failed. Check your network connection and try again.</div>';
+    // Prefer the error message from the error object if it looks like a user-facing message
+    let userMsg = t("search_error");
+    if (err.message && (err.message.includes("Finelin") || err.message.includes("Fineli") || err.message.includes("häiriö"))) {
+      userMsg = err.message;
+    }
+    searchResultsEl.innerHTML = `<div class="error-text">${userMsg}</div>`;
   } finally {
     searchButton.disabled = false;
     searchButton.textContent = t("search") || "Hae";
