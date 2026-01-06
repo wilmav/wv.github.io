@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="fi">
+
+<head>
+    <meta charset="UTF-8">
+    <title>SpotVaiFix - Sähkön hintavertailu</title>
+    <link rel="stylesheet" href="tyyli.css">
+    <link rel="stylesheet" href="kuitulaskuri.css">
+    <link rel="stylesheet" href="SpotVaiFix.css">
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation"></script>
+</head>
+
+<body>
+
+    <header>
+        <div class="app-title">
+            Sovellukset<span class="app-title-com">.com</span>
+        </div>
+
+        <nav>
+            <ul>
+                <li><a href="index.html">Etusivu</a></li>
+                <li><a href="kuitulaskuri.html">Kuitulaskuri</a></li>
+                <li><a href="yhteystiedot.html">Yhteystiedot</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <div class="content-wrapper">
+        <main>
+            <div class="content-padding">
+                <section class="fiber-app-shell">
+
+                    <div class="top-bar">
+                        <div>
+                            <h1>SpotVaiFix</h1>
+                            <p class="lead">Vertaile pörssisähköä ja kiinteähintaista sopimusta helposti.</p>
+                        </div>
+                    </div>
+
+                    <div class="fiber-layout">
+                        <!-- Vasen sarake: Syötteet -->
+                        <div>
+                            <div class="card">
+                                <h2>Pörssisähkö (Spot)</h2>
+                                <div class="input-group">
+                                    <label for="spotMargin">Marginaali (c/kWh)</label>
+                                    <input type="number" id="spotMargin" step="0.01" value="0.50">
+                                </div>
+                                <div class="input-group">
+                                    <label for="spotBasicFee">Kuukausimaksu (€/kk)</label>
+                                    <input type="number" id="spotBasicFee" step="0.10" value="4.50">
+                                </div>
+                            </div>
+
+                            <div class="card" style="margin-top: 1rem;">
+                                <h2>Kiinteähintainen sopimus</h2>
+                                <div class="input-group">
+                                    <label for="fixedPrice">Sähkön hinta (c/kWh)</label>
+                                    <input type="number" id="fixedPrice" step="0.10" value="7.50">
+                                </div>
+                                <div class="input-group">
+                                    <label for="fixedBasicFee">Kuukausimaksu (€/kk)</label>
+                                    <input type="number" id="fixedBasicFee" step="0.10" value="0.00">
+                                </div>
+                            </div>
+
+                            <div class="card" style="margin-top: 1rem;">
+                                <h2>Kulutus ja profiili</h2>
+                                <div class="input-group">
+                                    <label for="monthlyConsumption">Kuukausikulutus keskimäärin (kWh)</label>
+                                    <input type="number" id="monthlyConsumption" step="10" value="200">
+                                </div>
+                                <div class="input-group">
+                                    <label for="consumptionProfile">Kulutusprofiili</label>
+                                    <select id="consumptionProfile" class="styled-select">
+                                        <option value="flat">Tasainen</option>
+                                        <option value="evening">Painottuu iltaan</option>
+                                        <option value="night">Painottuu yöhön</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="card" style="margin-top: 1rem;">
+                                <h2>Aikaväli ja historia</h2>
+                                <div class="input-group">
+                                    <label for="startDate">Alkupäivä</label>
+                                    <input type="date" id="startDate">
+                                </div>
+                                <div class="input-group">
+                                    <label for="endDate">Loppupäivä</label>
+                                    <input type="date" id="endDate">
+                                </div>
+                                <button id="updateHistoryBtn" class="primary-button" style="width: 100%;">Päivitä
+                                    historia</button>
+                            </div>
+                        </div>
+
+                        <!-- Oikea sarake: Tulokset -->
+                        <div>
+                            <div class="sample-card results-card" style="position: sticky; top: 20px;">
+                                <h2>Yhteenveto</h2>
+                                <div id="comparisonResults" class="results-container">
+                                    <div class="result-box spot-result">
+                                        <div class="result-label">Pörssisähkö arvio</div>
+                                        <div id="spotTotalCost" class="result-value">- €/kk</div>
+                                        <div id="spotAvgPrice" class="result-subtext">- c/kWh</div>
+                                    </div>
+                                    <div class="result-box fixed-result">
+                                        <div class="result-label">Kiinteä hinta</div>
+                                        <div id="fixedTotalCost" class="result-value">- €/kk</div>
+                                        <div id="fixedAvgPrice" class="result-subtext">- c/kWh</div>
+                                    </div>
+                                    <div id="verdict" class="verdict-box">
+                                        Syötä tiedot nähdäksesi vertailun.
+                                    </div>
+                                </div>
+
+                                <div class="comparison-graph">
+                                    <div class="graph-bar-wrapper">
+                                        <div class="graph-label">Pörssi (kk-kustannus)</div>
+                                        <div class="graph-bar-container">
+                                            <div id="spotBar" class="graph-bar spot-bar" style="width: 0%"></div>
+                                        </div>
+                                    </div>
+                                    <div class="graph-bar-wrapper">
+                                        <div class="graph-label">Kiinteä (kk-kustannus)</div>
+                                        <div class="graph-bar-container">
+                                            <div id="fixedBar" class="graph-bar fixed-bar" style="width: 0%"></div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="price-info-box">
+                                    <p class="hint">Spot-hinnat haetaan reaaliajassa. Historiatietoja käytetään
+                                        vertailuun.</p>
+                                    <div id="currentSpotPriceDisplay" class="current-price-hero">
+                                        <div id="currentSpotPriceValue" class="hero-price">Haetaan...</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div> <!-- loppu fiber-layout -->
+
+                    <!-- Historiakaavio täydellä leveydellä alhaalla -->
+                    <div class="card chart-card" style="margin-top: 2rem;">
+                        <h2>Hinta- ja säähistoria</h2>
+                        <div class="chart-container">
+                            <canvas id="historyChart"></canvas>
+                        </div>
+                    </div>
+
+                </section>
+            </div>
+        </main>
+    </div>
+
+    <script src="SpotVaiFix.js"></script>
+</body>
+
+</html>
