@@ -12,32 +12,47 @@ const MOCK_DATA = {
         }
     },
     jyvaskyla: {
-        2023: {
-            days: generateMockYearData(2023, 10) // More snow
-        },
-        2022: {
-            days: generateMockYearData(2022, 15)
-        },
-        2021: {
-            days: generateMockYearData(2021, 5)
-        }
+        2023: { days: generateMockYearData(2023, 10) }
     }
 };
+
+let REAL_DATA = {}; // Cache for fetched data
 
 function initApp() {
     const locationSelect = document.getElementById('locationSelect');
 
-    // Initialize years based on available data (mock for now, real later)
-    // In real app, we might want to fetch available years from metadata
-    const availableYears = Array.from({ length: 25 }, (_, i) => 2024 - i); // 2024...2000
-    generateYearCheckboxes(availableYears, [2023, 2022]); // Default selected
+    // Check available years - for now static range 2000-2024
+    // Ideally we would read this from metadata
+    const availableYears = Array.from({ length: 25 }, (_, i) => 2024 - i);
+    generateYearCheckboxes(availableYears, [2023, 2022]);
 
     // Initial render
-    updateVisualization();
+    fetchAndRender();
 
     locationSelect.addEventListener('change', () => {
-        updateVisualization();
+        fetchAndRender();
     });
+}
+
+async function fetchAndRender() {
+    const location = document.getElementById('locationSelect').value;
+
+    // Check if we have data for this location
+    if (!REAL_DATA[location]) {
+        try {
+            const response = await fetch(`data/${location}.json`);
+            if (response.ok) {
+                REAL_DATA[location] = await response.json();
+                console.log(`Loaded data for ${location}`);
+            } else {
+                console.warn(`No data found for ${location}, using mock.`);
+            }
+        } catch (e) {
+            console.warn(`Fetch error for ${location}:`, e);
+        }
+    }
+
+    updateVisualization();
 }
 
 function generateYearCheckboxes(years, defaultSelected) {
@@ -79,20 +94,24 @@ function renderVisualization(location, selectedYears) {
         return;
     }
 
-    const data = MOCK_DATA[location] || MOCK_DATA['helsinki']; // Fallback
-
-    // Note: In real app, we might mix years (e.g. winter 2023-2024). 
-    // The concept says "tammikuu-joulukuu", but for winter comparison "July-June" or "Sept-May" might be better?
-    // Prompt image says: "tammikuu-joulukuu" (Jan-Dec). We stick to that.
+    // Use Real Data if available, fallback to mock
+    const locationData = REAL_DATA[location] || MOCK_DATA[location] || MOCK_DATA['helsinki'];
 
     selectedYears.forEach(year => {
-        // Mock data generation if missing from static mock
-        let yearData = data[year];
-        if (!yearData) {
-            yearData = { days: generateMockYearData(year) };
+        let days = [];
+
+        // Check if we have real data for this year
+        if (locationData[year] && Array.isArray(locationData[year])) {
+            days = locationData[year];
+        } else if (locationData[year] && locationData[year].days) {
+            // Mock structure format
+            days = locationData[year].days;
+        } else {
+            // Fallback to generator
+            days = generateMockYearData(year);
         }
 
-        const row = createYearRow(year, yearData.days);
+        const row = createYearRow(year, days);
         container.appendChild(row);
     });
 }
@@ -112,11 +131,6 @@ function createYearRow(year, days) {
     label.className = 'year-label';
     label.innerHTML = `
         <div style="font-size:1.1rem; margin-bottom:0.2rem;">${year}</div>
-        <!-- Stats are now visual, but kept small here as summary if needed, or removed? 
-             User asked for visual timeline. We can keep summary for quick reading. -->
-         <div class="year-stats" style="font-size:0.75rem; color:#666;">
-            Stats janalla &rarr;
-        </div>
     `;
     row.appendChild(label);
 
@@ -135,7 +149,14 @@ function createYearRow(year, days) {
 
         segDiv.style.width = `${widthPct}%`;
         segDiv.className = `segment segment-${seg.type}`;
-        segDiv.title = `${seg.type}`; // Tooltip
+        // Tooltip translation map
+        const typeNames = {
+            'snow': 'Lumi',
+            'bare': 'Lumeton',
+            'heat': 'Helle',
+            'dry': 'Sateeton'
+        };
+        segDiv.title = typeNames[seg.type] || seg.type;
         track.appendChild(segDiv);
     });
     bar.appendChild(track);
@@ -156,32 +177,38 @@ function createYearRow(year, days) {
     // Note: Markers are children of 'bar', so they are positioned relative to bar
     // They should have z-index > overlay
 
-    // First Snow
+    // First Snow (Ensilumi)
     const firstSnowDayIndex = days.findIndex(d => d.snowDepth > 0);
     if (firstSnowDayIndex !== -1) {
-        addMarker(bar, firstSnowDayIndex, '❄', 'Ensilumi', 'marker-first-snow');
+        const dateStr = getDayDateString(year, firstSnowDayIndex);
+        addMarker(bar, firstSnowDayIndex, `🌨 ${dateStr}`, `Ensilumi: ${dateStr}`, 'marker-first-snow', true);
     }
 
-    // Max Temp
+    // Max Temp (Helle)
     if (stats.maxTempIndex !== -1) {
         addMarker(bar, stats.maxTempIndex, `☀ ${stats.maxTemp}°`, 'Korkein lämpötila', 'marker-extreme-heat', true);
     }
 
-    // Min Temp
+    // Min Temp (Pakkanen)
     if (stats.minTempIndex !== -1) {
         addMarker(bar, stats.minTempIndex, `❄ ${stats.minTemp}°`, 'Alin lämpötila', 'marker-extreme-cold', true);
     }
 
-    // Longest Dry Spell (Center of the spell)
-    if (stats.maxDrySpell > 0 && stats.maxDrySpellIndex !== -1) {
-        // Calculate center of the spell
+    // Longest Dry Spell (Sateeton)
+    if (stats.maxDrySpell > 3 && stats.maxDrySpellIndex !== -1) { // Only show significant spells (>3 days)
         const centerIndex = stats.maxDrySpellIndex - Math.floor(stats.maxDrySpell / 2);
-        // Maybe an icon?
-        addMarker(bar, centerIndex, `🌵 ${stats.maxDrySpell}pv`, 'Pisin sateeton jakso', '', true);
+        addMarker(bar, centerIndex, `🌵 ${stats.maxDrySpell}pv`, 'Pisin sateeton jakso', 'marker-dry-spell', true);
     }
 
     row.appendChild(bar);
     return row;
+}
+
+// Helper: Convert day index (0-364) to d.m. string
+function getDayDateString(year, dayIndex) {
+    const date = new Date(year, 0, 1);
+    date.setDate(date.getDate() + dayIndex);
+    return `${date.getDate()}.${date.getMonth() + 1}.`;
 }
 
 function calculateStats(days) {
@@ -191,37 +218,39 @@ function calculateStats(days) {
     let maxTempIndex = -1;
 
     let maxDrySpell = 0;
-    let maxDrySpellEndIndex = -1; // This will store the index of the last day of the longest dry spell
+    let maxDrySpellEndIndex = -1;
 
     let currentDrySpell = 0;
-    let currentDrySpellStartIndex = -1;
 
     days.forEach((day, index) => {
-        if (day.temp < minTemp) {
-            minTemp = day.temp;
+        // Handle different data formats (real vs mock)
+        // Real: tempMin, tempMax, tempMean
+        // Mock: temp
+        const tMin = day.tempMin !== undefined ? day.tempMin : day.temp;
+        const tMax = day.tempMax !== undefined ? day.tempMax : day.temp;
+        const precip = day.precipitation !== undefined ? day.precipitation : 0;
+
+        if (tMin < minTemp) {
+            minTemp = tMin;
             minTempIndex = index;
         }
-        if (day.temp > maxTemp) {
-            maxTemp = day.temp;
+        if (tMax > maxTemp) {
+            maxTemp = tMax;
             maxTempIndex = index;
         }
 
         // Dry spell logic (precipitation < 0.1)
-        if (day.precipitation < 0.1) {
-            if (currentDrySpell === 0) { // Start of a new dry spell
-                currentDrySpellStartIndex = index;
-            }
+        if (precip < 0.1) {
             currentDrySpell++;
         } else {
             if (currentDrySpell > maxDrySpell) {
                 maxDrySpell = currentDrySpell;
-                maxDrySpellEndIndex = index - 1; // The day before precipitation occurred
+                maxDrySpellEndIndex = index - 1;
             }
             currentDrySpell = 0;
-            currentDrySpellStartIndex = -1;
         }
     });
-    // Check last spell if it extends to the end of the year
+
     if (currentDrySpell > maxDrySpell) {
         maxDrySpell = currentDrySpell;
         maxDrySpellEndIndex = days.length - 1;
@@ -233,15 +262,30 @@ function calculateStats(days) {
         maxTemp: maxTemp.toFixed(1),
         maxTempIndex,
         maxDrySpell,
-        maxDrySpellIndex: maxDrySpellEndIndex // Renamed for clarity, it's the end index
+        maxDrySpellIndex: maxDrySpellEndIndex
     };
 }
 
 function addMarker(container, dayIndex, content, title, extraClass = '', showLabel = false) {
     const marker = document.createElement('div');
-    marker.className = `marker ${extraClass}`;
+
+    // Handle edges (First/Last 15 days) to avoid clipping
+    let edgeClass = '';
+    if (dayIndex < 15) {
+        edgeClass = 'marker-left-edge';
+        marker.style.left = '0%';
+        // No left-position percentage for edge, just stick to side? 
+        // Or keep correct pos but change transform.
+        marker.style.left = `${(dayIndex / 365) * 100}%`;
+    } else if (dayIndex > 350) {
+        edgeClass = 'marker-right-edge';
+        marker.style.left = `${(dayIndex / 365) * 100}%`;
+    } else {
+        marker.style.left = `${(dayIndex / 365) * 100}%`;
+    }
+
+    marker.className = `marker ${extraClass} ${edgeClass}`;
     marker.title = title;
-    marker.style.left = `${(dayIndex / 365) * 100}%`;
 
     if (showLabel) {
         // Content is text + icon

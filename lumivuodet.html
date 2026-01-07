@@ -49,7 +49,7 @@
                             </select>
                         </div>
 
-                        <div class="control-group">
+                        <div class="control-group" style="margin-top: 1.5rem;">
                             <label>Vuodet</label>
                             <div class="year-selector" id="yearSelector">
                                 <!-- Checkboxit generoidaan JavaScriptillä -->
@@ -64,22 +64,20 @@
 
                     <div class="legend">
                         <div class="legend-item">
-                            <span class="symbol symbol-snow">❄</span> Ensilumi
+                            <span class="marker-icon">🌨</span> <span>Ensilumi</span>
                         </div>
                         <div class="legend-item">
-                            <span class="bar-sample bar-snow"></span> Lumipeite
+                            <div class="color-box" style="background: #3b82f6;"></div> <span>Lumipeite</span>
                         </div>
                         <div class="legend-item">
-                            <span class="bar-sample bar-ground"></span> Lumeton
+                            <div class="color-box" style="background: var(--accent-soft);"></div> <span>Lumeton</span>
+                        </div>
+                        <!-- Pysyvä sulaminen not currently visualized with distinct marker -->
+                        <div class="legend-item">
+                            <div class="color-box" style="background: #d97706;"></div> <span>Sateeton jakso</span>
                         </div>
                         <div class="legend-item">
-                            <span class="symbol symbol-melt">💧</span> Pysyvä sulaminen
-                        </div>
-                        <div class="legend-item">
-                            <span class="bar-sample bar-dry" style="background-color: #fde047;"></span> Sateeton jakso
-                        </div>
-                        <div class="legend-item">
-                            <span class="bar-sample bar-heat" style="background-color: #fca5a5;"></span> Helle / Lämmin
+                            <div class="color-box" style="background: var(--accent);"></div> <span>Helle / Lämmin</span>
                         </div>
                     </div>
 

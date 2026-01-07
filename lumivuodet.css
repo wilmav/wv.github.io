@@ -26,7 +26,8 @@
     grid-template-columns: repeat(auto-fill, minmax(60px, 1fr));
     gap: 0.5rem;
     max-width: 500px;
-    max-height: 200px;
+    max-height: 130px;
+    /* Reduced height */
     overflow-y: auto;
     border: 1px solid var(--border);
     border-radius: var(--radius);
@@ -83,26 +84,31 @@
     display: flex;
     align-items: center;
     gap: 1rem;
+    margin-bottom: 3.5rem;
+    /* Increased space between rows for markers */
 }
 
 .year-label {
-    min-width: 60px;
-    font-weight: 700;
-    font-size: 1rem;
-    color: var(--text);
+    width: 60px;
+    flex-shrink: 0;
     text-align: right;
+    font-weight: bold;
+    color: var(--text);
 }
 
 .season-bar {
     flex-grow: 1;
-    height: 40px;
-    background: #e5e5e5;
-    /* Fallback bg */
-    border-radius: 4px;
+    height: 60px;
+    /* Taller bar for better marker visibility */
+    background: var(--accent-soft);
+    /* Light Saffron for Summer/Bare ground */
+    border-radius: 6px;
     position: relative;
     /* overflow: hidden;  <-- REMOVED to show labels */
     min-width: 600px;
     /* display: flex; <-- REMOVED, using absolute children now */
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.05);
+    /* Slight depth */
 }
 
 /* New inner track for the colored segments */
@@ -123,64 +129,119 @@
     height: 100%;
 }
 
+/* Segments */
 .segment-snow {
-    background-color: #3b82f6;
-    /* Blue for snow */
+    background: #3b82f6;
+    /* Blue */
 }
 
 .segment-bare {
-    background-color: #3f3f46;
-    /* Dark grey for bare ground */
-}
-
-.segment-melt {
-    background-color: #ef4444;
-    /* Red for warmth/melt event */
+    background: transparent;
+    /* Show gray background of bar */
 }
 
 .segment-heat {
-    background-color: #fca5a5;
-    /* Lighter red for general heat */
+    background: var(--accent);
+    /* Theme Yellow for Heat/Summer */
+    opacity: 0.8;
 }
 
 .segment-dry {
-    background-color: #fde047;
-    /* Yellow for dry/rainless */
+    background: #d97706;
+    /* Amber/Orange for dry spells to distinguish from yellow heat */
+    /* Or maybe pattern? */
+    background-image: linear-gradient(45deg, #d97706 25%, transparent 25%, transparent 50%, #d97706 50%, #d97706 75%, transparent 75%, transparent);
+    background-size: 10px 10px;
+    opacity: 0.6;
 }
 
 /* Markers */
 .marker {
     position: absolute;
-    top: 50%;
-    transform: translate(-50%, -50%);
-    /* Centered on the point */
-    font-size: 1.2rem;
-    z-index: 10;
-    pointer-events: none;
-    white-space: nowrap;
-    text-shadow: 0 1px 2px rgba(255, 255, 255, 0.8);
-    font-weight: bold;
+    /* Centered horizontally on the time point */
+    transform: translateX(-50%);
+    z-index: 100;
+    pointer-events: auto;
+    /* Allow hovering */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
 }
 
+/* Edge handling for markers */
+.marker.marker-left-edge {
+    transform: translateX(0);
+    /* Align left edge to point */
+    align-items: flex-start;
+    /* Text aligns left */
+}
+
+.marker.marker-right-edge {
+    transform: translateX(-100%);
+    /* Align right edge to point */
+    align-items: flex-end;
+    /* Text aligns right */
+}
+
+/* Common label style */
 .marker-label {
     font-size: 0.75rem;
-    background: rgba(255, 255, 255, 0.9);
-    padding: 2px 4px;
-    border-radius: 4px;
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
-    margin-left: 2px;
+    font-weight: 600;
+    padding: 2px 6px;
+    border-radius: 12px;
+    white-space: nowrap;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    background: rgba(255, 255, 255, 0.95);
+    border: 1px solid rgba(0, 0, 0, 0.05);
 }
 
-.marker-extreme-cold {
-    color: #2563eb;
-    top: 80%;
-    /* Position below center/snow */
-}
+/* --- LANES (Vertical positioning) --- */
+/* Positioning INSIDE the bar (janan sisään) - 4 Layers/Stacks */
 
+/* LEVEL 1 (Top): Heat */
 .marker-extreme-heat {
-    color: #dc2626;
-    top: 20%;
-    /* Position above */
+    top: 2px;
+    bottom: auto;
+    margin: 0;
+    color: #856404;
+    z-index: 102;
+}
+
+/* LEVEL 2 (Upper Middle): Dry Spell */
+.marker-dry-spell {
+    top: 28px;
+    /* Below heat */
+    bottom: auto;
+    margin: 0;
+    color: #d97706;
+    z-index: 101;
+}
+
+/* LEVEL 3 (Lower Middle): First Snow */
+.marker-first-snow {
+    top: auto;
+    bottom: 28px;
+    /* Above cold */
+    margin: 0;
+    color: #0e7490;
+    z-index: 101;
+}
+
+/* LEVEL 4 (Bottom): Cold */
+.marker-extreme-cold {
+    top: auto;
+    bottom: 2px;
+    /* Sticks to bottom */
+    margin: 0;
+    color: #1e40af;
+    z-index: 102;
+    /* Topmost in bottom group */
+}
+
+
+/* Connector lines - ensure none */
+.marker::after {
+    display: none;
 }
 
 /* Grid lines / Months */
@@ -244,6 +305,24 @@
     gap: 0.5rem;
     font-size: 0.9rem;
     color: var(--text-soft);
+}
+
+.marker-icon {
+    font-size: 1.2rem;
+    line-height: 1;
+    display: inline-block;
+    width: 20px;
+    text-align: center;
+}
+
+.color-box {
+    width: 20px;
+    height: 20px;
+    border-radius: 4px;
+    flex-shrink: 0;
+    /* Prevent collapsing */
+    display: inline-block;
+    border: 1px solid rgba(0, 0, 0, 0.1);
 }
 
 .symbol {
