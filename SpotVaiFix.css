@@ -415,19 +415,23 @@ input[type="date"] {
     padding-top: 1.1rem;
     box-sizing: border-box;
     /* Ensures padding doesn't overflow height */
+    justify-content: space-between;
+    /* Distribute content evenly */
 }
 
 /* Ensure right header aligns with left headers (remove default margin) */
 .results-card h2 {
     margin-top: 0;
-    margin-bottom: 1rem;
+    margin-bottom: 0.5rem;
+    /* Allow space-between to handle more gap if needed, but keeping small min */
     border-bottom: 2px solid var(--k-accent);
     padding-bottom: 0.5rem;
     display: inline-block;
 }
 
 .result-box {
-    padding: 0.5rem 0.6rem;
+    padding: 0.7rem 0.9rem;
+    /* Slightly varied padding */
     border-radius: 12px;
     background: var(--k-card-alt);
     border: 1px solid var(--k-border);
@@ -438,17 +442,17 @@ input[type="date"] {
     display: flex;
     flex-direction: column;
     gap: 0.5rem;
-    margin-top: 0.5rem;
+    margin-top: 0.2rem;
 }
 
 .comparison-graph {
-    margin-top: 0.8rem;
+    margin-top: 0;
+    /* Let space-between handle this */
     display: flex;
     flex-direction: column;
     gap: 0.4rem;
 }
 
 .result-label {
-    margin-bottom: 0.1rem;
-
+    margin-bottom: 0.2rem;
 }
