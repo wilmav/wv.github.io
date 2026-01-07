@@ -405,16 +405,38 @@ input[type="date"] {
 /* Align cards to equal height (both top and bottom aligned) */
 
 /* Override grid alignment to stretch columns to equal height */
+/* Override alignment to stretch columns to equal height */
 .fiber-layout {
+    display: flex;
     align-items: stretch;
+    gap: 2rem;
 }
 
-.fiber-layout .card {
+.fiber-layout>div {
+    display: flex;
+    flex-direction: column;
+}
+
+.fiber-layout>div:first-child {
+    flex: 1;
+}
+
+.fiber-layout>div:last-child {
+    flex: 0 0 32%;
+    /* Kapeampi oikea sarake, n. 1/3 leveydestä */
+    min-width: 300px;
+}
+
+.fiber-layout .card,
+.results-card {
     flex: 1;
     display: flex;
     flex-direction: column;
     margin-bottom: 0;
+    height: 100%;
+    /* Ensure it fills parent */
     justify-content: flex-start;
+    /* Keep content at top */
 }
 
 /* Uusi chart-header layout */

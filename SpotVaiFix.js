@@ -106,10 +106,36 @@ function setDefaultDates() {
 // Fetch current spot price for display
 async function fetchSpotPrices() {
     try {
-        const response = await fetch(SPOT_API_CURRENT);
+        // Use sahkotin.fi which supports CORS and 15-min (if available)
+        // Fetch valid range: 6 hour back and 6 forward to ensure coverage
+        const now = new Date();
+        const start = new Date(now.getTime() - 21600000); // -6h
+        const end = new Date(now.getTime() + 21600000);   // +6h
+
+        const startStr = start.toISOString();
+        const endStr = end.toISOString();
+
+        const response = await fetch(`https://sahkotin.fi/prices?vat&start=${startStr}&end=${endStr}`);
         if (!response.ok) throw new Error("Price fetch failed");
         const data = await response.json();
-        currentSpotPrice = data.PriceWithTax * 100; // API returns EUR/kWh, convert to snt/kWh
+
+        // Find price matching current time
+        // We need the *latest* point that is in the past/present
+        // Since data.prices is usually chronological, we can filter <= and take last?
+        // Or find logic?
+        // Let's grab all points <= now, and take the last one (most recent start time)
+        const validPoints = data.prices.filter(p => new Date(p.date) <= now);
+
+        if (validPoints.length > 0) {
+            const latest = validPoints[validPoints.length - 1];
+            // Value is EUR/MWh (with tax if ?vat used). 
+            // 1 EUR/MWh = 0.1 snt/kWh.
+            // Wait: 100 EUR/MWh = 10 snt/kWh.
+            // So divide by 10.
+            currentSpotPrice = latest.value / 10;
+        } else {
+            throw new Error("No current price found");
+        }
 
         const formattedPrice = currentSpotPrice.toFixed(2).replace('.', ',');
         currentSpotPriceValueEl.innerHTML = `${formattedPrice} <span class="hero-unit">snt / kWh</span>`;
@@ -119,26 +145,24 @@ async function fetchSpotPrices() {
     }
 }
 
-// Fetch historical average from PREVIOUS MONTH (fixed result box)
+// Fetch historical average from PREVIOUS MONTH (Rolling 30 days ending yesterday)
 async function fetchHistoricalAverage() {
     try {
         const now = new Date();
         now.setDate(now.getDate() - 1); // Eilinen
 
-        // Lasketaan edellinen kalenterikuukausi täsmällisesti
-        const prevMonthDate = new Date(now);
-        prevMonthDate.setMonth(prevMonthDate.getMonth() - 1);
+        // Rolling month: Yesterday and Yesterday - 1 month
+        const endDayDate = new Date(now);
 
-        // Edellisen kuukauden ensimmäinen ja viimeinen päivä
-        const startOfMonth = new Date(prevMonthDate.getFullYear(), prevMonthDate.getMonth(), 1);
-        const endOfMonth = new Date(prevMonthDate.getFullYear(), prevMonthDate.getMonth() + 1, 0);
+        const startDayDate = new Date(now);
+        startDayDate.setMonth(startDayDate.getMonth() - 1);
 
-        const startStr = `${startOfMonth.getFullYear()}-${String(startOfMonth.getMonth() + 1).padStart(2, '0')}-${String(startOfMonth.getDate()).padStart(2, '0')}`;
-        const endStr = `${endOfMonth.getFullYear()}-${String(endOfMonth.getMonth() + 1).padStart(2, '0')}-${String(endOfMonth.getDate()).padStart(2, '0')}`;
+        const startStr = `${startDayDate.getFullYear()}-${String(startDayDate.getMonth() + 1).padStart(2, '0')}-${String(startDayDate.getDate()).padStart(2, '0')}`;
+        const endStr = `${endDayDate.getFullYear()}-${String(endDayDate.getMonth() + 1).padStart(2, '0')}-${String(endDayDate.getDate()).padStart(2, '0')}`;
 
         // Päivitä päivämääränäyttö
-        const dateRangeText = `${startOfMonth.getDate()}.${startOfMonth.getMonth() + 1}. - ${endOfMonth.getDate()}.${endOfMonth.getMonth() + 1}.${endOfMonth.getFullYear()}`;
-        document.getElementById("fixedPeriodDates").textContent = `(${dateRangeText})`;
+        const formatDate = (d) => `${d.getDate()}.${d.getMonth() + 1}.${d.getFullYear()}`;
+        document.getElementById("fixedPeriodDates").textContent = `(${formatDate(startDayDate)} - ${formatDate(endDayDate)})`;
 
         const url = `https://sahkotin.fi/prices?fix&vat&start=${startStr}T00:00:00.000Z&end=${endStr}T23:59:59.999Z`;
         const res = await fetch(url);
