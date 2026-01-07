@@ -47,7 +47,7 @@
                             <div class="card">
                                 <h2>Pörssisähkö (Spot)</h2>
                                 <div class="input-group">
-                                    <label for="spotMargin">Marginaali (c/kWh)</label>
+                                    <label for="spotMargin">Marginaali (snt/kWh)</label>
                                     <input type="number" id="spotMargin" step="0.01" value="0.50">
                                 </div>
                                 <div class="input-group">
@@ -59,7 +59,7 @@
                             <div class="card" style="margin-top: 1rem;">
                                 <h2>Kiinteähintainen sopimus</h2>
                                 <div class="input-group">
-                                    <label for="fixedPrice">Sähkön hinta (c/kWh)</label>
+                                    <label for="fixedPrice">Sähkön hinta (snt/kWh)</label>
                                     <input type="number" id="fixedPrice" step="0.10" value="7.50">
                                 </div>
                                 <div class="input-group">
@@ -105,9 +105,16 @@
                                 <h2>Yhteenveto</h2>
                                 <div id="comparisonResults" class="results-container">
                                     <div class="result-box spot-result">
-                                        <div class="result-label">Pörssisähkö arvio</div>
-                                        <div id="spotTotalCost" class="result-value">- €/kk</div>
-                                        <div id="spotAvgPrice" class="result-subtext">- c/kWh</div>
+                                        <div class="result-label">Pörssisähkön kk-arvio tämän hetken varttihinnalla
+                                        </div>
+                                        <div id="spotCurrentCost" class="result-value">- €/kk</div>
+                                        <div id="spotCurrentPrice" class="result-subtext">- snt/kWh</div>
+                                    </div>
+                                    <div class="result-box spot-result-alt">
+                                        <div class="result-label">Pörssisähkön toteutunut kk-hinta edeltävältä
+                                            kuukaudelta</div>
+                                        <div id="spotHistoricalCost" class="result-value">- €/kk</div>
+                                        <div id="spotHistoricalPrice" class="result-subtext">- snt/kWh</div>
                                     </div>
                                     <div class="result-box fixed-result">
                                         <div class="result-label">Kiinteä hinta</div>
@@ -121,9 +128,16 @@
 
                                 <div class="comparison-graph">
                                     <div class="graph-bar-wrapper">
-                                        <div class="graph-label">Pörssi (kk-kustannus)</div>
+                                        <div class="graph-label">Pörssi - tämän hetken hinta (kk)</div>
                                         <div class="graph-bar-container">
-                                            <div id="spotBar" class="graph-bar spot-bar" style="width: 0%"></div>
+                                            <div id="spotCurrentBar" class="graph-bar spot-bar" style="width: 0%"></div>
+                                        </div>
+                                    </div>
+                                    <div class="graph-bar-wrapper">
+                                        <div class="graph-label">Pörssi - edeltävä kuukausi (kk)</div>
+                                        <div class="graph-bar-container">
+                                            <div id="spotHistoricalBar" class="graph-bar spot-bar-alt"
+                                                style="width: 0%"></div>
                                         </div>
                                     </div>
                                     <div class="graph-bar-wrapper">
@@ -154,6 +168,32 @@
                     </div>
 
                 </section>
+
+                <footer class="app-footer">
+                    <h3>Tietolähteet ja vastuuvapauslauseke</h3>
+                    <div class="footer-content">
+                        <div class="source-section">
+                            <h4>API-lähteet</h4>
+                            <ul>
+                                <li><strong>Spot-hinnat (nykyhetki):</strong> <a href="https://spot-hinta.fi"
+                                        target="_blank" rel="noopener">spot-hinta.fi API</a></li>
+                                <li><strong>Historiatiedot (sähkön hinta):</strong> <a href="https://sahkotin.fi"
+                                        target="_blank" rel="noopener">sahkotin.fi API</a></li>
+                                <li><strong>Säähistoria:</strong> <a href="https://open-meteo.com" target="_blank"
+                                        rel="noopener">Open-Meteo Archive API</a></li>
+                            </ul>
+                        </div>
+                        <div class="disclaimer-section">
+                            <h4>Vastuuvapauslauseke</h4>
+                            <p>Tämä sovellus on tarkoitettu vain suuntaa-antavaan vertailuun. Hintatiedot haetaan
+                                avoimilta
+                                rajapinnoilta, emmekä takaa niiden tarkkuutta tai ajantasaisuutta. Älä tee
+                                sopimuspäätöksiä
+                                pelkästään tämän sovelluksen perusteella. Tarkista aina viralliset hinnat
+                                sähköyhtiöltäsi.</p>
+                        </div>
+                    </div>
+                </footer>
             </div>
         </main>
     </div>

@@ -37,9 +37,14 @@
     border-left: 4px solid var(--k-accent);
 }
 
+.spot-result-alt {
+    border-left: 4px solid #f59e0b;
+    /* Orange for historical average */
+}
+
 .fixed-result {
-    border-left: 4px solid #3b82f6;
-    /* Blue for fixed to contrast Saffron */
+    border-left: 4px solid #8b5cf6;
+    /* Violet for fixed to match chart */
 }
 
 .result-label {
@@ -162,8 +167,14 @@
     background: var(--k-accent);
 }
 
+.spot-bar-alt {
+    background: #f59e0b;
+    /* Orange for historical */
+}
+
 .fixed-bar {
-    background: var(--fixed-blue);
+    background: #8b5cf6;
+    /* Violet to match chart */
 }
 
 .results-card h2 {
@@ -202,7 +213,156 @@ input[type="date"] {
     box-sizing: border-box;
 }
 
+/* Explanation Box */
+.explanation-box {
+    margin-top: 1.5rem;
+    padding: 1.2rem;
+    background: #f8fafc;
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+}
+
+.explanation-box h3 {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--k-text);
+    margin: 0 0 0.8rem 0;
+}
+
+.explanation-box p {
+    font-size: 0.9rem;
+    line-height: 1.6;
+    color: var(--k-text-soft);
+    margin: 0 0 0.6rem 0;
+}
+
+.explanation-box p:last-child {
+    margin-bottom: 0;
+}
+
+/* Chart Explanation (below chart) */
+.chart-explanation {
+    margin-top: 1rem;
+    padding: 1rem;
+    background: #f8fafc;
+    border-radius: 8px;
+    border-left: 3px solid var(--k-accent);
+}
+
+.chart-explanation p {
+    font-size: 0.9rem;
+    line-height: 1.6;
+    color: var(--k-text-soft);
+    margin: 0;
+}
+
+.chart-explanation strong {
+    color: var(--k-text);
+}
+
+#chartDateRange {
+    font-weight: 600;
+    color: var(--k-accent-strong);
+}
+
+/* Footer Styles */
+.explanation-box {
+    margin-top: 1.5rem;
+    padding: 1.2rem;
+    background: #f8fafc;
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+}
+
+.explanation-box h3 {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--k-text);
+    margin: 0 0 0.8rem 0;
+}
+
+.explanation-box p {
+    font-size: 0.9rem;
+    line-height: 1.6;
+    color: var(--k-text-soft);
+    margin: 0 0 0.6rem 0;
+}
+
+.explanation-box p:last-child {
+    margin-bottom: 0;
+}
+
+/* Footer Styles */
+.app-footer {
+    margin-top: 3rem;
+    padding: 2rem 0 1rem 0;
+    border-top: 2px solid var(--k-border);
+}
+
+.app-footer h3 {
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: var(--k-text);
+    margin: 0 0 1.5rem 0;
+}
+
+.footer-content {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
+}
+
+@media (max-width: 768px) {
+    .footer-content {
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
+    }
+}
+
+.source-section h4,
+.disclaimer-section h4 {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--k-text);
+    margin: 0 0 0.8rem 0;
+}
+
+.source-section ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.source-section li {
+    font-size: 0.9rem;
+    line-height: 1.8;
+    color: var(--k-text-soft);
+    margin-bottom: 0.5rem;
+}
+
+.source-section a {
+    color: var(--k-accent-strong);
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.source-section a:hover {
+    text-decoration: underline;
+}
+
+.disclaimer-section p {
+    font-size: 0.9rem;
+    line-height: 1.6;
+    color: var(--k-text-soft);
+    margin: 0;
+}
+
 /* Inherit and adjust Saffron accents if needed */
 :root {
     --fixed-blue: #3b82f6;
+}
+
+/* Align card bottoms in fiber-layout */
+.fiber-layout {
+    align-items: flex-end;
 }
