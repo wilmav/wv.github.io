@@ -15,7 +15,8 @@ STATIONS = {
     "sodankyla": 101932
 }
 
-YEARS = [2020, 2021, 2022, 2023, 2024]
+# Fetch data from 2000 to current year
+YEARS = list(range(2000, 2025))
 DATA_DIR = "data"
 
 def fetch_fmi_data(fmisid, year):

@@ -29,7 +29,7 @@ function initApp() {
 
     // Initialize years based on available data (mock for now, real later)
     // In real app, we might want to fetch available years from metadata
-    const availableYears = [2023, 2022, 2021, 2020];
+    const availableYears = Array.from({ length: 25 }, (_, i) => 2024 - i); // 2024...2000
     generateYearCheckboxes(availableYears, [2023, 2022]); // Default selected
 
     // Initial render
@@ -97,56 +97,160 @@ function renderVisualization(location, selectedYears) {
     });
 }
 
+// Helper for month names
+const MONTHS_FI = ['Tammi', 'Helmi', 'Maalis', 'Huhti', 'Touko', 'Kesä', 'Heinä', 'Elo', 'Syys', 'Loka', 'Marras', 'Joulu'];
+
 function createYearRow(year, days) {
     const row = document.createElement('div');
     row.className = 'year-row';
 
+    // Info/Stats block
+    const stats = calculateStats(days);
+
+    // Left side label
     const label = document.createElement('div');
     label.className = 'year-label';
-    label.textContent = year;
+    label.innerHTML = `
+        <div style="font-size:1.1rem; margin-bottom:0.2rem;">${year}</div>
+        <!-- Stats are now visual, but kept small here as summary if needed, or removed? 
+             User asked for visual timeline. We can keep summary for quick reading. -->
+         <div class="year-stats" style="font-size:0.75rem; color:#666;">
+            Stats janalla &rarr;
+        </div>
+    `;
     row.appendChild(label);
 
     const bar = document.createElement('div');
     bar.className = 'season-bar';
 
-    // Render segments
-    // Simple approach: map each day to a pixel slice? 
-    // Or just identifying periods of snow vs no snow.
+    // 1. Render segments into a track (to clip them but not labels)
+    const track = document.createElement('div');
+    track.className = 'bar-track';
 
-    // For CSS flex visual, we can group consecutive days.
     const segments = analyzeSegments(days);
 
     segments.forEach(seg => {
         const segDiv = document.createElement('div');
-        // Calculate percentage width
-        const totalDays = 365; // Approximate
-        const widthPct = (seg.length / totalDays) * 100;
+        const widthPct = (seg.length / 365) * 100;
 
         segDiv.style.width = `${widthPct}%`;
         segDiv.className = `segment segment-${seg.type}`;
-        segDiv.title = `${seg.start} - ${seg.end}: ${seg.type}`; // Tooltip
-        bar.appendChild(segDiv);
+        segDiv.title = `${seg.type}`; // Tooltip
+        track.appendChild(segDiv);
     });
+    bar.appendChild(track);
 
-    // Add markers (First snow, etc)
+    // 2. Render Month Grid Overlay
+    const gridOverlay = document.createElement('div');
+    gridOverlay.className = 'months-overlay';
+
+    MONTHS_FI.forEach(mName => {
+        const tick = document.createElement('div');
+        tick.className = 'month-tick';
+        tick.innerHTML = `<span class="month-label">${mName}</span>`;
+        gridOverlay.appendChild(tick);
+    });
+    bar.appendChild(gridOverlay);
+
+    // 3. Add Markers
+    // Note: Markers are children of 'bar', so they are positioned relative to bar
+    // They should have z-index > overlay
+
+    // First Snow
     const firstSnowDayIndex = days.findIndex(d => d.snowDepth > 0);
     if (firstSnowDayIndex !== -1) {
-        addMarker(bar, firstSnowDayIndex, '❄', 'Ensilumi');
+        addMarker(bar, firstSnowDayIndex, '❄', 'Ensilumi', 'marker-first-snow');
     }
 
-    // Add persistent melt marker (simplified: first day of 0 snow after long snow period)
-    // TODO: stricter logic later
+    // Max Temp
+    if (stats.maxTempIndex !== -1) {
+        addMarker(bar, stats.maxTempIndex, `☀ ${stats.maxTemp}°`, 'Korkein lämpötila', 'marker-extreme-heat', true);
+    }
+
+    // Min Temp
+    if (stats.minTempIndex !== -1) {
+        addMarker(bar, stats.minTempIndex, `❄ ${stats.minTemp}°`, 'Alin lämpötila', 'marker-extreme-cold', true);
+    }
+
+    // Longest Dry Spell (Center of the spell)
+    if (stats.maxDrySpell > 0 && stats.maxDrySpellIndex !== -1) {
+        // Calculate center of the spell
+        const centerIndex = stats.maxDrySpellIndex - Math.floor(stats.maxDrySpell / 2);
+        // Maybe an icon?
+        addMarker(bar, centerIndex, `🌵 ${stats.maxDrySpell}pv`, 'Pisin sateeton jakso', '', true);
+    }
 
     row.appendChild(bar);
     return row;
 }
 
-function addMarker(container, dayIndex, symbol, title) {
+function calculateStats(days) {
+    let minTemp = 100;
+    let minTempIndex = -1;
+    let maxTemp = -100;
+    let maxTempIndex = -1;
+
+    let maxDrySpell = 0;
+    let maxDrySpellEndIndex = -1; // This will store the index of the last day of the longest dry spell
+
+    let currentDrySpell = 0;
+    let currentDrySpellStartIndex = -1;
+
+    days.forEach((day, index) => {
+        if (day.temp < minTemp) {
+            minTemp = day.temp;
+            minTempIndex = index;
+        }
+        if (day.temp > maxTemp) {
+            maxTemp = day.temp;
+            maxTempIndex = index;
+        }
+
+        // Dry spell logic (precipitation < 0.1)
+        if (day.precipitation < 0.1) {
+            if (currentDrySpell === 0) { // Start of a new dry spell
+                currentDrySpellStartIndex = index;
+            }
+            currentDrySpell++;
+        } else {
+            if (currentDrySpell > maxDrySpell) {
+                maxDrySpell = currentDrySpell;
+                maxDrySpellEndIndex = index - 1; // The day before precipitation occurred
+            }
+            currentDrySpell = 0;
+            currentDrySpellStartIndex = -1;
+        }
+    });
+    // Check last spell if it extends to the end of the year
+    if (currentDrySpell > maxDrySpell) {
+        maxDrySpell = currentDrySpell;
+        maxDrySpellEndIndex = days.length - 1;
+    }
+
+    return {
+        minTemp: minTemp.toFixed(1),
+        minTempIndex,
+        maxTemp: maxTemp.toFixed(1),
+        maxTempIndex,
+        maxDrySpell,
+        maxDrySpellIndex: maxDrySpellEndIndex // Renamed for clarity, it's the end index
+    };
+}
+
+function addMarker(container, dayIndex, content, title, extraClass = '', showLabel = false) {
     const marker = document.createElement('div');
-    marker.className = 'marker';
-    marker.textContent = symbol;
+    marker.className = `marker ${extraClass}`;
     marker.title = title;
     marker.style.left = `${(dayIndex / 365) * 100}%`;
+
+    if (showLabel) {
+        // Content is text + icon
+        marker.innerHTML = `<span class="marker-label">${content}</span>`;
+    } else {
+        // Just icon
+        marker.textContent = content;
+    }
+
     container.appendChild(marker);
 }
 
@@ -190,26 +294,40 @@ function generateMockYearData(year, snowBonus = 0) {
     const daysInYear = 365;
 
     for (let i = 0; i < daysInYear; i++) {
-        // Mock seasonality: Snow roughly Jan-April, Nov-Dec
-        // Day 0 = Jan 1. Day 90 = ~April 1. Day 300 = ~Oct 27.
         let snowDepth = 0;
+        let temp = 0;
+        let precipitation = 0;
 
-        const isWinterSpring = i < 90; // Jan-Mar
-        const isLateAutumn = i > 310; // Nov-Dec
+        // Mock seasonality
+        const isWinter = i < 90 || i > 310;
+        const isSummer = i > 150 && i < 240;
 
-        if (isWinterSpring) {
-            snowDepth = Math.max(0, 30 - (i * 0.3) + (Math.random() * 5) + snowBonus);
-        } else if (isLateAutumn) {
-            snowDepth = Math.max(0, (i - 310) * 0.5 + (Math.random() * 5) + snowBonus);
+        // Temp
+        if (isWinter) {
+            temp = -5 + (Math.random() * 10) - 10; // -15 to +5
+        } else if (isSummer) {
+            temp = 15 + (Math.random() * 15); // 15 to 30
+        } else {
+            temp = 5 + (Math.random() * 10); // 5 to 15
         }
 
-        // Random melting days
-        if (Math.random() > 0.95) snowDepth = 0;
+        // Snow
+        if (isWinter && temp < 0) {
+            snowDepth = Math.max(0, 30 + (Math.random() * 20) + snowBonus);
+        }
+
+        // Precipitation (random dry spells)
+        if (Math.random() > 0.7) {
+            precipitation = Math.random() * 10;
+        } else {
+            precipitation = 0;
+        }
 
         days.push({
             dayIndex: i,
-            snowDepth: snowDepth > 1 ? snowDepth : 0, // Threshold
-            temp: 0 // Not used yet
+            snowDepth: snowDepth > 0 ? snowDepth : 0,
+            temp: temp,
+            precipitation: precipitation
         });
     }
     return days;
