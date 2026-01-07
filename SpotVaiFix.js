@@ -12,7 +12,6 @@ const spotBasicFeeInput = document.getElementById("spotBasicFee");
 const fixedPriceInput = document.getElementById("fixedPrice");
 const fixedBasicFeeInput = document.getElementById("fixedBasicFee");
 const monthlyConsumptionInput = document.getElementById("monthlyConsumption");
-const consumptionProfileSelect = document.getElementById("consumptionProfile");
 
 // UI Elements - Dual estimates
 const spotCurrentCostEl = document.getElementById("spotCurrentCost");
@@ -61,10 +60,11 @@ async function init() {
     updateHistoryBtn.addEventListener("click", updateHistory);
 }
 
+// Set default dates to last month for chart
 function setDefaultDates() {
     const end = new Date();
     const start = new Date();
-    start.setDate(end.getDate() - 30); // Default to 30 days
+    start.setDate(end.getDate() - 30);
 
     startDateInput.value = start.toISOString().split('T')[0];
     endDateInput.value = end.toISOString().split('T')[0];
@@ -86,9 +86,10 @@ async function fetchSpotPrices() {
     }
 }
 
-// Fetch 30-day historical average
+// Fetch historical average from LAST MONTH (fixed, not affected by chart range)
 async function fetchHistoricalAverage() {
     try {
+        // Always use last 30 days for the estimate, regardless of chart settings
         const end = new Date();
         const start = new Date();
         start.setDate(end.getDate() - 30);
@@ -124,19 +125,22 @@ function calculateComparison() {
     const fixedPrice = parseFloat(fixedPriceInput.value) || 0;
     const fixedBasic = parseFloat(fixedBasicFeeInput.value) || 0;
     const consumption = parseFloat(monthlyConsumptionInput.value) || 0;
-    const profile = consumptionProfileSelect.value;
 
-    // Profile multipliers (simulated heuristics)
-    let profileMultiplier = 1.0;
-    if (profile === "evening") profileMultiplier = 1.15; // Typically higher in the evening
-    if (profile === "night") profileMultiplier = 0.75;   // Lower at night
+    // Error handling - check if we have valid price data
+    if (!currentSpotPrice || !historicalAvgPrice) {
+        spotCurrentCostEl.textContent = "Ladataan...";
+        spotCurrentPriceEl.textContent = "Haetaan hintoja";
+        spotHistoricalCostEl.textContent = "Ladataan...";
+        spotHistoricalPriceEl.textContent = "Haetaan hintoja";
+        return;
+    }
 
-    // Spot Calculation - Current hourly price
-    const effectiveCurrentSpotPrice = (currentSpotPrice * profileMultiplier) + margin;
+    // Spot Calculation - Current hourly price (no profile multiplier)
+    const effectiveCurrentSpotPrice = currentSpotPrice + margin;
     const spotCurrentMonthlyCost = (effectiveCurrentSpotPrice * consumption / 100) + spotBasic;
 
-    // Spot Calculation - 30-day historical average
-    const effectiveHistoricalSpotPrice = (historicalAvgPrice * profileMultiplier) + margin;
+    // Spot Calculation - Historical average from selected time range
+    const effectiveHistoricalSpotPrice = historicalAvgPrice + margin;
     const spotHistoricalMonthlyCost = (effectiveHistoricalSpotPrice * consumption / 100) + spotBasic;
 
     // Fixed Calculation
@@ -175,7 +179,7 @@ function updateVerdict(spotCurrent, spotHistorical, fixedCost) {
     const diff = Math.abs(bestSpot - fixedCost).toFixed(2).replace('.', ',');
 
     if (bestSpot < fixedCost) {
-        const whichSpot = spotCurrent < spotHistorical ? "tämän hetken hinnalla" : "edeltävän kuukauden keskiarvolla";
+        const whichSpot = spotCurrent < spotHistorical ? "tämän hetken hinnalla" : "valitun ajanjakson keskiarvolla";
         verdictEl.textContent = `Pörssisähkö ${whichSpot} on n. ${diff} € halvempi kuukaudessa.`;
         verdictEl.className = "verdict-box"; // Default green
     } else {
@@ -191,8 +195,7 @@ function saveSettings() {
         spotBasicFee: spotBasicFeeInput.value,
         fixedPrice: fixedPriceInput.value,
         fixedBasicFee: fixedBasicFeeInput.value,
-        monthlyConsumption: monthlyConsumptionInput.value,
-        consumptionProfile: consumptionProfileSelect.value
+        monthlyConsumption: monthlyConsumptionInput.value
     };
     localStorage.setItem("spotVaiFixSettings", JSON.stringify(settings));
 }
@@ -208,7 +211,6 @@ function loadSettings() {
             fixedPriceInput.value = settings.fixedPrice || "7.50";
             fixedBasicFeeInput.value = settings.fixedBasicFee || "0.00";
             monthlyConsumptionInput.value = settings.monthlyConsumption || "200";
-            consumptionProfileSelect.value = settings.consumptionProfile || "flat";
         }
     } catch (e) {
         console.error("Error loading settings:", e);
@@ -217,21 +219,20 @@ function loadSettings() {
 
 // Historical Data and Charts
 async function updateHistory() {
-    const start = startDateInput.value;
-    const end = endDateInput.value;
-
-    if (!start || !end) return;
-
     updateHistoryBtn.disabled = true;
     updateHistoryBtn.textContent = "Ladataan...";
 
     try {
+        const start = startDateInput.value;
+        const end = endDateInput.value;
+
         const [prices, weather] = await Promise.all([
             fetchHistoricalPrices(start, end),
             fetchHistoricalWeather(start, end)
         ]);
 
         renderHistoryChart(prices, weather);
+        // NOTE: Historical estimate is NOT updated here - it always uses last 30 days
     } catch (e) {
         console.error("History update failed", e);
     } finally {
@@ -360,8 +361,8 @@ function renderHistoryChart(prices, weather) {
                     labels: {
                         usePointStyle: true,
                         pointStyle: 'line',
-                        boxWidth: 1000,
-                        boxHeight: 8
+                        boxWidth: 600,
+                        boxHeight: 5
                     }
                 }
             }

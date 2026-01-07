@@ -48,7 +48,9 @@
                                 <h2>Pörssisähkö (Spot)</h2>
                                 <div class="input-group">
                                     <label for="spotMargin">Marginaali (snt/kWh)</label>
-                                    <input type="number" id="spotMargin" step="0.01" value="0.50">
+                                    <input type="number" id="spotMargin" step="0.01" value="0.40">
+                                    <span class="input-hint">Sähköyhtiön marginaali, tyypillisesti 0,3-0,6
+                                        snt/kWh</span>
                                 </div>
                                 <div class="input-group">
                                     <label for="spotBasicFee">Kuukausimaksu (€/kk)</label>
@@ -60,7 +62,8 @@
                                 <h2>Kiinteähintainen sopimus</h2>
                                 <div class="input-group">
                                     <label for="fixedPrice">Sähkön hinta (snt/kWh)</label>
-                                    <input type="number" id="fixedPrice" step="0.10" value="7.50">
+                                    <input type="number" id="fixedPrice" step="0.10" value="9.50">
+                                    <span class="input-hint">Kiinteähintaisen sopimuksen hinta ilman siirtoa</span>
                                 </div>
                                 <div class="input-group">
                                     <label for="fixedBasicFee">Kuukausimaksu (€/kk)</label>
@@ -69,18 +72,11 @@
                             </div>
 
                             <div class="card" style="margin-top: 1rem;">
-                                <h2>Kulutus ja profiili</h2>
+                                <h2>Kulutus</h2>
                                 <div class="input-group">
                                     <label for="monthlyConsumption">Kuukausikulutus keskimäärin (kWh)</label>
-                                    <input type="number" id="monthlyConsumption" step="10" value="200">
-                                </div>
-                                <div class="input-group">
-                                    <label for="consumptionProfile">Kulutusprofiili</label>
-                                    <select id="consumptionProfile" class="styled-select">
-                                        <option value="flat">Tasainen</option>
-                                        <option value="evening">Painottuu iltaan</option>
-                                        <option value="night">Painottuu yöhön</option>
-                                    </select>
+                                    <input type="number" id="monthlyConsumption" step="10" value="350">
+                                    <span class="input-hint">Kerrostalo ~200-300 kWh, omakotitalo ~400-600 kWh</span>
                                 </div>
                             </div>
 
@@ -105,16 +101,18 @@
                                 <h2>Yhteenveto</h2>
                                 <div id="comparisonResults" class="results-container">
                                     <div class="result-box spot-result">
-                                        <div class="result-label">Pörssisähkön kk-arvio tämän hetken varttihinnalla
-                                        </div>
+                                        <div class="result-label">Pörssisähkön kk-hinta-arvio nykyhinnalla
+                                            (teoreettinen, ei realistinen)</div>
                                         <div id="spotCurrentCost" class="result-value">- €/kk</div>
                                         <div id="spotCurrentPrice" class="result-subtext">- snt/kWh</div>
+                                        <div class="result-warning">⚠️ Spot-hinta vaihtelee tunneittain</div>
                                     </div>
                                     <div class="result-box spot-result-alt">
-                                        <div class="result-label">Pörssisähkön toteutunut kk-hinta edeltävältä
+                                        <div class="result-label">Pörssisähkön toteutunut kk-hinta edelliseltä
                                             kuukaudelta</div>
                                         <div id="spotHistoricalCost" class="result-value">- €/kk</div>
                                         <div id="spotHistoricalPrice" class="result-subtext">- snt/kWh</div>
+                                        <div class="result-info">✓ Perustuu todellisiin hintoihin</div>
                                     </div>
                                     <div class="result-box fixed-result">
                                         <div class="result-label">Kiinteä hinta</div>
@@ -185,12 +183,12 @@
                         </div>
                         <div class="disclaimer-section">
                             <h4>Vastuuvapauslauseke</h4>
-                            <p>Tämä sovellus on tarkoitettu vain suuntaa-antavaan vertailuun. Hintatiedot haetaan
-                                avoimilta
-                                rajapinnoilta, emmekä takaa niiden tarkkuutta tai ajantasaisuutta. Älä tee
-                                sopimuspäätöksiä
-                                pelkästään tämän sovelluksen perusteella. Tarkista aina viralliset hinnat
-                                sähköyhtiöltäsi.</p>
+                            <p>Tämä sovellus on tarkoitettu vain suuntaa-antavaan vertailuun. Laskuri ei sisällä
+                                sähkön siirtomaksua, joka on sama riippumatta siitä valitsetko pörssi- vai
+                                kiinteähintaisen sopimuksen. Hintatiedot haetaan avoimilta rajapinnoilta, emmekä
+                                takaa niiden tarkkuutta tai ajantasaisuutta. Älä tee sopimuspäätöksiä pelkästään
+                                tämän sovelluksen perusteella. Tarkista aina viralliset hinnat sähköyhtiöltäsi.
+                            </p>
                         </div>
                     </div>
                 </footer>
