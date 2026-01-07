@@ -360,8 +360,8 @@ function renderHistoryChart(prices, weather) {
                     labels: {
                         usePointStyle: true,
                         pointStyle: 'line',
-                        boxWidth: 240,
-                        boxHeight: 3
+                        boxWidth: 1000,
+                        boxHeight: 8
                     }
                 }
             }
