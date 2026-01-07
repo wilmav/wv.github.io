@@ -37,7 +37,7 @@
                     <div class="top-bar">
                         <div>
                             <h1>SpotVaiFix</h1>
-                            <p class="lead">Vertaile pörssisähköä ja kiinteähintaista sopimusta helposti.</p>
+                            <p class="lead">Vertaile pörssisähköä ja kiinteähintaista sopimusta.</p>
                         </div>
                     </div>
 
@@ -58,11 +58,11 @@
                                 </div>
                             </div>
 
-                            <div class="card" style="margin-top: 1rem;">
+                            <div class="card">
                                 <h2>Kiinteähintainen sopimus</h2>
                                 <div class="input-group">
                                     <label for="fixedPrice">Sähkön hinta (snt/kWh)</label>
-                                    <input type="number" id="fixedPrice" step="0.10" value="9.50">
+                                    <input type="number" id="fixedPrice" step="0.01" value="7.50">
                                     <span class="input-hint">Kiinteähintaisen sopimuksen hinta ilman siirtoa</span>
                                 </div>
                                 <div class="input-group">
@@ -71,16 +71,17 @@
                                 </div>
                             </div>
 
-                            <div class="card" style="margin-top: 1rem;">
+                            <div class="card">
                                 <h2>Kulutus</h2>
                                 <div class="input-group">
                                     <label for="monthlyConsumption">Kuukausikulutus keskimäärin (kWh)</label>
                                     <input type="number" id="monthlyConsumption" step="10" value="350">
-                                    <span class="input-hint">Kerrostalo ~200-300 kWh, omakotitalo ~400-600 kWh</span>
+                                    <span class="input-hint">Kerrostalo ~200-300 kWh, omakotitalo ~400-600
+                                        kWh</span>
                                 </div>
                             </div>
 
-                            <div class="card" style="margin-top: 1rem;">
+                            <div class="card">
                                 <h2>Aikaväli ja historia</h2>
                                 <div class="input-group">
                                     <label for="startDate">Alkupäivä</label>
@@ -105,10 +106,12 @@
                                             (teoreettinen, ei realistinen)</div>
                                         <div id="spotCurrentCost" class="result-value">- €/kk</div>
                                         <div id="spotCurrentPrice" class="result-subtext">- snt/kWh</div>
-                                        <div class="result-warning">⚠️ Spot-hinta vaihtelee tunneittain</div>
+                                        <div class="result-warning">⚠️ Spot-hinta vaihtelee tunneittain
+                                        </div>
                                     </div>
                                     <div class="result-box spot-result-alt">
-                                        <div class="result-label">Pörssisähkön toteutunut kk-hinta edelliseltä
+                                        <div class="result-label">Pörssisähkön toteutunut kk-hinta
+                                            edelliseltä
                                             kuukaudelta</div>
                                         <div id="spotHistoricalCost" class="result-value">- €/kk</div>
                                         <div id="spotHistoricalPrice" class="result-subtext">- snt/kWh</div>
@@ -147,7 +150,8 @@
                                 </div>
 
                                 <div class="price-info-box">
-                                    <p class="hint">Spot-hinnat haetaan reaaliajassa. Historiatietoja käytetään
+                                    <p class="hint">Spot-hinnat haetaan reaaliajassa. Historiatietoja
+                                        käytetään
                                         vertailuun.</p>
                                     <div id="currentSpotPriceDisplay" class="current-price-hero">
                                         <div id="currentSpotPriceValue" class="hero-price">Haetaan...</div>

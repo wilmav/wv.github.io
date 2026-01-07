@@ -35,7 +35,8 @@ const historyChartCanvas = document.getElementById("historyChart");
 const ALV_PERCENT = 25.5; // Current ALV in Finland
 
 let currentSpotPrice = null;
-let historicalAvgPrice = null;
+let historicalAvgPrice = null; // This will become the dynamic range average
+let previousMonthAvgPrice = null; // This stays fixed as previous calendar month
 let historicalDateRange = { start: null, end: null };
 let historyChart = null;
 
@@ -44,12 +45,13 @@ async function init() {
     setDefaultDates();
     loadSettings();
     await fetchSpotPrices();
-    await fetchHistoricalAverage(); // Fetch 30-day average
+    await fetchHistoricalAverage(); // Fetch previous calendar month
+    historicalAvgPrice = previousMonthAvgPrice; // Default comparison to previous month
     calculateComparison();
     await updateHistory();
 
     // Event Listeners
-    [spotMarginInput, spotBasicFeeInput, fixedPriceInput, fixedBasicFeeInput, monthlyConsumptionInput, consumptionProfileSelect].forEach(input => {
+    [spotMarginInput, spotBasicFeeInput, fixedPriceInput, fixedBasicFeeInput, monthlyConsumptionInput].forEach(input => {
         input.addEventListener("input", () => {
             saveSettings();
             calculateComparison();
@@ -60,14 +62,40 @@ async function init() {
     updateHistoryBtn.addEventListener("click", updateHistory);
 }
 
-// Set default dates to last month for chart
+// Set default dates to the previous calendar month
+// Set default dates to: Yesterday AND one month back from yesterday
 function setDefaultDates() {
-    const end = new Date();
-    const start = new Date();
-    start.setDate(end.getDate() - 30);
+    const now = new Date();
+    // Eilinen
+    now.setDate(now.getDate() - 1);
 
-    startDateInput.value = start.toISOString().split('T')[0];
-    endDateInput.value = end.toISOString().split('T')[0];
+    // Loppupäivä = Eilinen
+    const endYear = now.getFullYear();
+    const endMonth = String(now.getMonth() + 1).padStart(2, '0');
+    const endDay = String(now.getDate()).padStart(2, '0');
+    const endStr = `${endYear}-${endMonth}-${endDay}`;
+
+    // Alkupäivä = Eilinen - 1 kk
+    const startObj = new Date(now);
+    startObj.setMonth(startObj.getMonth() - 1);
+
+    const startYear = startObj.getFullYear();
+    const startMonth = String(startObj.getMonth() + 1).padStart(2, '0');
+    const startDay = String(startObj.getDate()).padStart(2, '0');
+    const startStr = `${startYear}-${startMonth}-${startDay}`;
+
+    startDateInput.value = startStr;
+    endDateInput.value = endStr;
+
+    // Set max date to TODAY (allowing the user to select today if they want, but default is yesterday)
+    const today = new Date();
+    const tYear = today.getFullYear();
+    const tMonth = String(today.getMonth() + 1).padStart(2, '0');
+    const tDay = String(today.getDate()).padStart(2, '0');
+    const todayStr = `${tYear}-${tMonth}-${tDay}`;
+
+    startDateInput.max = todayStr;
+    endDateInput.max = todayStr;
 }
 
 // Fetch current spot price for display
@@ -86,19 +114,17 @@ async function fetchSpotPrices() {
     }
 }
 
-// Fetch historical average from LAST MONTH (fixed, not affected by chart range)
+// Fetch historical average from PREVIOUS MONTH (fixed result box)
 async function fetchHistoricalAverage() {
     try {
-        // Always use last 30 days for the estimate, regardless of chart settings
-        const end = new Date();
-        const start = new Date();
-        start.setDate(end.getDate() - 30);
+        const now = new Date();
+        now.setDate(now.getDate() - 1); // Eilinen
 
-        historicalDateRange.start = start;
-        historicalDateRange.end = end;
+        const endStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
 
-        const startStr = start.toISOString().split('T')[0];
-        const endStr = end.toISOString().split('T')[0];
+        const start = new Date(now);
+        start.setMonth(start.getMonth() - 1); // Kuukausi taaksepäin eilisestä
+        const startStr = `${start.getFullYear()}-${String(start.getMonth() + 1).padStart(2, '0')}-${String(start.getDate()).padStart(2, '0')}`;
 
         const url = `https://sahkotin.fi/prices?fix&vat&start=${startStr}T00:00:00.000Z&end=${endStr}T23:59:59.999Z`;
         const res = await fetch(url);
@@ -107,14 +133,14 @@ async function fetchHistoricalAverage() {
 
         const pricesArray = data.prices || data;
         if (Array.isArray(pricesArray) && pricesArray.length > 0) {
-            const total = pricesArray.reduce((acc, p) => acc + p.value, 0); // Sahkotin API with 'fix' returns snt/kWh
-            historicalAvgPrice = total / pricesArray.length;
+            const total = pricesArray.reduce((acc, p) => acc + p.value, 0);
+            previousMonthAvgPrice = total / pricesArray.length;
         } else {
-            historicalAvgPrice = currentSpotPrice || 8.0;
+            previousMonthAvgPrice = currentSpotPrice || 8.0;
         }
     } catch (error) {
         console.error("Error fetching historical average:", error);
-        historicalAvgPrice = currentSpotPrice || 8.0;
+        previousMonthAvgPrice = currentSpotPrice || 8.0;
     }
 }
 
@@ -127,7 +153,7 @@ function calculateComparison() {
     const consumption = parseFloat(monthlyConsumptionInput.value) || 0;
 
     // Error handling - check if we have valid price data
-    if (!currentSpotPrice || !historicalAvgPrice) {
+    if (!currentSpotPrice || !previousMonthAvgPrice) {
         spotCurrentCostEl.textContent = "Ladataan...";
         spotCurrentPriceEl.textContent = "Haetaan hintoja";
         spotHistoricalCostEl.textContent = "Ladataan...";
@@ -135,13 +161,18 @@ function calculateComparison() {
         return;
     }
 
-    // Spot Calculation - Current hourly price (no profile multiplier)
+    // Spot Calculation - Current hourly price
     const effectiveCurrentSpotPrice = currentSpotPrice + margin;
     const spotCurrentMonthlyCost = (effectiveCurrentSpotPrice * consumption / 100) + spotBasic;
 
-    // Spot Calculation - Historical average from selected time range
-    const effectiveHistoricalSpotPrice = historicalAvgPrice + margin;
-    const spotHistoricalMonthlyCost = (effectiveHistoricalSpotPrice * consumption / 100) + spotBasic;
+    // Spot Calculation - PREVIOUS MONTH (always stays the same)
+    const effectivePrevMonthSpotPrice = previousMonthAvgPrice + margin;
+    const spotPrevMonthMonthlyCost = (effectivePrevMonthSpotPrice * consumption / 100) + spotBasic;
+
+    // Spot Calculation - SELECTED RANGE (for verdict/graph)
+    const currentHistAvg = historicalAvgPrice || previousMonthAvgPrice;
+    const effectiveSelectedSpotPrice = currentHistAvg + margin;
+    const spotSelectedMonthlyCost = (effectiveSelectedSpotPrice * consumption / 100) + spotBasic;
 
     // Fixed Calculation
     const fixedMonthlyCost = (fixedPrice * consumption / 100) + fixedBasic;
@@ -150,16 +181,17 @@ function calculateComparison() {
     spotCurrentCostEl.textContent = `${spotCurrentMonthlyCost.toFixed(2).replace('.', ',')} €/kk`;
     spotCurrentPriceEl.textContent = `${effectiveCurrentSpotPrice.toFixed(2).replace('.', ',')} snt/kWh (sis. marginaali)`;
 
-    // Update UI - Historical estimate
-    spotHistoricalCostEl.textContent = `${spotHistoricalMonthlyCost.toFixed(2).replace('.', ',')} €/kk`;
-    spotHistoricalPriceEl.textContent = `${effectiveHistoricalSpotPrice.toFixed(2).replace('.', ',')} snt/kWh (sis. marginaali)`;
+    // Update UI - Fixed Previous Month box (as requested: "ei muutu")
+    spotHistoricalCostEl.textContent = `${spotPrevMonthMonthlyCost.toFixed(2).replace('.', ',')} €/kk`;
+    spotHistoricalPriceEl.textContent = `${effectivePrevMonthSpotPrice.toFixed(2).replace('.', ',')} snt/kWh (sis. marginaali)`;
 
     // Update UI - Fixed
     fixedTotalCostEl.textContent = `${fixedMonthlyCost.toFixed(2).replace('.', ',')} €/kk`;
     fixedAvgPriceEl.textContent = `${fixedPrice.toFixed(2).replace('.', ',')} snt/kWh`;
 
-    updateVerdict(spotCurrentMonthlyCost, spotHistoricalMonthlyCost, fixedMonthlyCost);
-    updateGraph(spotCurrentMonthlyCost, spotHistoricalMonthlyCost, fixedMonthlyCost);
+    // Verdict and Graph use the SELECTED range (dynamic)
+    updateVerdict(spotCurrentMonthlyCost, spotSelectedMonthlyCost, fixedMonthlyCost);
+    updateGraph(spotCurrentMonthlyCost, spotSelectedMonthlyCost, fixedMonthlyCost);
 }
 
 function updateGraph(spotCurrent, spotHistorical, fixed) {
@@ -231,8 +263,14 @@ async function updateHistory() {
             fetchHistoricalWeather(start, end)
         ]);
 
+        // Calculate average for the selected range
+        if (prices.length > 0) {
+            const total = prices.reduce((acc, p) => acc + p.v, 0);
+            historicalAvgPrice = total / prices.length;
+        }
+
         renderHistoryChart(prices, weather);
-        // NOTE: Historical estimate is NOT updated here - it always uses last 30 days
+        calculateComparison(); // Update verdict and bars based on new selected range
     } catch (e) {
         console.error("History update failed", e);
     } finally {
@@ -324,6 +362,15 @@ function renderHistoryChart(prices, weather) {
         });
     }
 
+    // Parse dates for strict axis limits
+    const startParts = document.getElementById("startDate").value.split('-');
+    const endParts = document.getElementById("endDate").value.split('-');
+    // Create local midnight dates
+    const startObj = new Date(startParts[0], startParts[1] - 1, startParts[2]);
+    const endObj = new Date(endParts[0], endParts[1] - 1, endParts[2]);
+    // Set End Date to end of day for the axis
+    endObj.setHours(23, 59, 59);
+
     historyChart = new Chart(ctx, {
         type: 'line',
         data: { datasets },
@@ -333,11 +380,14 @@ function renderHistoryChart(prices, weather) {
             scales: {
                 x: {
                     type: 'time',
+                    min: startObj.getTime(), // Force start tick
+                    max: endObj.getTime(),   // Force end tick
                     time: {
                         unit: 'day',
                         displayFormats: {
                             day: 'd.M.'
-                        }
+                        },
+                        tooltipFormat: 'd.M.yyyy HH:mm'
                     },
                     title: { display: true, text: 'Aika' }
                 },
@@ -359,10 +409,9 @@ function renderHistoryChart(prices, weather) {
                     display: true,
                     position: 'top',
                     labels: {
-                        usePointStyle: true,
-                        pointStyle: 'line',
-                        boxWidth: 600,
-                        boxHeight: 5
+                        usePointStyle: false, // Käytetään laatikkoa jotta leveyttä voi säätää
+                        boxWidth: 80,         // Pitkä viiva
+                        boxHeight: 2          // Matala (kuin viiva)
                     }
                 }
             }
