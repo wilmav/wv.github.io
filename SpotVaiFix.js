@@ -257,7 +257,7 @@ function updateVerdict(spotCurrent, spotHistorical, fixedCost) {
         verdictEl.textContent = `Pörssisähkö valitun ajanjakson keskiarvolla on n. ${diff} € halvempi kuukaudessa kuin kiinteähintainen.`;
         verdictEl.className = "verdict-box spot-win";
     } else {
-        verdictEl.textContent = `Kiinteähintainen sopimus valitun ajanjakson keskiarvolla on n. ${diff} € halvempi kuukaudessa kuin pörssisähkö.`;
+        verdictEl.textContent = `Kiinteähintainen sopimus valitulla ajanjaksolla on n. ${diff} € halvempi kuukaudessa kuin pörssisähkö.`;
         verdictEl.className = "verdict-box fixed-win";
     }
 }

@@ -96,9 +96,9 @@
     border-radius: 12px;
     font-weight: 600;
     text-align: center;
-    background: #f0fdf4;
-    color: #166534;
-    border: 1px solid #bbf7d0;
+    background: transparent;
+    color: var(--k-text);
+    border: 1px solid transparent;
 }
 
 .verdict-box.cheaper-fixed {
@@ -437,6 +437,12 @@ input[type="date"] {
     /* Ensure it fills parent */
     justify-content: flex-start;
     /* Keep content at top */
+}
+
+/* Apply fade ONLY to the left card (inputs) */
+.fiber-layout .card {
+    mask-image: linear-gradient(to bottom, black 95%, transparent 100%);
+    -webkit-mask-image: linear-gradient(to bottom, black 95%, transparent 100%);
 }
 
 /* Uusi chart-header layout */
