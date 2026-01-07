@@ -50,6 +50,19 @@ async function init() {
     calculateComparison();
     await updateHistory();
 
+    // Initialize Flatpickr with Finnish locale
+    const fpConfig = {
+        locale: "fi",
+        dateFormat: "Y-m-d",
+        altInput: true,
+        altFormat: "d.m.Y",
+        allowInput: true,
+        maxDate: new Date() // Restrict to today max
+    };
+
+    flatpickr("#startDate", fpConfig);
+    flatpickr("#endDate", fpConfig);
+
     // Event Listeners
     [spotMarginInput, spotBasicFeeInput, fixedPriceInput, fixedBasicFeeInput, monthlyConsumptionInput].forEach(input => {
         input.addEventListener("input", () => {
@@ -87,15 +100,7 @@ function setDefaultDates() {
     startDateInput.value = startStr;
     endDateInput.value = endStr;
 
-    // Set max date to TODAY (allowing the user to select today if they want, but default is yesterday)
-    const today = new Date();
-    const tYear = today.getFullYear();
-    const tMonth = String(today.getMonth() + 1).padStart(2, '0');
-    const tDay = String(today.getDate()).padStart(2, '0');
-    const todayStr = `${tYear}-${tMonth}-${tDay}`;
-
-    startDateInput.max = todayStr;
-    endDateInput.max = todayStr;
+    // Max date handled by Flatpickr config in init()
 }
 
 // Fetch current spot price for display
@@ -120,11 +125,20 @@ async function fetchHistoricalAverage() {
         const now = new Date();
         now.setDate(now.getDate() - 1); // Eilinen
 
-        const endStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+        // Lasketaan edellinen kalenterikuukausi täsmällisesti
+        const prevMonthDate = new Date(now);
+        prevMonthDate.setMonth(prevMonthDate.getMonth() - 1);
 
-        const start = new Date(now);
-        start.setMonth(start.getMonth() - 1); // Kuukausi taaksepäin eilisestä
-        const startStr = `${start.getFullYear()}-${String(start.getMonth() + 1).padStart(2, '0')}-${String(start.getDate()).padStart(2, '0')}`;
+        // Edellisen kuukauden ensimmäinen ja viimeinen päivä
+        const startOfMonth = new Date(prevMonthDate.getFullYear(), prevMonthDate.getMonth(), 1);
+        const endOfMonth = new Date(prevMonthDate.getFullYear(), prevMonthDate.getMonth() + 1, 0);
+
+        const startStr = `${startOfMonth.getFullYear()}-${String(startOfMonth.getMonth() + 1).padStart(2, '0')}-${String(startOfMonth.getDate()).padStart(2, '0')}`;
+        const endStr = `${endOfMonth.getFullYear()}-${String(endOfMonth.getMonth() + 1).padStart(2, '0')}-${String(endOfMonth.getDate()).padStart(2, '0')}`;
+
+        // Päivitä päivämääränäyttö
+        const dateRangeText = `${startOfMonth.getDate()}.${startOfMonth.getMonth() + 1}. - ${endOfMonth.getDate()}.${endOfMonth.getMonth() + 1}.${endOfMonth.getFullYear()}`;
+        document.getElementById("fixedPeriodDates").textContent = `(${dateRangeText})`;
 
         const url = `https://sahkotin.fi/prices?fix&vat&start=${startStr}T00:00:00.000Z&end=${endStr}T23:59:59.999Z`;
         const res = await fetch(url);
@@ -141,6 +155,7 @@ async function fetchHistoricalAverage() {
     } catch (error) {
         console.error("Error fetching historical average:", error);
         previousMonthAvgPrice = currentSpotPrice || 8.0;
+        document.getElementById("fixedPeriodDates").textContent = "(Tietoja ei saatavilla)";
     }
 }
 
@@ -206,17 +221,20 @@ function updateGraph(spotCurrent, spotHistorical, fixed) {
 }
 
 function updateVerdict(spotCurrent, spotHistorical, fixedCost) {
-    // Compare the better spot option (lower of current or historical) with fixed
-    const bestSpot = Math.min(spotCurrent, spotHistorical);
-    const diff = Math.abs(bestSpot - fixedCost).toFixed(2).replace('.', ',');
+    // Determine the relevant spot price for comparison (using the selected historical range as primary context)
+    // Actually, usually users compare "Should I switch to Spot?" using historical data as the "realistic" expectation.
+    // The previous prompt text was "Pörssisähkö valitun ajanjakson keskiarvolla..." implies we prioritize spotHistorical for the text logic.
 
-    if (bestSpot < fixedCost) {
-        const whichSpot = spotCurrent < spotHistorical ? "tämän hetken hinnalla" : "valitun ajanjakson keskiarvolla";
-        verdictEl.textContent = `Pörssisähkö ${whichSpot} on n. ${diff} € halvempi kuukaudessa.`;
-        verdictEl.className = "verdict-box"; // Default green
+    // We compare spotHistorical to fixedCost for the main "winner" text, as spotCurrent is "theoretical".
+    const spotVal = spotHistorical;
+    const diff = Math.abs(spotVal - fixedCost).toFixed(2).replace('.', ',');
+
+    if (spotVal < fixedCost) {
+        verdictEl.textContent = `Pörssisähkö valitun ajanjakson keskiarvolla on n. ${diff} € halvempi kuukaudessa kuin kiinteähintainen.`;
+        verdictEl.className = "verdict-box spot-win";
     } else {
-        verdictEl.textContent = `Kiinteä hinta on n. ${diff} € halvemmin kuukaudessa.`;
-        verdictEl.className = "verdict-box cheaper-fixed"; // Blue style
+        verdictEl.textContent = `Kiinteähintainen sopimus valitun ajanjakson keskiarvolla on n. ${diff} € halvempi kuukaudessa kuin pörssisähkö.`;
+        verdictEl.className = "verdict-box fixed-win";
     }
 }
 

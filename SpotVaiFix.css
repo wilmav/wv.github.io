@@ -90,7 +90,8 @@
 }
 
 .verdict-box {
-    margin-top: 1rem;
+    margin-top: 0;
+    margin-bottom: 1.5rem;
     padding: 1rem;
     border-radius: 12px;
     font-weight: 600;
@@ -287,6 +288,23 @@ input[type="date"] {
     color: var(--k-accent-strong);
 }
 
+.result-date-range {
+    font-size: 0.8rem;
+    color: var(--k-text-soft);
+    margin-top: 0.2rem;
+    font-weight: 500;
+}
+
+.chart-date-badge {
+    background: #f1f5f9;
+    padding: 0.3rem 0.8rem;
+    border-radius: 99px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--k-text);
+    border: 1px solid #e2e8f0;
+}
+
 /* Footer Styles */
 .explanation-box {
     margin-top: 1rem;
@@ -399,60 +417,121 @@ input[type="date"] {
     justify-content: flex-start;
 }
 
-/* Painike pakotetaan kortin alaosaan, jolloin tyhjä tila jää painikkeen ja inputtien väliin */
-#updateHistoryBtn {
-    margin-top: 1.5rem;
-    padding-top: 0.8rem;
-    padding-bottom: 0.8rem;
-    margin-bottom: 0.2rem;
-}
-
-.results-card {
+/* Uusi chart-header layout */
+.chart-header-row {
     display: flex;
-    flex-direction: column;
-    height: 100%;
-    /* Fills the stretched column */
-    padding-top: 1.1rem;
-    box-sizing: border-box;
-    /* Ensures padding doesn't overflow height */
     justify-content: space-between;
-    /* Distribute content evenly */
+    align-items: center;
+    margin-bottom: 1rem;
+    flex-wrap: wrap;
+    gap: 1rem;
 }
 
-/* Ensure right header aligns with left headers (remove default margin) */
+.chart-header-row h2 {
+    white-space: nowrap;
+    margin-right: auto;
+}
+
+.chart-controls {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: #f8fafc;
+    padding: 0.3rem 0.5rem;
+    border-radius: 8px;
+    border: 1px solid #e2e8f0;
+}
+
+.chart-date-input {
+    border: 1px solid transparent;
+    background: transparent;
+    font-size: 0.9rem;
+    color: var(--k-text);
+    padding: 0.2rem 0.1rem;
+    width: 125px;
+    /* Hieman leveämpi jotta pvm mahtuu */
+    font-family: inherit;
+    cursor: pointer;
+}
+
+.chart-date-input:focus {
+    outline: none;
+    background: #ffffff;
+    border-color: var(--k-accent);
+    border-radius: 4px;
+}
+
+.date-sep {
+    color: var(--k-text-soft);
+    font-weight: 500;
+}
+
+.refresh-button {
+    background: #ffffff;
+    border: 1px solid #cbd5e1;
+    color: var(--k-text);
+    border-radius: 6px;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 1.1rem;
+    margin-left: 0.5rem;
+    transition: all 0.2s;
+    flex-shrink: 0;
+    /* Estää painikkeen kasaan puristumisen */
+    width: auto;
+    padding: 0 1rem;
+    font-size: 0.9rem;
+    font-weight: 600;
+}
+
+.refresh-button:hover {
+    background: var(--k-accent);
+    border-color: var(--k-accent);
+    color: #fff;
+}
+
+/* Header alignment fixes */
+.card h2,
 .results-card h2 {
     margin-top: 0;
-    margin-bottom: 0.5rem;
-    /* Allow space-between to handle more gap if needed, but keeping small min */
-    border-bottom: 2px solid var(--k-accent);
-    padding-bottom: 0.5rem;
-    display: inline-block;
+    padding-top: 0;
+    margin-bottom: 0.8rem;
 }
 
-.result-box {
-    padding: 0.7rem 0.9rem;
-    /* Slightly varied padding */
-    border-radius: 12px;
-    background: var(--k-card-alt);
-    border: 1px solid var(--k-border);
-    text-align: center;
+.card,
+.results-card {
+    padding: 1.5rem;
 }
 
-.results-container {
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-    margin-top: 0.2rem;
+/* Verdict box visual fix */
+.verdict-box {
+    margin-top: 0.5rem;
+    margin-bottom: 1rem;
+    padding: 1rem;
+    border-radius: 8px;
+    font-weight: 600;
+    text-align: left;
+    font-size: 1rem;
 }
 
-.comparison-graph {
-    margin-top: 0;
-    /* Let space-between handle this */
-    display: flex;
-    flex-direction: column;
-    gap: 0.4rem;
+.verdict-box.spot-win {
+    background: #fffbeb;
+    /* Light yellow bg */
+    color: #b45309;
+    /* Dark amber text */
+    border: 1px solid #fcd34d;
+    /* Yellow border */
 }
 
-.result-label {
-    margin-bottom: 0.2rem;
+.verdict-box.fixed-win {
+    background: #f5f3ff;
+    /* Light violet bg */
+    color: #7c3aed;
+    /* Dark violet text */
+    border: 1px solid #c4b5fd;
+    /* Violet border */
 }

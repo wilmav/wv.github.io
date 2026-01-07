@@ -11,6 +11,10 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation"></script>
+    <!-- Flatpickr -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script src="https://npmcdn.com/flatpickr/dist/l10n/fi.js"></script>
 </head>
 
 <body>
@@ -59,7 +63,7 @@
                             </div>
 
                             <div class="card">
-                                <h2>Kiinteähintainen sopimus</h2>
+                                <h2>Kiinteähintainen sopimus (Fix)</h2>
                                 <div class="input-group">
                                     <label for="fixedPrice">Sähkön hinta (snt/kWh)</label>
                                     <input type="number" id="fixedPrice" step="0.01" value="7.50">
@@ -81,19 +85,7 @@
                                 </div>
                             </div>
 
-                            <div class="card">
-                                <h2>Aikaväli ja historia</h2>
-                                <div class="input-group">
-                                    <label for="startDate">Alkupäivä</label>
-                                    <input type="date" id="startDate">
-                                </div>
-                                <div class="input-group">
-                                    <label for="endDate">Loppupäivä</label>
-                                    <input type="date" id="endDate">
-                                </div>
-                                <button id="updateHistoryBtn" class="primary-button" style="width: 100%;">Päivitä
-                                    historia</button>
-                            </div>
+
                         </div>
 
                         <!-- Oikea sarake: Tulokset -->
@@ -115,15 +107,13 @@
                                             kuukaudelta</div>
                                         <div id="spotHistoricalCost" class="result-value">- €/kk</div>
                                         <div id="spotHistoricalPrice" class="result-subtext">- snt/kWh</div>
+                                        <div id="fixedPeriodDates" class="result-date-range"></div>
                                         <div class="result-info">✓ Perustuu todellisiin hintoihin</div>
                                     </div>
                                     <div class="result-box fixed-result">
                                         <div class="result-label">Kiinteä hinta</div>
                                         <div id="fixedTotalCost" class="result-value">- €/kk</div>
                                         <div id="fixedAvgPrice" class="result-subtext">- c/kWh</div>
-                                    </div>
-                                    <div id="verdict" class="verdict-box">
-                                        Syötä tiedot nähdäksesi vertailun.
                                     </div>
                                 </div>
 
@@ -163,7 +153,20 @@
 
                     <!-- Historiakaavio täydellä leveydellä alhaalla -->
                     <div class="card chart-card" style="margin-top: 2rem;">
-                        <h2>Hinta- ja säähistoria</h2>
+                        <div class="chart-header-row">
+                            <h2 style="margin: 0; border: none;">Hinta- ja säähistoria</h2>
+                            <div class="chart-controls">
+                                <input type="text" id="startDate" class="chart-date-input" placeholder="pp.kk.vvvv">
+                                <span class="date-sep">-</span>
+                                <input type="text" id="endDate" class="chart-date-input" placeholder="pp.kk.vvvv">
+                                <button id="updateHistoryBtn" class="refresh-button">↻ Päivitä historia</button>
+                            </div>
+                        </div>
+
+                        <div id="verdict" class="verdict-box">
+                            Syötä tiedot nähdäksesi vertailun.
+                        </div>
+
                         <div class="chart-container">
                             <canvas id="historyChart"></canvas>
                         </div>
