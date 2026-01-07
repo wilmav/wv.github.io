@@ -1,3 +1,6 @@
+// Lumivuodet Visualization - v1.0 (Winter Lanes)
+// Author: Antigravity
+// Date: 2026-01-07
 document.addEventListener('DOMContentLoaded', () => {
     initApp();
 });
