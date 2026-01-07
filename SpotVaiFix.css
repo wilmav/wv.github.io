@@ -67,6 +67,28 @@
     margin-top: 0.2rem;
 }
 
+.result-warning {
+    font-size: 0.8rem;
+    color: #dc2626;
+    margin-top: 0.5rem;
+    font-weight: 600;
+}
+
+.result-info {
+    font-size: 0.8rem;
+    color: #059669;
+    margin-top: 0.5rem;
+    font-weight: 600;
+}
+
+.input-hint {
+    font-size: 0.75rem;
+    color: var(--k-text-soft);
+    font-style: italic;
+    margin-top: 0.2rem;
+    display: block;
+}
+
 .verdict-box {
     margin-top: 1rem;
     padding: 1rem;
