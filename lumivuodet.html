@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="fi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lumivuodet - Talvikalenteri</title>
+    <link rel="stylesheet" href="tyyli.css">
+    <link rel="stylesheet" href="lumivuodet.css">
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
+    <!-- Fontit ja ikonit tarvittaessa -->
+</head>
+
+<body>
+
+    <header>
+        <div class="app-title">
+            Sovellukset<span class="app-title-com">.com</span>
+        </div>
+
+        <nav>
+            <ul>
+                <li><a href="index.html">Etusivu</a></li>
+                <li><a href="kuitulaskuri.html">Kuitulaskuri</a></li>
+                <li><a href="SpotVaiFix.html">SpotVaiFix</a></li>
+                <li><a href="lumivuodet.html" class="active">Lumivuodet</a></li>
+                <li><a href="yhteystiedot.html">Yhteystiedot</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <div class="content-wrapper">
+        <main>
+            <div class="content-padding">
+                <section class="app-shell">
+                    <div class="top-bar">
+                        <h1>Lumivuodet</h1>
+                        <p class="lead">Vertaille talvien lumitilannetta ja kestoa eri vuosina.</p>
+                    </div>
+
+                    <!-- Asetukset ja valinnat -->
+                    <div class="controls-container">
+                        <div class="control-group">
+                            <label for="locationSelect">Paikkakunta</label>
+                            <select id="locationSelect" class="styled-select">
+                                <option value="helsinki">Helsinki (Kaisaniemi)</option>
+                                <option value="jyvaskyla">Jyväskylä</option>
+                                <option value="sodankyla">Sodankylä</option>
+                            </select>
+                        </div>
+
+                        <div class="control-group">
+                            <label>Vuodet</label>
+                            <div class="year-selector" id="yearSelector">
+                                <!-- Checkboxit generoidaan JavaScriptillä -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Visualisointi -->
+                    <div id="visualizationContainer" class="visualization-container">
+                        <!-- Tähän generoidaan talvipalkit -->
+                    </div>
+
+                    <div class="legend">
+                        <div class="legend-item">
+                            <span class="symbol symbol-snow">❄</span> Ensilumi
+                        </div>
+                        <div class="legend-item">
+                            <span class="bar-sample bar-snow"></span> Lumipeite
+                        </div>
+                        <div class="legend-item">
+                            <span class="bar-sample bar-ground"></span> Lumeton
+                        </div>
+                        <div class="legend-item">
+                            <span class="symbol symbol-melt">💧</span> Pysyvä sulaminen
+                        </div>
+                        <div class="legend-item">
+                            <span class="bar-sample bar-dry" style="background-color: #fde047;"></span> Sateeton jakso
+                        </div>
+                        <div class="legend-item">
+                            <span class="bar-sample bar-heat" style="background-color: #fca5a5;"></span> Helle / Lämmin
+                        </div>
+                    </div>
+
+                </section>
+
+                <footer class="app-footer">
+                    <div class="footer-content">
+                        <div class="source-section">
+                            <h4>Tietolähteet</h4>
+                            <p>Säädata: Ilmatieteen laitos (Avoin data).</p>
+                        </div>
+                    </div>
+                </footer>
+            </div>
+        </main>
+    </div>
+
+    <script src="lumivuodet.js"></script>
+</body>
+
+</html>
