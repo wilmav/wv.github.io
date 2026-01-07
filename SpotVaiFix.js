@@ -282,9 +282,9 @@ function loadSettings() {
         if (settings) {
             spotMarginInput.value = settings.spotMargin || "0.50";
             spotBasicFeeInput.value = settings.spotBasicFee || "4.50";
-            fixedPriceInput.value = settings.fixedPrice || "7.50";
-            fixedBasicFeeInput.value = settings.fixedBasicFee || "0.00";
-            monthlyConsumptionInput.value = settings.monthlyConsumption || "200";
+            fixedPriceInput.value = settings.fixedPrice || "8.50";
+            fixedBasicFeeInput.value = settings.fixedBasicFee || "3.90";
+            monthlyConsumptionInput.value = settings.monthlyConsumption || "300";
         }
     } catch (e) {
         console.error("Error loading settings:", e);
