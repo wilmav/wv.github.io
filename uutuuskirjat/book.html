@@ -31,31 +31,22 @@
                 <div id="detail-container"
                     style="background: white; padding: 2rem; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); margin-top: 2rem;">
 
-                    <!-- Header with Title -->
+                    <!-- Header with Title & Back Link -->
                     <div
                         style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:1rem; flex-wrap:wrap; gap:1rem; width:100%;">
                         <h2 id="book-title" style="margin:0; flex:1;">Ladataan...</h2>
-                        <!-- Info Icon / Disclaimer -->
-                        <div class="info-icon-container" tabindex="0" style="position:relative;">
-                            <div class="info-icon">i</div>
-                            <div class="info-tooltip" style="right:0; left:auto; transform:none; width:280px;">
-                                <p><strong>Lähteet:</strong></p>
-                                <ul style="margin: 4px 0 8px 1.2rem; padding:0; list-style-type: disc;">
-                                    <li><a href="https://www.finna.fi" target="_blank" rel="noopener">Finna.fi</a>
-                                        (Perustiedot/Aiheet)</li>
-                                    <li><a href="https://books.google.com" target="_blank" rel="noopener">Google
-                                            Books</a> (Kuvaukset ja kannet)</li>
-                                    <li><a href="https://openlibrary.org" target="_blank" rel="noopener">Open
-                                            Library</a> (Arvostelut ja kannet)</li>
-                                </ul>
-                                <p>Tiedot ovat suuntaa-antavia.</p>
-                            </div>
-                        </div>
+                        <a href="index.html"
+                            style="margin-left:auto; color:#57606a; text-decoration:none; font-weight:500; font-size:1rem; display:flex; align-items:center;">
+                            ← Takaisin listaukseen
+                        </a>
                     </div>
 
                     <div style="display:flex; gap: 2rem; flex-wrap: wrap; align-items: start;">
-                        <div id="book-cover"
-                            style="width: 160px; aspect-ratio: 2/3; background: #f6f8fa; flex-shrink: 0; border-radius: 4px; overflow:hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+                        <div style="flex-shrink:0; width:160px; display:flex; flex-direction:column; gap:12px;">
+                            <div id="book-cover"
+                                style="width: 100%; aspect-ratio: 2/3; background: #f6f8fa; border-radius: 4px; overflow:hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+                            </div>
+
                         </div>
                         <div class="info" style="flex:1; min-width: 250px;">
                             <!-- Author prominent -->
@@ -90,6 +81,8 @@
                                 <div id="similar-list"
                                     style="display:flex; gap:16px; overflow-x:auto; padding-bottom:8px;"></div>
                             </div>
+
+
                         </div>
                     </div>
                 </div>
