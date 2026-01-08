@@ -182,15 +182,8 @@
                 let res = await fetch(`https://www.googleapis.com/books/v1/volumes?q=${q}&maxResults=1`);
                 let data = await res.json();
 
-                // FALLBACK: If no results or no image, and we have original title, try that.
-                if ((!data.items || !data.items[0].volumeInfo.imageLinks) && originalTitle) {
-                    const author = extractAuthor(book);
-                    console.log("Trying fallback to original title:", originalTitle);
-                    const q2 = `intitle:${encodeURIComponent(originalTitle)}+inauthor:${encodeURIComponent(author)}`;
-                    const res2 = await fetch(`https://www.googleapis.com/books/v1/volumes?q=${q2}&maxResults=1`);
-                    const data2 = await res2.json();
-                    if (data2.items) data = data2; // Use this data if found
-                }
+                // NO FALLBACK to original title anymore.
+                // Strict matching only to avoid English covers/descriptions for Finnish books.
 
                 if (data.items && data.items.length > 0) {
                     const info = data.items[0].volumeInfo;
@@ -347,6 +340,7 @@
                     if (clean.includes(':')) {
                         clean = clean.split(':')[0];
                     }
+                    if (clean.includes('/')) clean = clean.split('/')[0];
                     clean = clean.trim().toLowerCase().replace(/\.$/, ''); // Remove trailing dot
 
                     if (uniqueMap.has(clean)) {
@@ -477,7 +471,8 @@
                     <div style="width:100%; aspect-ratio:2/3; background:#f0f0f0; border-radius:4px; overflow:hidden; margin-bottom:4px; position:relative;">
                         ${imgSrc ? `<img src="${imgSrc}" style="width:100%; height:100%; object-fit:cover;" onerror="this.style.display='none'">` : '<div style="width:100%; height:100%; display:flex; align-items:center; justify-content:center; color:#ccc; font-size:0.8rem;">Ei kuvaa</div>'}
                     </div>
-                    <div style="font-size:0.75rem; font-weight:500; line-height:1.2; overflow:hidden; text-overflow:ellipsis; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical;">${b.title}</div>
+                    <div style="font-size:0.75rem; font-weight:600; line-height:1.2; overflow:hidden; text-overflow:ellipsis; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; margin-bottom:2px;">${b.title}</div>
+                    <div style="font-size:0.7rem; color:#666; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${extractAuthor(b)}</div>
                 `;
                 list.appendChild(el);
             });
@@ -522,13 +517,13 @@
             `;
         }
 
-        async function enrichBookData(title, author) {
+        async function enrichWithFinnaCopies(title, author) {
             if (!title) return;
-            console.log("Attempting to enrich data for", title);
+            console.log("Attempting to enrich data via Finna copies for", title);
 
-            // Search for other records of the same book (e.g. Helmet libraries often have descriptions)
+            // Search for other records (e.g. audiobook, ebook) that might have a summary
             const params = new URLSearchParams({
-                lookfor: `"${title}" ${author}`, // Quote title for exact phrase match
+                lookfor: `"${title}" ${author}`,
                 type: 'AllFields',
                 limit: 5,
                 'field[]': ['summary', 'id']
@@ -539,18 +534,23 @@
                 const data = await res.json();
 
                 if (data.records && data.records.length > 0) {
-                    // Find the first record that actually has a summary
+                    // Find any record that has a non-empty summary
                     const betterRecord = data.records.find(r => r.summary && r.summary.length > 0);
+
                     if (betterRecord) {
-                        console.log("Found better description from", betterRecord.id);
+                        console.log("Found better description from sibling record:", betterRecord.id);
                         const desc = Array.isArray(betterRecord.summary) ? betterRecord.summary.join('\n\n') : betterRecord.summary;
+
+                        // Update UI if current description is empty
                         const dEl = document.getElementById('book-desc');
-                        dEl.innerText = desc;
-                        dEl.parentElement.style.display = 'block'; // Show if found
+                        if (dEl.innerText.trim() === "") {
+                            dEl.innerText = desc;
+                            dEl.parentElement.style.display = 'block';
+                        }
                     }
                 }
             } catch (e) {
-                console.warn("Enrichment failed", e);
+                console.warn("Finna enrichment failed", e);
             }
         }
 
