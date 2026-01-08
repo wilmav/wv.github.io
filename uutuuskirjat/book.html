@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="fi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kirjan tiedot | Kirjavinkit</title>
+    <link rel="stylesheet" href="../tyyli.css">
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <div class="container">
+        <header class="app-header">
+            <a href="index.html" style="text-decoration:none; color:inherit;">
+                <h1>Kirjavinkit <span class="beta-tag">Beta</span></h1>
+            </a>
+            <p class="subtitle"><a href="index.html">← Takaisin etusivulle</a></p>
+        </header>
+
+        <section class="book-detail">
+            <div id="detail-container"
+                style="background: white; padding: 2rem; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
+                <h2 id="book-title">Ladataan...</h2>
+                <div style="display:flex; gap: 2rem; margin-top: 1rem; flex-wrap: wrap;">
+                    <div id="book-cover" style="width: 200px; height: 300px; background: #eee; flex-shrink: 0;"></div>
+                    <div class="info" style="flex:1;">
+                        <h3 id="book-author" style="color: var(--primary-color);"></h3>
+                        <p id="book-year" style="color: #666; font-weight: bold;"></p>
+                        <p id="book-desc" style="line-height: 1.6; margin-top: 1rem;"></p>
+
+                        <div style="margin-top: 2rem; padding: 1rem; background: #fafafa; border-radius: 8px;">
+                            <h4>Työkalut</h4>
+                            <button class="btn-text" id="find-recs-btn">Hae samankaltaisia</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <div id="recommendations-area"></div>
+
+    </div>
+
+    <script>
+        // Placeholder simple script for interaction
+        const params = new URLSearchParams(window.location.search);
+        const bookId = params.get('id');
+
+        if (bookId) {
+            document.getElementById('book-title').textContent = "Kirja ID: " + bookId;
+            // logic to fetch details would go here
+        }
+
+        document.getElementById('find-recs-btn').addEventListener('click', () => {
+            alert('Tämä ominaisuus (suosittelut) on tulossa pian!');
+        });
+    </script>
+</body>
+
+</html>

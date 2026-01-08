@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="fi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Uutuuskirjat (Beta)</title>
+    <link rel="stylesheet" href="../tyyli.css">
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+    <header>
+        <a href="../index.html" class="app-logo-link" style="text-decoration:none;">
+            <div class="app-title">Sovellukset<span class="app-title-com">.com</span></div>
+        </a>
+        <nav>
+            <ul>
+                <li><a href="../index.html">Etusivu</a></li>
+                <!-- Current page marked visually or just valid link -->
+                <li><strong>Kirjavinkit</strong></li>
+            </ul>
+        </nav>
+        <div style="margin-top: auto; padding: 1rem; font-size: 0.85rem; opacity: 0.8;">
+            <p>Seuraa suosikkikirjailijoitasi ja löydä uutta.</p>
+        </div>
+    </header>
+
+    <div class="content-wrapper">
+        <main>
+            <div class="app-hero">
+                <h1>Kirjavinkit <span class="beta-tag"
+                        style="background:var(--accent); color:black; font-size: 0.5em; vertical-align: middle; opacity: 0.8;">BETA</span>
+                </h1>
+                <p class="hero-subtitle">Seuraa kirjailijoita, löydä uutuudet.</p>
+            </div>
+            <section class="user-authors">
+                <div class="section-header">
+                    <h2>Suosikkini</h2>
+                    <div class="controls">
+                        <button id="add-author-btn" class="btn-text">+ Lisää kirjailija</button>
+                    </div>
+                </div>
+
+                <!-- Search Bar (Hidden by default) -->
+                <div id="author-search-panel" class="search-panel hidden">
+                    <input type="text" id="author-search-input"
+                        placeholder="Hae kirjailijan nimellä (esim. Tove Jansson)...">
+                    <button id="search-action-btn">Hae</button>
+                    <div id="search-results" class="search-results-container">
+                        <div id="search-results-inner" class="search-results"></div>
+                    </div>
+                </div>
+
+                <div id="author-list" class="author-grid">
+                    <!-- Authors will be injected here via JS -->
+                    <div class="loading-state">Ladataan tietoja...</div>
+                </div>
+            </section>
+
+            <section class="latest-releases">
+                <div class="section-header">
+                    <h2>Uusimmat julkaisut</h2>
+                    <div class="filters-container">
+                        <span class="filter-label">Kirjojen kieli:</span>
+                        <div class="filters" id="lang-filters">
+                            <label class="filter-checkbox">
+                                <input type="checkbox" value="fin" checked> suomi
+                            </label>
+                            <label class="filter-checkbox">
+                                <input type="checkbox" value="swe" checked> ruotsi
+                            </label>
+                            <label class="filter-checkbox">
+                                <input type="checkbox" value="eng" checked> englanti
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                <div id="book-grid" class="book-grid">
+                    <!-- Books will be injected here -->
+                </div>
+            </section>
+        </main>
+
+        <footer class="app-footer">
+            <p>Lähteet: Kirjojen tiedot haetaan <a href="https://www.finna.fi" target="_blank"
+                    rel="noopener">Finna.fi</a> -rajapinnasta.</p>
+            <p class="disclaimer">Palvelu on kokeiluasteella. Tiedot tarjotaan sitoumuksetta, eikä niiden oikeellisuutta
+                voida taata kaikissa tilanteissa.</p>
+        </footer>
+    </div>
+
+    <!-- Data loaded as JS variables for file:// compatibility -->
+    <script src="data/authors.js"></script>
+    <script src="data/books.js"></script>
+    <script src="app.js"></script>
+</body>
+
+</html>

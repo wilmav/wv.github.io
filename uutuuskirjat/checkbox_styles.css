@@ -1,0 +1,22 @@
+/* Filter Checkboxes */
+.filter-checkbox {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.95rem;
+    cursor: pointer;
+    user-select: none;
+    color: #555;
+    font-weight: 500;
+}
+
+.filter-checkbox input[type="checkbox"] {
+    accent-color: #DFAF2B;
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+}
+
+.filter-checkbox:hover {
+    color: #DFAF2B;
+}
