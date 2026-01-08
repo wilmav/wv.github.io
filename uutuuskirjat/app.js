@@ -151,6 +151,17 @@ document.addEventListener('DOMContentLoaded', async () => {
             };
         }
 
+        let isEbook = false;
+        let isAudio = false;
+
+        if (book.formats) {
+            book.formats.forEach(f => {
+                const val = (typeof f === 'string' ? f : f.value) || "";
+                if (val.includes("eBook") || val.includes("EBook")) isEbook = true;
+                if (val.includes("AudioBook") || val.includes("Sound")) isAudio = true;
+            });
+        }
+
         return {
             id: book.id,
             title: book.title,
@@ -161,7 +172,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             image: book.images && book.images.length ? `https://api.finna.fi${book.images[0]}` : null,
             language: book.languages,
             series: seriesInfo,
-            formats: book.formats || []
+            formats: { isEbook, isAudio }
         };
     }
 
@@ -451,8 +462,9 @@ document.addEventListener('DOMContentLoaded', async () => {
                     <span class="author">${book.author}</span>
                     <div style="display:flex; gap:6px; flex-wrap:wrap; margin-top:4px;">
                         <span class="year-tag">${book.year}</span>
-                        ${book.formats.includes('EBook') ? '<span class="year-tag" style="background:#eef; color:#44a;">E-kirja</span>' : ''}
-                        ${book.formats.includes('Sound') ? '<span class="year-tag" style="background:#efe; color:#064;">Äänikirja</span>' : ''}
+                        ${book.formats.isEbook ? '<span class="year-tag" style="background:#eef; color:#44a;">E-kirja</span>' : ''}
+                        ${book.formats.isAudio ? '<span class="year-tag" style="background:#efe; color:#064;">Äänikirja</span>' : ''}
+                        ${!book.formats.isEbook && !book.formats.isAudio ? '<span class="year-tag" style="background:#f0f0f0; color:#444;">Kirja</span>' : ''}
                     </div>
                 </div>
             `;
