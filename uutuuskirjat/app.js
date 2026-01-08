@@ -101,42 +101,41 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     async function searchFinnaBooks(authorName, minYear) {
-        // Swap "Penny, Louise" -> "Louise Penny" for better search results
-        let searchName = authorName;
-        if (searchName.includes(',')) {
-            const parts = searchName.split(',').map(s => s.trim());
-            if (parts.length === 2) {
-                searchName = `${parts[1]} ${parts[0]}`;
-            }
-        }
+        // Did not swap "Penny, Louise" -> "Louise Penny" because type=Author expects "Last, First" often.
+        const searchName = authorName;
 
         // Use "author" search field explicitly.
         // limit: 100 to get a good coverage of "all" books as requested.
-        const params = new URLSearchParams({
-            "lookfor": `author: "${searchName}"`,
-            "type": "AllFields",
-            "filter[]": [
-                '~format:"0/Book/"',
-                '~format:"0/EBook/"',
-                '~format:"0/Sound/"'
-            ],
-            "sort": "main_date_str desc",
-            "limit": 100,
-            "field[]": ["id", "title", "authors", "year", "images", "summary", "languages", "series", "uniformTitles", "formats"]
-        });
+        // limit: 100 to get a good coverage of "all" books as requested.
+        const params = new URLSearchParams();
+        params.append("lookfor", searchName);
+        params.append("type", "Author");
+        params.append("sort", "main_date_str desc");
+        params.append("limit", "100");
+
+        const fields = ["id", "title", "authors", "year", "images", "summary", "languages", "series", "uniformTitles", "formats"];
+        fields.forEach(f => params.append("field[]", f));
 
         // Finna API handling
         const url = `${API_SEARCH}?${params.toString()}`;
-        const res = await fetch(url);
-        const data = await res.json();
-        const records = data.records || [];
+        console.log("Fetching books with URL:", url);
 
-        return records
-            .filter(book => {
-                const y = parseInt(book.year);
-                return !isNaN(y) && y >= minYear;
-            })
-            .map(normalizeBookData);
+        try {
+            const res = await fetch(url);
+            const data = await res.json();
+            const records = data.records || [];
+            console.log(`Found ${records.length} books for ${searchName}`);
+
+            return records
+                .filter(book => {
+                    const y = parseInt(book.year);
+                    return !isNaN(y) && y >= minYear;
+                })
+                .map(normalizeBookData);
+        } catch (e) {
+            console.error("Search failed for " + searchName, e);
+            return [];
+        }
     }
 
     function normalizeBookData(book) {
@@ -209,7 +208,11 @@ document.addEventListener('DOMContentLoaded', async () => {
                 if (r.authors) {
                     Object.values(r.authors).forEach(roleObj => {
                         if (roleObj) {
-                            Object.keys(roleObj).forEach(name => foundAuthors.add(name));
+                            Object.keys(roleObj).forEach(name => {
+                                // Normalize: trim and collapse multiple spaces (e.g. "Penny,  Louise" -> "Penny, Louise")
+                                const normalized = name.replace(/\s+/g, ' ').trim();
+                                if (normalized) foundAuthors.add(normalized);
+                            });
                         }
                     });
                 }
@@ -223,7 +226,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 return queryTokens.every(token => lowerName.includes(token));
             });
 
-            // SORT: Prioritize names starting with query (e.g. "Penny..." -> "Penny, Louise")
+            // Sort and log
             const sortedAuthors = filteredAuthors.sort((a, b) => {
                 const lowerA = a.toLowerCase();
                 const lowerB = b.toLowerCase();
@@ -237,6 +240,9 @@ document.addEventListener('DOMContentLoaded', async () => {
 
                 return lowerA.localeCompare(lowerB);
             });
+
+            console.log("Found authors (Set):", [...foundAuthors]);
+            console.log("Sorted authors:", sortedAuthors);
 
             if (sortedAuthors.length === 0) {
                 // Fallback to partial matches
