@@ -474,7 +474,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     ${imageHtml}
                 </div>
                 <div class="book-info">
-                    <h3 class="book-title" title="${book.title}">${book.title}</h3>
+                    <h3 class="book-title" title="${book.title}">${book.cleanTitle || book.title}</h3>
                     ${book.originalTitle ? `<div style="font-size:0.75rem; color:#666; font-style:italic; margin-bottom:4px;">Alkuteos: ${book.originalTitle}</div>` : ''}
                     <span class="author">${book.author}</span>
                     <div style="display:flex; gap:6px; flex-wrap:wrap; margin-top:4px;">

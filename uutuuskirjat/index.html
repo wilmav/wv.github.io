@@ -78,15 +78,28 @@
                         <span class="filter-label">Kieli:</span>
                         <div class="filters" id="lang-filters">
                             <label class="filter-checkbox">
-                                <input type="checkbox" value="fin" checked> suomi
+                                <input type="checkbox" value="fin"> suomi
                             </label>
                             <label class="filter-checkbox">
-                                <input type="checkbox" value="swe" checked> ruotsi
+                                <input type="checkbox" value="swe"> ruotsi
                             </label>
                             <label class="filter-checkbox">
-                                <input type="checkbox" value="eng" checked> englanti
+                                <input type="checkbox" value="eng"> englanti
                             </label>
                         </div>
+                        <script>
+                            // Prevent flash of wrong state
+                            (function() {
+                                try {
+                                    var s = localStorage.getItem('selectedLanguages');
+                                    var l = s ? JSON.parse(s) : ['fin', 'swe', 'eng'];
+                                    var inputs = document.getElementById('lang-filters').getElementsByTagName('input');
+                                    for(var i=0; i<inputs.length; i++) {
+                                        inputs[i].checked = l.indexOf(inputs[i].value) !== -1;
+                                    }
+                                } catch(e){}
+                            })();
+                        </script>
                     </div>
                 </div>
                 <div id="book-grid" class="book-grid">
