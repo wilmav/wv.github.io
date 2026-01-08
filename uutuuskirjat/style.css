@@ -24,42 +24,35 @@ main {
 
 /* Header */
 /* Sidebar Styling (overrides tyyli.css header) */
+/* Header */
+/* Sidebar Styling (overrides tyyli.css header) */
 header {
     background: linear-gradient(180deg, #FF9900 0%, #FFCC00 100%) !important;
     color: white !important;
     border-right: none !important;
     box-shadow: 4px 0 12px rgba(255, 153, 0, 0.1);
+    /* Enforce layout for bottom alignment */
+    display: flex !important;
+    flex-direction: column !important;
+    min-height: 100vh !important;
+    height: 100vh !important;
 }
 
 header .app-title {
     color: white !important;
-    margin-bottom: 1rem !important;
-    /* Reduced from 2rem */
-    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-header nav ul li a {
-    color: rgba(255, 255, 255, 0.9) !important;
-    border-left: 3px solid transparent;
-    padding-left: 10px;
-}
-
-header nav {
-    justify-content: flex-start !important;
-    padding-top: 1rem;
-    /* Reduced because we have a logo area now */
-    margin-top: 2rem;
-}
-
-/* Logo Area Placeholder */
-header .app-title {
-    margin-top: 1rem !important;
     margin-bottom: 2rem !important;
-    /* Ensuring space for future logo */
-    /* Ensuring space for future logo */
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     min-height: auto;
     display: block;
     margin-top: 1rem !important;
+}
+
+/* HIGH SPECIFICITY to override tyyli.css */
+header .app-title .app-title-com,
+.app-title-com {
+    color: #000000 !important;
+    opacity: 0.8 !important;
+    /* Slight transparency for style, remove if unwanted */
 }
 
 .app-logo-link {
@@ -67,16 +60,16 @@ header .app-title {
     display: block;
 }
 
-/* Logo: Sovellukset (White) .com (Black/Dark) on Yellow */
-header .app-title {
-    color: white !important;
+header nav {
+    flex-grow: 0 !important;
+    /* CRITICAL: Prevent taking up all space so margin-top: auto works */
+    justify-content: flex-start !important;
+    padding-top: 1rem;
+    margin-top: auto !important;
+    /* Push to bottom */
     margin-bottom: 2rem !important;
-    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-header .app-title-com {
-    color: #1f2328 !important;
-    /* Dark color for contrast on yellow */
+    display: flex !important;
+    flex-direction: column !important;
 }
 
 header nav ul li a {
@@ -92,14 +85,7 @@ header nav ul li strong {
     display: block;
     font-weight: 700;
     padding-top: 0.4rem;
-    /* match link padding roughly */
     padding-bottom: 0.4rem;
-}
-
-header nav {
-    justify-content: flex-start !important;
-    padding-top: 1rem;
-    margin-top: 1rem;
 }
 
 header nav ul li a:hover {
