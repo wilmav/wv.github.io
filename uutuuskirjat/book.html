@@ -60,12 +60,112 @@
         const bookId = params.get('id');
 
         if (bookId) {
-            document.getElementById('book-title').textContent = "Kirja ID: " + bookId;
-            // logic to fetch details would go here
+            fetchBookDetails(bookId);
+        } else {
+            document.getElementById('book-title').textContent = "Virhe: Kirjan tunnistetta ei annettu.";
+        }
+
+        async function fetchBookDetails(id) {
+            const apiParams = new URLSearchParams();
+            apiParams.append('lookfor', id);
+            apiParams.append('type', 'id');
+            apiParams.append('field[]', 'title');
+            apiParams.append('field[]', 'authors');
+            apiParams.append('field[]', 'year');
+            apiParams.append('field[]', 'summary');
+            apiParams.append('field[]', 'images');
+
+            // Allow getting data regardless of format
+
+            const url = `https://api.finna.fi/v1/search?${apiParams.toString()}`;
+
+            try {
+                const res = await fetch(url);
+                const data = await res.json();
+
+                if (data.records && data.records.length > 0) {
+                    let book = data.records[0];
+                    renderBook(book);
+
+                    // Automatic enrichment: If summary is missing, try to find a better record
+                    if (!book.summary || book.summary.length === 0) {
+                        enrichBookData(book.title, extractAuthor(book));
+                    }
+                } else {
+                    document.getElementById('book-title').textContent = "Kirjaa ei löytynyt.";
+                }
+            } catch (e) {
+                console.error(e);
+                document.getElementById('book-title').textContent = "Virhe ladattaessa tietoja.";
+            }
+        }
+
+        async function enrichBookData(title, author) {
+            if (!title) return;
+            console.log("Attempting to enrich data for", title);
+
+            // Search for other records of the same book (e.g. Helmet libraries often have descriptions)
+            const params = new URLSearchParams({
+                lookfor: `"${title}" ${author}`, // Quote title for exact phrase match
+                type: 'AllFields',
+                limit: 5,
+                'field[]': ['summary', 'id']
+            });
+
+            try {
+                const res = await fetch(`https://api.finna.fi/v1/search?${params.toString()}`);
+                const data = await res.json();
+
+                if (data.records && data.records.length > 0) {
+                    // Find the first record that actually has a summary
+                    const betterRecord = data.records.find(r => r.summary && r.summary.length > 0);
+                    if (betterRecord) {
+                        console.log("Found better description from", betterRecord.id);
+                        const desc = Array.isArray(betterRecord.summary) ? betterRecord.summary.join('\n\n') : betterRecord.summary;
+                        document.getElementById('book-desc').innerText = desc;
+                    }
+                }
+            } catch (e) {
+                console.warn("Enrichment failed", e);
+            }
+        }
+
+        function extractAuthor(book) {
+            if (!book.authors) return "";
+            const primary = book.authors.primary || Object.values(book.authors)[0];
+            return primary ? Object.keys(primary)[0] : "";
+        }
+
+        function renderBook(book) {
+            document.getElementById('book-title').textContent = book.title;
+
+            // Author
+            const authorName = extractAuthor(book) || "Tuntematon";
+            document.getElementById('book-author').textContent = authorName;
+
+            // Year
+            document.getElementById('book-year').textContent = book.year || "";
+
+            // Description - handle array usually returned by Finna
+            let desc = "Ei kuvausta saatavilla.";
+            if (book.summary) {
+                desc = Array.isArray(book.summary) ? book.summary.join('\n\n') : book.summary;
+            }
+            // Use innerText to preserve newlines as separate text blocks
+            document.getElementById('book-desc').innerText = desc;
+
+            // Image
+            const coverDiv = document.getElementById('book-cover');
+            if (book.images && book.images.length > 0) {
+                coverDiv.innerHTML = `<img src="https://api.finna.fi${book.images[0]}" alt="${book.title}" style="width:100%; height:100%; object-fit:cover;">`;
+            } else {
+                coverDiv.innerHTML = `<div style="display:flex; align-items:center; justify-content:center; height:100%; color:#888;">Ei kuvaa</div>`;
+            }
         }
 
         document.getElementById('find-recs-btn').addEventListener('click', () => {
-            alert('Tämä ominaisuus (suosittelut) on tulossa pian!');
+            // Future: Implement recommendation logic
+            alert('Suositteluominaisuus on tulossa pian!');
         });
     </script>
 </body>
