@@ -395,20 +395,26 @@ select:focus {
 .btn-accent {
     background: transparent;
     border: 1px solid transparent;
-    color: #DFAF2B;
-    /* Accent color text */
+    color: #e6b800;
+    /* Brighter yellow as requested */
     font-size: 0.9rem;
     padding: 6px 12px;
     border-radius: 6px;
-    font-weight: 600;
+    font-weight: 700;
     cursor: pointer;
     transition: all 0.2s;
+    letter-spacing: 0.01em;
 }
 
 .btn-accent:hover {
-    background: rgba(223, 175, 43, 0.1);
-    /* Light yellow tint */
+    background: rgba(255, 248, 225, 0.5);
+    /* Very light, fresh yellow background */
+    color: #e6b800;
+    /* Keep the bright color, don't darken it */
+    text-shadow: 0 0 1px rgba(230, 184, 0, 0.2);
+    /* Subtle glow instead of color shift */
     text-decoration: none;
+    transform: translateY(-1px);
 }
 
 .no-cover {
@@ -582,6 +588,44 @@ select:focus {
 
 .search-results-container::-webkit-scrollbar-thumb:hover {
     background: #a8a8a8;
+}
+
+/* Custom scrollbar for the description to make it obvious */
+.scrollable-content {
+    max-height: 400px;
+    overflow-y: auto;
+    padding: 1rem;
+    background: #ffffff;
+    border: 1px solid #e1e4e8;
+    border-radius: 8px;
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.02);
+}
+
+.scrollable-content::-webkit-scrollbar {
+    width: 6px;
+}
+
+.scrollable-content::-webkit-scrollbar-track {
+    background: transparent;
+    /* Cleaner look */
+    border-radius: 3px;
+}
+
+.scrollable-content::-webkit-scrollbar-thumb {
+    background: transparent;
+    /* Hidden by default */
+    border-radius: 3px;
+    transition: background 0.3s;
+}
+
+.scrollable-content:hover::-webkit-scrollbar-thumb {
+    background: #d0d7de;
+    /* Visible on hover */
+}
+
+.scrollable-content::-webkit-scrollbar-thumb:hover {
+    background: #b0b8c0;
+    /* Darker when grabbing */
 }
 
 .search-results {
