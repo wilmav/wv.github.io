@@ -329,10 +329,27 @@ document.addEventListener('DOMContentLoaded', async () => {
     function renderAuthors() {
         authorList.innerHTML = '';
 
+        const selectedLangs = state.selectedLanguages;
+
         // ONLY render userAuthors (which now includes bootstrapped defaults)
         state.userAuthors.forEach(author => {
             const isActive = state.selectedAuthor === author.name;
-            const count = author.latest_books ? author.latest_books.length : 0;
+
+            // Calculate filtered count
+            let count = 0;
+            if (author.latest_books) {
+                count = author.latest_books.filter(bookId => {
+                    const book = state.books[bookId];
+                    if (!book) return false;
+                    // Apply Language Filter
+                    if (selectedLangs.length > 0) {
+                        if (!book.language) return false;
+                        return book.language.some(langCode => selectedLangs.some(sel => langCode.includes(sel)));
+                    }
+                    return false; // If no language selected, show 0? Or maybe all? Logic says 0 if selected.length > 0 is false check.
+                    // Actually if selected.length == 0, renderBooks shows 0. So count should be 0.
+                }).length;
+            }
 
             const el = document.createElement('div');
             el.className = `author-chip ${isActive ? 'active' : ''}`;
@@ -497,6 +514,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 .map(cb => cb.value);
 
             state.selectedLanguages = checked;
+            renderAuthors(); // Update counts based on filters
             renderBooks();
         });
     }
