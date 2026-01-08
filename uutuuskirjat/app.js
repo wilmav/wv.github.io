@@ -9,7 +9,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         userAuthors: [],   // From localStorage
         books: {},         // Combined static + fetched books
         selectedAuthor: null,
-        selectedLanguages: ['fin', 'swe', 'eng']
+        selectedLanguages: JSON.parse(localStorage.getItem('selectedLanguages')) || ['fin', 'swe', 'eng']
     };
 
     // --- DOM Elements ---
@@ -469,12 +469,12 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
 
             card.innerHTML = `
-                <div class="cover-wrapper">
+                <div class="book-cover-container">
                     ${badgeHtml}
                     ${imageHtml}
                 </div>
                 <div class="book-info">
-                    <h3>${book.title}</h3>
+                    <h3 class="book-title" title="${book.title}">${book.title}</h3>
                     ${book.originalTitle ? `<div style="font-size:0.75rem; color:#666; font-style:italic; margin-bottom:4px;">Alkuteos: ${book.originalTitle}</div>` : ''}
                     <span class="author">${book.author}</span>
                     <div style="display:flex; gap:6px; flex-wrap:wrap; margin-top:4px;">
@@ -506,6 +506,19 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (e.key === 'Enter') searchActionBtn.click();
         });
 
+        initLangFilter();
+    }
+
+    function initLangFilter() {
+        const langFilter = document.getElementById('lang-filters');
+        if (!langFilter) return;
+
+        // Sync checkboxes with current state (loaded from LS at start)
+        const checkboxes = langFilter.querySelectorAll('input[type="checkbox"]');
+        checkboxes.forEach(cb => {
+            cb.checked = state.selectedLanguages.includes(cb.value);
+        });
+
         // Filter Change
         langFilter.addEventListener('change', () => {
             const checkboxes = langFilter.querySelectorAll('input[type="checkbox"]');
@@ -514,7 +527,10 @@ document.addEventListener('DOMContentLoaded', async () => {
                 .map(cb => cb.value);
 
             state.selectedLanguages = checked;
-            renderAuthors(); // Update counts based on filters
+            localStorage.setItem('selectedLanguages', JSON.stringify(checked)); // Save state
+
+            // Re-calc counts since they depend on language now
+            renderAuthors();
             renderBooks();
         });
     }
