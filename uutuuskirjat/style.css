@@ -330,8 +330,8 @@ select:focus {
 /* Book Grid */
 .book-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-    gap: 2rem;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 1rem;
 }
 
 .book-card {
@@ -385,15 +385,15 @@ select:focus {
 }
 
 .book-info {
-    padding: 16px;
+    padding: 10px;
     display: flex;
     flex-direction: column;
 }
 
 .book-info h3 {
-    font-size: 1.05rem;
-    line-height: 1.4;
-    margin: 0 0 0.5rem 0;
+    font-size: 0.95rem;
+    line-height: 1.3;
+    margin: 0 0 0.4rem 0;
     font-weight: 600;
     color: #1f2328;
 }
@@ -600,4 +600,80 @@ select:focus {
     max-width: 600px;
     margin-left: auto;
     margin-right: auto;
+}
+
+/* Info Icon & Tooltip (Replaces Footer) */
+.info-icon-container {
+    position: relative;
+    display: inline-block;
+}
+
+.info-icon {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    border: 1.5px solid #8c959f;
+    color: #8c959f;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: bold;
+    font-style: italic;
+    cursor: help;
+    transition: all 0.2s;
+}
+
+.info-icon:hover {
+    border-color: #DFAF2B;
+    color: #DFAF2B;
+    background: #FFF8E1;
+}
+
+.info-tooltip {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    margin-top: 8px;
+    width: 280px;
+    background: white;
+    border: 1px solid #d0d7de;
+    border-radius: 8px;
+    padding: 16px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-4px);
+    transition: all 0.2s ease;
+    z-index: 100;
+    font-size: 0.85rem;
+    color: #57606a;
+    text-align: left;
+    pointer-events: none;
+    /* Let clicks pass through if hidden */
+}
+
+.info-icon-container:hover .info-tooltip,
+.info-icon-container:focus-within .info-tooltip {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+    pointer-events: auto;
+}
+
+.info-tooltip a {
+    color: #0969da;
+    text-decoration: none;
+}
+
+.info-tooltip a:hover {
+    text-decoration: underline;
+}
+
+.info-tooltip p {
+    margin-bottom: 8px;
+}
+
+.info-tooltip p:last-child {
+    margin-bottom: 0;
 }

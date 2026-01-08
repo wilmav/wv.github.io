@@ -9,7 +9,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         userAuthors: [],   // From localStorage
         books: {},         // Combined static + fetched books
         selectedAuthor: null,
-        languageFilter: 'all'
+        selectedLanguages: ['fin', 'swe', 'eng']
     };
 
     // --- DOM Elements ---
@@ -374,17 +374,18 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
 
         // 2. Filter by Language
-        const lang = state.languageFilter;
-        if (lang !== 'all') {
+        // Strict limit: only show books that have one of the SELECTED languages.
+        // This also handles the "never show other languages" rule because we only check against available checkboxes.
+        const selected = state.selectedLanguages;
+        if (selected.length > 0) {
             booksToShow = booksToShow.filter(b => {
                 if (!b.language) return false;
-                // fin, eng, swe...
-                // Finna uses ISO codes mostly.
-                if (lang === 'fin') return b.language.includes('fin');
-                if (lang === 'eng') return b.language.includes('eng');
-                if (lang === 'swe') return b.language.includes('swe');
-                return true;
+                // b.language is array of codes (e.g. ['fin']). Check intersection.
+                return b.language.some(langCode => selected.some(sel => langCode.includes(sel)));
             });
+        } else {
+            // If nothing selected, show nothing (or all? usually nothing implies user unchecked all)
+            booksToShow = [];
         }
 
         // Sort by year desc.
@@ -477,8 +478,13 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
 
         // Filter Change
-        langFilter.addEventListener('change', (e) => {
-            state.languageFilter = e.target.value;
+        langFilter.addEventListener('change', () => {
+            const checkboxes = langFilter.querySelectorAll('input[type="checkbox"]');
+            const checked = Array.from(checkboxes)
+                .filter(cb => cb.checked)
+                .map(cb => cb.value);
+
+            state.selectedLanguages = checked;
             renderBooks();
         });
     }

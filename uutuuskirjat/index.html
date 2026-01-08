@@ -29,11 +29,23 @@
 
     <div class="content-wrapper">
         <main>
-            <div class="app-hero">
-                <h1>Kirjavinkit <span class="beta-tag"
-                        style="background:var(--accent); color:black; font-size: 0.5em; vertical-align: middle; opacity: 0.8;">BETA</span>
-                </h1>
-                <p class="hero-subtitle">Seuraa kirjailijoita, löydä uutuudet.</p>
+            <div class="app-hero" style="display:flex; justify-content:space-between; align-items:start;">
+                <div>
+                    <h1>Kirjavinkit <span class="beta-tag"
+                            style="background:var(--accent); color:black; font-size: 0.5em; vertical-align: middle; opacity: 0.8;">BETA</span>
+                    </h1>
+                    <p class="hero-subtitle">Seuraa kirjailijoita, löydä uutuudet.</p>
+                </div>
+                <!-- Info Icon / Disclaimer -->
+                <div class="info-icon-container" tabindex="0">
+                    <div class="info-icon">i</div>
+                    <div class="info-tooltip">
+                        <p>Lähteet: Kirjojen tiedot haetaan <a href="https://www.finna.fi" target="_blank"
+                                rel="noopener">Finna.fi</a> -rajapinnasta.</p>
+                        <p>Palvelu on kokeiluasteella. Tiedot tarjotaan sitoumuksetta, eikä niiden oikeellisuutta voida
+                            taata kaikissa tilanteissa.</p>
+                    </div>
+                </div>
             </div>
             <section class="user-authors">
                 <div class="section-header">
@@ -63,7 +75,7 @@
                 <div class="section-header">
                     <h2>Uusimmat julkaisut</h2>
                     <div class="filters-container">
-                        <span class="filter-label">Kirjojen kieli:</span>
+                        <span class="filter-label">Kieli:</span>
                         <div class="filters" id="lang-filters">
                             <label class="filter-checkbox">
                                 <input type="checkbox" value="fin" checked> suomi
@@ -83,12 +95,7 @@
             </section>
         </main>
 
-        <footer class="app-footer">
-            <p>Lähteet: Kirjojen tiedot haetaan <a href="https://www.finna.fi" target="_blank"
-                    rel="noopener">Finna.fi</a> -rajapinnasta.</p>
-            <p class="disclaimer">Palvelu on kokeiluasteella. Tiedot tarjotaan sitoumuksetta, eikä niiden oikeellisuutta
-                voida taata kaikissa tilanteissa.</p>
-        </footer>
+        </main>
     </div>
 
     <!-- Data loaded as JS variables for file:// compatibility -->
