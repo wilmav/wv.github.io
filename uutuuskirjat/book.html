@@ -292,7 +292,7 @@
 
         async function executeRecommendationSearch(query, sourceBook, uniqueSubjects, specificGenres, audience, isAuthorFallback) {
             // Fetch candidates
-            const url = `https://api.finna.fi/v1/search?lookfor=${encodeURIComponent(query)}&limit=30&field[]=id&field[]=title&field[]=images&field[]=year&field[]=subjects&field[]=genres&field[]=targetAudience&field[]=authors&field[]=isbn`;
+            const url = `https://api.finna.fi/v1/search?lookfor=${encodeURIComponent(query)}&limit=30&field[]=id&field[]=title&field[]=images&field[]=year&field[]=subjects&field[]=genres&field[]=targetAudience&field[]=authors&field[]=isbn&field[]=formats`;
 
             try {
                 const res = await fetch(url);
@@ -302,6 +302,18 @@
                 let candidates = data.records ? data.records.filter(r => {
                     if (r.id === sourceBook.id) return false;
                     if (r.title.toLowerCase().trim() === sourceBook.title.toLowerCase().trim()) return false;
+
+                    // STRICT FORMAT FILTERING
+                    if (r.formats) {
+                        const forbidden = ['elokuva', 'video', 'dvd', 'blu-ray', 'musiikki', 'nuotti', 'peli', 'kartta', 'esine', 'partituuri', 'cd-levy'];
+                        // Check if ANY format is forbidden (case-insensitive). Formats are objects { value, translated } or strings.
+                        const hasForbidden = r.formats.some(f => {
+                            const val = (typeof f === 'string' ? f : (f.translated || f.value || "")).toLowerCase();
+                            return forbidden.some(forb => val.includes(forb));
+                        });
+                        if (hasForbidden) return false;
+                    }
+
                     return true;
                 }) : [];
 
