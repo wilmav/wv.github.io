@@ -40,8 +40,15 @@
                 <div class="info-icon-container" tabindex="0">
                     <div class="info-icon">i</div>
                     <div class="info-tooltip">
-                        <p>Lähteet: Kirjojen tiedot haetaan <a href="https://www.finna.fi" target="_blank"
-                                rel="noopener">Finna.fi</a> -rajapinnasta.</p>
+                        <p><strong>Lähteet:</strong></p>
+                        <ul style="margin: 4px 0 8px 1.2rem; padding:0; list-style-type: disc;">
+                            <li><a href="https://www.finna.fi" target="_blank" rel="noopener">Finna.fi</a> (Perustiedot)
+                            </li>
+                            <li><a href="https://books.google.com" target="_blank" rel="noopener">Google Books</a>
+                                (Kuvaukset ja kannet)</li>
+                            <li><a href="https://openlibrary.org" target="_blank" rel="noopener">Open Library</a>
+                                (Arvostelut ja kannet)</li>
+                        </ul>
                         <p>Palvelu on kokeiluasteella. Tiedot tarjotaan sitoumuksetta, eikä niiden oikeellisuutta voida
                             taata kaikissa tilanteissa.</p>
                     </div>
@@ -89,15 +96,15 @@
                         </div>
                         <script>
                             // Prevent flash of wrong state
-                            (function() {
+                            (function () {
                                 try {
                                     var s = localStorage.getItem('selectedLanguages');
                                     var l = s ? JSON.parse(s) : ['fin', 'swe', 'eng'];
                                     var inputs = document.getElementById('lang-filters').getElementsByTagName('input');
-                                    for(var i=0; i<inputs.length; i++) {
+                                    for (var i = 0; i < inputs.length; i++) {
                                         inputs[i].checked = l.indexOf(inputs[i].value) !== -1;
                                     }
-                                } catch(e){}
+                                } catch (e) { }
                             })();
                         </script>
                     </div>

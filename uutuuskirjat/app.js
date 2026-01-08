@@ -450,15 +450,35 @@ document.addEventListener('DOMContentLoaded', async () => {
                 window.location.href = `book.html?id=${book.id}`;
             };
 
-            let imageHtml = `<div class="no-cover">Ei kuvaa</div>`;
-            if (book.image) {
-                imageHtml = `<img src="${book.image}" alt="${book.title}" loading="lazy">`;
+            // Clean Original Title
+            let displayOriginalTitle = book.originalTitle || "";
+            if (displayOriginalTitle) {
+                displayOriginalTitle = displayOriginalTitle.replace(/^Alkuteos:\s*/i, "").replace(/^Alkuperäisteos:\s*/i, "").replace(/\.\s*Suomi$/i, "").trim();
+            }
+
+            // Image Logic: Finna -> OpenLibrary -> Google Books (Lazy)
+            let imgSrc = book.image ? `https://api.finna.fi${book.image}` : '';
+            let imgHtml = '';
+
+            if (imgSrc) {
+                imgHtml = `<img src="${imgSrc}" alt="${book.title}" loading="lazy" onerror="this.style.display='none'">`;
+            } else if (book.isbn) {
+                // OpenLibrary Check
+                const isbn = Array.isArray(book.isbn) ? book.isbn[0] : book.isbn;
+                // We create an ID for this image to update it later if needed or just let it load
+                imgHtml = `<img src="https://covers.openlibrary.org/b/isbn/${isbn}-M.jpg" class="cover-placeholder" data-isbn="${isbn}" data-title="${book.title}" data-author="${book.author}" alt="${book.title}" loading="lazy" onerror="handleCoverError(this)">`;
+            } else {
+                // No ISBN? Try Google via Title/Author
+                // STRICT MODE: Only search with current title (Finnish/Swedish), NO fallback to original title.
+                imgHtml = `<img src="" class="cover-placeholder" data-title="${book.title}" data-author="${book.author}" alt="${book.title}" loading="lazy" onerror="handleCoverError(this)" style="display:none">`;
+                // Trigger fetch immediately
+                setTimeout(() => fetchGoogleCover(null, book.title, book.author, card.querySelector('.cover-placeholder')), 0);
             }
 
             // Series Badge logic
-            let badgeHtml = '';
+            let seriesBadgeHtml = '';
             if (book.series && book.series.number) {
-                badgeHtml = `
+                seriesBadgeHtml = `
                     <div class="series-badge" title="${book.series.name}">
                         ${book.series.number}
                     </div>
@@ -468,25 +488,80 @@ document.addEventListener('DOMContentLoaded', async () => {
                  `;
             }
 
+            // Format Badges
+            let formatBadgeHtml = `
+                <span class="year-tag">${book.year}</span>
+                ${book.formats.isEbook ? '<span class="year-tag" style="background:#eef; color:#44a;">E-kirja</span>' : ''}
+                ${book.formats.isAudio ? '<span class="year-tag" style="background:#efe; color:#064;">Äänikirja</span>' : ''}
+                ${!book.formats.isEbook && !book.formats.isAudio ? '<span class="year-tag" style="background:#f0f0f0; color:#444;">Kirja</span>' : ''}
+            `;
+
             card.innerHTML = `
                 <div class="book-cover-container">
-                    ${badgeHtml}
-                    ${imageHtml}
+                    ${seriesBadgeHtml}
+                    ${imgHtml}
+                    <div class="no-cover-text" style="display:none; width:100%; height:100%; align-items:center; justify-content:center; text-align:center; color:#9fa6b2; font-size:0.85rem; padding:10px; background:#f6f8fa;">Ei kuvaa</div>
                 </div>
                 <div class="book-info">
                     <h3 class="book-title" title="${book.title}">${book.cleanTitle || book.title}</h3>
-                    ${book.originalTitle ? `<div style="font-size:0.75rem; color:#666; font-style:italic; margin-bottom:4px;">Alkuteos: ${book.originalTitle}</div>` : ''}
+                    ${displayOriginalTitle ? `<div style="font-size:0.75rem; color:#666; font-style:italic; margin-bottom:4px;">Alkuteos: ${displayOriginalTitle}</div>` : ''}
                     <span class="author">${book.author}</span>
                     <div style="display:flex; gap:6px; flex-wrap:wrap; margin-top:4px;">
-                        <span class="year-tag">${book.year}</span>
-                        ${book.formats.isEbook ? '<span class="year-tag" style="background:#eef; color:#44a;">E-kirja</span>' : ''}
-                        ${book.formats.isAudio ? '<span class="year-tag" style="background:#efe; color:#064;">Äänikirja</span>' : ''}
-                        ${!book.formats.isEbook && !book.formats.isAudio ? '<span class="year-tag" style="background:#f0f0f0; color:#444;">Kirja</span>' : ''}
+                        ${formatBadgeHtml}
                     </div>
                 </div>
             `;
             bookGrid.appendChild(card);
         });
+    }
+
+    // Lazy Fetch Logic
+    window.handleCoverError = function (img) {
+        // OpenLibrary failed (or was empty). Try Google Books.
+        const isbn = img.dataset.isbn;
+        const title = img.dataset.title;
+        const author = img.dataset.author;
+
+        // Prevent infinite loop if we already tried
+        if (img.dataset.triedGoogle) {
+            img.style.display = 'none';
+            if (img.parentElement.querySelector('.no-cover-text')) {
+                img.parentElement.querySelector('.no-cover-text').style.display = 'flex';
+            }
+            return;
+        }
+
+        img.dataset.triedGoogle = "true";
+        fetchGoogleCover(isbn, title, author, img);
+    };
+
+    async function fetchGoogleCover(isbn, title, author, imgEl) {
+        let q = "";
+        if (isbn) q = `isbn:${isbn}`;
+        else q = `intitle:${encodeURIComponent(title)}+inauthor:${encodeURIComponent(author)}`;
+
+        try {
+            let res = await fetch(`https://www.googleapis.com/books/v1/volumes?q=${q}&maxResults=1`);
+            let data = await res.json();
+
+            if (data.items && data.items.length > 0 && data.items[0].volumeInfo.imageLinks) {
+                const link = data.items[0].volumeInfo.imageLinks.thumbnail || data.items[0].volumeInfo.imageLinks.smallThumbnail;
+                if (link) {
+                    imgEl.src = link.replace('&edge=curl', '');
+                    imgEl.style.display = 'block';
+                    if (imgEl.parentElement.querySelector('.no-cover-text')) {
+                        imgEl.parentElement.querySelector('.no-cover-text').style.display = 'none';
+                    }
+                    return;
+                }
+            }
+        } catch (e) { }
+
+        // If we get here, failure.
+        imgEl.style.display = 'none';
+        if (imgEl.parentElement && imgEl.parentElement.querySelector('.no-cover-text')) {
+            imgEl.parentElement.querySelector('.no-cover-text').style.display = 'flex';
+        }
     }
 
     // --- UI Interactions ---

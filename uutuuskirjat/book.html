@@ -32,8 +32,24 @@
 
                     <!-- Header with Title -->
                     <div
-                        style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:1rem; flex-wrap:wrap; gap:1rem;">
-                        <h2 id="book-title" style="margin:0;">Ladataan...</h2>
+                        style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:1rem; flex-wrap:wrap; gap:1rem; width:100%;">
+                        <h2 id="book-title" style="margin:0; flex:1;">Ladataan...</h2>
+                        <!-- Info Icon / Disclaimer -->
+                        <div class="info-icon-container" tabindex="0" style="position:relative;">
+                            <div class="info-icon">i</div>
+                            <div class="info-tooltip" style="right:0; left:auto; transform:none; width:280px;">
+                                <p><strong>Lähteet:</strong></p>
+                                <ul style="margin: 4px 0 8px 1.2rem; padding:0; list-style-type: disc;">
+                                    <li><a href="https://www.finna.fi" target="_blank" rel="noopener">Finna.fi</a>
+                                        (Perustiedot/Aiheet)</li>
+                                    <li><a href="https://books.google.com" target="_blank" rel="noopener">Google
+                                            Books</a> (Kuvaukset ja kannet)</li>
+                                    <li><a href="https://openlibrary.org" target="_blank" rel="noopener">Open
+                                            Library</a> (Arvostelut ja kannet)</li>
+                                </ul>
+                                <p>Tiedot ovat suuntaa-antavia.</p>
+                            </div>
+                        </div>
                     </div>
 
                     <div style="display:flex; gap: 2rem; flex-wrap: wrap; align-items: start;">
@@ -114,17 +130,32 @@
 
                 if (data.records && data.records.length > 0) {
                     let book = data.records[0];
-                    renderBook(book);
 
+                    // Extract Original Title early
+                    let originalTitle = "";
+                    if (book.notes) {
+                        const otNote = book.notes.find(n => n.includes("Alkuteos:") || n.includes("Alkuperäisteos:"));
+                        if (otNote) {
+                            originalTitle = otNote.replace("Alkuteos:", "").replace("Alkuperäisteos:", "").trim();
+                        }
+                    }
+                    book.parsedOriginalTitle = originalTitle; // Store for usage
+
+                    renderBook(book); // Render initial state
+
+                    // ENRICHMENT PIPELINE
                     if (!book.summary || book.summary.length === 0) {
-                        enrichBookData(book.title, extractAuthor(book));
+                        enrichWithFinnaCopies(book.title, extractAuthor(book));
                     }
 
-                    // Auto-load reviews and similar
+                    // Google Books Enrichment (Covers & Summaries)
+                    if ((!book.images || book.images.length === 0) || (!book.summary)) {
+                        enrichWithGoogleBooks(book, originalTitle);
+                    }
+
                     if (book.isbn) fetchReviews(book.isbn);
                     else fetchReviewsByTitle(book.title, extractAuthor(book));
 
-                    // Trigger recommendation engine
                     findSimilarBooks(book);
 
                 } else {
@@ -134,6 +165,88 @@
                 console.error(e);
                 document.getElementById('book-title').textContent = "Virhe ladattaessa tietoja.";
             }
+        }
+
+        async function enrichWithGoogleBooks(book, originalTitle) {
+            let q = "";
+            let isbn = (book.isbn && book.isbn.length) ? book.isbn[0] : null;
+
+            if (isbn) {
+                q = `isbn:${isbn}`;
+            } else {
+                const author = extractAuthor(book);
+                q = `intitle:${encodeURIComponent(book.title)}+inauthor:${encodeURIComponent(author)}`;
+            }
+
+            try {
+                let res = await fetch(`https://www.googleapis.com/books/v1/volumes?q=${q}&maxResults=1`);
+                let data = await res.json();
+
+                // FALLBACK: If no results or no image, and we have original title, try that.
+                if ((!data.items || !data.items[0].volumeInfo.imageLinks) && originalTitle) {
+                    const author = extractAuthor(book);
+                    console.log("Trying fallback to original title:", originalTitle);
+                    const q2 = `intitle:${encodeURIComponent(originalTitle)}+inauthor:${encodeURIComponent(author)}`;
+                    const res2 = await fetch(`https://www.googleapis.com/books/v1/volumes?q=${q2}&maxResults=1`);
+                    const data2 = await res2.json();
+                    if (data2.items) data = data2; // Use this data if found
+                }
+
+                if (data.items && data.items.length > 0) {
+                    const info = data.items[0].volumeInfo;
+
+                    // 1. Enrich Description if missing
+                    const descEl = document.getElementById('book-desc');
+                    if (descEl.innerText === "" && info.description) {
+                        descEl.innerText = info.description;
+                        descEl.parentElement.style.display = 'block';
+                        // Add attribution
+                        descEl.parentElement.insertAdjacentHTML('beforeend', '<div style="font-size:0.8rem; color:#888; margin-top:8px;">Kuvaus: Google Books</div>');
+                    }
+
+                    // 2. Enrich Cover if missing
+                    const coverDiv = document.getElementById('book-cover');
+                    // Check if we currently show "Ei kuvaa" (placeholder)
+                    const hasImage = coverDiv.querySelector('img') && !coverDiv.querySelector('img').src.includes('openlibrary');
+
+                    if (!hasImage && info.imageLinks) {
+                        const imgUrl = info.imageLinks.thumbnail || info.imageLinks.smallThumbnail;
+                        if (imgUrl) {
+                            // Use zoom=1 (thumbnail) which is reliable.
+                            // Forcing zoom=0 or zoom=2 often results in "Image Not Available" placeholder.
+                            const safeUrl = imgUrl.replace('&edge=curl', ''); // Remove curl for flat image
+                            coverDiv.innerHTML = `<img src="${safeUrl}" alt="${book.title}" style="width:100%; height:100%; object-fit:cover;">`;
+                        }
+                    }
+                } else if (!isbn) {
+                    // Fallback: If no google result and we want cover, try OpenLibrary logic in renderBook
+                }
+            } catch (e) { }
+        }
+
+        async function enrichWithFinnaCopies(title, author) {
+            if (!title) return;
+            const params = new URLSearchParams({
+                lookfor: `"${title}" ${author}`,
+                type: 'AllFields',
+                limit: 5,
+                'field[]': ['summary', 'id']
+            });
+            try {
+                const res = await fetch(`https://api.finna.fi/v1/search?${params.toString()}`);
+                const data = await res.json();
+                if (data.records && data.records.length > 0) {
+                    const betterRecord = data.records.find(r => r.summary && r.summary.length > 0);
+                    if (betterRecord) {
+                        const desc = Array.isArray(betterRecord.summary) ? betterRecord.summary.join('\n\n') : betterRecord.summary;
+                        const dEl = document.getElementById('book-desc');
+                        if (dEl.innerText === "") {
+                            dEl.innerText = desc;
+                            dEl.parentElement.style.display = 'block';
+                        }
+                    }
+                }
+            } catch (e) { }
         }
 
         async function findSimilarBooks(sourceBook) {
@@ -170,7 +283,16 @@
             const audience = sourceBook.targetAudience ? sourceBook.targetAudience.flat() : [];
 
             // 2. BUILD QUERY
-            if (specificGenres.length === 0 && uniqueSubjects.length === 0) return;
+            if (specificGenres.length === 0 && uniqueSubjects.length === 0) {
+                // FALLBACK: If no metadata (e.g. 2026 book), search by AUTHOR
+                const author = extractAuthor(sourceBook);
+                if (author) {
+                    // Search for other books by this author
+                    const query = `author:"${author}" AND (${langQuery})`;
+                    return executeRecommendationSearch(query, sourceBook, [], [], [], true);
+                }
+                return;
+            }
 
             const terms = [];
             specificGenres.slice(0, 3).forEach(g => terms.push(`genre:"${g}"`));
@@ -178,6 +300,10 @@
 
             const query = `(${terms.join(' OR ')}) AND (${langQuery})`;
 
+            executeRecommendationSearch(query, sourceBook, uniqueSubjects, specificGenres, audience, false);
+        }
+
+        async function executeRecommendationSearch(query, sourceBook, uniqueSubjects, specificGenres, audience, isAuthorFallback) {
             // Fetch candidates
             const url = `https://api.finna.fi/v1/search?lookfor=${encodeURIComponent(query)}&limit=30&field[]=id&field[]=title&field[]=images&field[]=year&field[]=subjects&field[]=genres&field[]=targetAudience&field[]=authors&field[]=isbn`;
 
@@ -193,20 +319,52 @@
                 }) : [];
 
                 // STRICT FILTER: Fiction vs Non-Fiction separation
-                // "Tietokirjallisuus" is a strong marker in Finna.
-                const isNonFiction = (b) => {
-                    const allTags = [...(b.genres || []).flat(), ...(b.subjects || []).flat()].map(t => t.toLowerCase());
-                    return allTags.includes('tietokirjallisuus') || allTags.includes('non-fiction');
+
+                const getTags = (b) => [...(b.genres || []).flat(), ...(b.subjects || []).flat()].map(t => t.toLowerCase());
+
+                const isFiction = (b) => {
+                    const tags = getTags(b);
+                    const fictionKeywords = [
+                        'kaunokirjallisuus', 'romaanit', 'kertomakirjallisuus',
+                        'fiction', 'novel', 'novellit', 'runot', 'draama',
+                        'jännityskirjallisuus', 'rikoskirjallisuus', 'fantasia', 'scifi',
+                        'skönlitteratur', 'deckare', 'thriller', 'mystery', 'sagor'
+                    ];
+                    return tags.some(t => fictionKeywords.some(kw => t.includes(kw)));
                 };
 
-                const sourceIsFact = isNonFiction(sourceBook);
+                const sourceIsFiction = isFiction(sourceBook);
+
+                // DEDUPLICATION BY TITLE
+                const uniqueMap = new Map();
+                candidates.forEach(cand => {
+                    let clean = cand.title;
+                    // Generic cleaning
+                    ["Alkuteos:", "alkuteos:", "Alkuperäisteos:", ". Suomi"].forEach(term => {
+                        if (clean.includes(term)) clean = clean.split(term)[0];
+                    });
+                    // Aggressive cleaning: split by colon to ignore subtitles like ": romaani"
+                    if (clean.includes(':')) {
+                        clean = clean.split(':')[0];
+                    }
+                    clean = clean.trim().toLowerCase().replace(/\.$/, ''); // Remove trailing dot
+
+                    if (uniqueMap.has(clean)) {
+                        const existing = uniqueMap.get(clean);
+                        // Prefer existing if it has image, otherwise take new if it has image
+                        if (!existing.images?.length && cand.images?.length) {
+                            uniqueMap.set(clean, cand);
+                        }
+                    } else {
+                        uniqueMap.set(clean, cand);
+                    }
+                });
+                candidates = Array.from(uniqueMap.values());
 
                 candidates = candidates.filter(cand => {
-                    const candIsFact = isNonFiction(cand);
-                    // If source is fact, we only want fact.
-                    if (sourceIsFact) return candIsFact;
-                    // If source is fiction (not fact), we reject fact.
-                    return !candIsFact;
+                    const candIsFiction = isFiction(cand);
+                    if (sourceIsFiction) return candIsFiction;
+                    return !candIsFiction;
                 });
 
                 // 3. RANKING ALGORITHM
@@ -214,45 +372,65 @@
                     let score = 0;
                     let reasons = [];
 
-                    // A. THEME/SUBJECT MATCH
-                    if (uniqueSubjects.length > 0 && cand.subjects) {
-                        // Clean cand subjects too for matching
-                        const candSubjects = cand.subjects.flat().map(s => s.replace(/\s*\(.*?\)\s*/g, '').trim());
-                        const commonSubjects = candSubjects.filter(s => uniqueSubjects.includes(s));
-                        const uniqueCommon = [...new Set(commonSubjects)]; // Dedupe
+                    if (isAuthorFallback) {
+                        // Simple author match score
+                        score = 10;
+                        reasons.push(`Kirjailija: ${extractAuthor(sourceBook)}`);
+                    } else {
+                        // ... Standard Scoring ...
+                        // A. THEME/SUBJECT MATCH
+                        if (uniqueSubjects.length > 0 && cand.subjects) {
+                            const candSubjects = cand.subjects.flat().map(s => s.replace(/\s*\(.*?\)\s*/g, '').trim());
+                            const commonSubjects = candSubjects.filter(s => uniqueSubjects.includes(s));
+                            const uniqueCommon = [...new Set(commonSubjects)];
 
-                        if (uniqueCommon.length > 0) {
-                            score += 20 * uniqueCommon.length;
-                            reasons.push(`Teemat: ${uniqueCommon.slice(0, 3).join(', ')}`);
+                            if (uniqueCommon.length > 0) {
+                                score += 20 * uniqueCommon.length;
+                                reasons.push(`Teemat: ${uniqueCommon.slice(0, 3).join(', ')}`);
+                            }
                         }
-                    }
 
-                    // B. GENRE MATCH
-                    if (specificGenres.length > 0 && cand.genres) {
-                        const candGenres = cand.genres.flat();
-                        const commonGenres = candGenres.filter(g => specificGenres.includes(g));
-                        const uniqueGenreCalls = [...new Set(commonGenres)];
-                        if (uniqueGenreCalls.length > 0) {
-                            score += 15 * uniqueGenreCalls.length;
-                            reasons.push(`Genre: ${uniqueGenreCalls.slice(0, 2).join(', ')}`);
+                        // B. GENRE MATCH
+                        let genreMatchFound = false;
+                        if (specificGenres.length > 0 && cand.genres) {
+                            const candGenres = cand.genres.flat();
+                            const commonGenres = candGenres.filter(g => specificGenres.includes(g));
+                            const uniqueGenreCalls = [...new Set(commonGenres)];
+                            if (uniqueGenreCalls.length > 0) {
+                                score += 15 * uniqueGenreCalls.length;
+                                reasons.push(`Yhteinen genre: ${uniqueGenreCalls.slice(0, 2).join(', ')}`);
+                                genreMatchFound = true;
+                            }
                         }
-                    }
 
-                    // C. AUDIENCE MATCH
-                    if (audience.length > 0 && cand.targetAudience) {
-                        const commonAudience = cand.targetAudience.filter(a => audience.includes(a));
-                        if (commonAudience.length > 0) {
-                            score += 10;
-                            reasons.push(`Kohdeyleisö: ${commonAudience.join(', ')}`);
+                        // IF NO GENRE MATCH, STILL SHOW GENRE INFO
+                        if (!genreMatchFound && cand.genres) {
+                            const genericGenreBlocklist = ['kaunokirjallisuus', 'romaanit', 'suomenkielinen kirjallisuus', 'käännöskirjallisuus'];
+                            const formatBlocklist = ['äänikirjat', 'e-kirjat', 'cd-levyt', 'verkkoaineisto', 'pokkarit', 'isokokoiset kirjat', 'celia-aineisto'];
+                            const candSpecific = cand.genres.flat().filter(g => {
+                                const lower = g.toLowerCase();
+                                return !genericGenreBlocklist.includes(lower) && !formatBlocklist.some(f => lower.includes(f));
+                            });
+                            if (candSpecific.length > 0) {
+                                reasons.unshift(`Genre: ${candSpecific[0]}`);
+                            }
                         }
-                    }
 
-                    // D. AUTHOR BONUS
-                    const sourceAuth = extractAuthor(sourceBook);
-                    const candAuth = extractAuthor(cand);
-                    if (sourceAuth && candAuth && sourceAuth === candAuth) {
-                        score += 5;
-                    }
+                        // C. AUDIENCE MATCH
+                        if (audience.length > 0 && cand.targetAudience) {
+                            const commonAudience = cand.targetAudience.filter(a => audience.includes(a));
+                            if (commonAudience.length > 0) {
+                                score += 10;
+                            }
+                        }
+
+                        // D. AUTHOR BONUS
+                        const sourceAuth = extractAuthor(sourceBook);
+                        const candAuth = extractAuthor(cand);
+                        if (sourceAuth && candAuth && sourceAuth === candAuth) {
+                            score += 5;
+                        }
+                    } // end else
 
                     return { book: cand, score, reasons };
                 });
@@ -276,10 +454,15 @@
 
             scoredBooks.forEach(item => {
                 const b = item.book;
-                const reasonText = [...new Set(item.reasons)].join('\n'); // Dedupe whole reason lines
+                // Unique reasons, join with newlines
+                const reasonText = [...new Set(item.reasons)].join('\n');
 
-                // Image Logic: Finna -> OpenLibrary Fallback -> Placeholder
+                // Image Logic: Finna -> Google Fallback -> OpenLibrary Fallback -> Placeholder
                 let imgSrc = (b.images && b.images.length) ? `https://api.finna.fi${b.images[0]}` : '';
+
+                // We'll rely on the onerror handlers for Google/OL fallbacks in the HTML string, 
+                // but strictly speaking, we don't have the Google URL here easily without async.
+                // For recommendations, sticking to Finna + OpenLibrary is fastest.
                 if (!imgSrc && b.isbn) {
                     const isbn = Array.isArray(b.isbn) ? b.isbn[0] : b.isbn;
                     imgSrc = `https://covers.openlibrary.org/b/isbn/${isbn}-M.jpg`;
@@ -288,7 +471,7 @@
                 const el = document.createElement('div');
                 el.style.cssText = "width: 100px; cursor: pointer; flex-shrink:0;";
                 el.onclick = () => window.location.href = `book.html?id=${b.id}`;
-                el.title = `Miksi tämä? \n${reasonText}`;
+                el.title = reasonText; // Simple tooltip
 
                 el.innerHTML = `
                     <div style="width:100%; aspect-ratio:2/3; background:#f0f0f0; border-radius:4px; overflow:hidden; margin-bottom:4px; position:relative;">
