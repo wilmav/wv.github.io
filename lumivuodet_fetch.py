@@ -16,7 +16,7 @@ STATIONS = {
 }
 
 # Fetch data from 2000 to current year
-YEARS = list(range(2000, 2025))
+YEARS = list(range(2000, 2026))
 DATA_DIR = "data"
 
 def fetch_fmi_data(fmisid, year):
@@ -38,7 +38,7 @@ def fetch_fmi_data(fmisid, year):
         "fmisid": fmisid,
         "starttime": start_time,
         "endtime": end_time,
-        "parameters": "snow_aws,tday,tmin,tmax,rrday"
+        "parameters": "snow,tday,tmin,tmax,rrday"
     }
 
     print(f"Fetching data for {fmisid} year {year}...")
@@ -97,7 +97,7 @@ def parse_fmi_xml(xml_content):
         except (ValueError, TypeError):
             val = None
             
-        if param_name == "snow_aws":
+        if param_name == "snow" or param_name == "snow_aws":
             data_by_date[date_key]["snowDepth"] = val if val is not None and val >= 0 else 0
         elif param_name == "tday":
             data_by_date[date_key]["tempMean"] = val

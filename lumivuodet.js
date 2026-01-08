@@ -24,9 +24,9 @@ let REAL_DATA = {}; // Cache for fetched data
 function initApp() {
     const locationSelect = document.getElementById('locationSelect');
 
-    // Check available years - for now static range 2000-2024
+    // Check available years - for now static range 2000-2025
     // Ideally we would read this from metadata
-    const availableYears = Array.from({ length: 25 }, (_, i) => 2024 - i);
+    const availableYears = Array.from({ length: 26 }, (_, i) => 2025 - i);
     generateYearCheckboxes(availableYears, [2023, 2022]);
 
     // Initial render
