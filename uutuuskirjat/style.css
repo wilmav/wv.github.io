@@ -924,7 +924,11 @@ body.dark-mode header {
     box-shadow: 4px 0 12px rgba(0, 0, 0, 0.3) !important;
 }
 
-body.dark-mode header .app-title,
+body.dark-mode header .app-title {
+    color: #f1f5f9 !important;
+    border-left: none !important;
+}
+
 body.dark-mode header nav ul li strong {
     color: #f1f5f9 !important;
     border-left-color: #38bdf8 !important;

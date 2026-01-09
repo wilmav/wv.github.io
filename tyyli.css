@@ -66,7 +66,7 @@ header {
   line-height: 1.2;
   /* Match menu alignment */
   padding-left: 10px;
-  border-left: 3px solid transparent;
+  border-left: none;
 }
 
 nav {
