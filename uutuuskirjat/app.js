@@ -511,10 +511,10 @@ document.addEventListener('DOMContentLoaded', async () => {
                 imgHtml = `<img src="${imgSrc}" alt="${book.title}" loading="lazy" onerror="this.style.display='none'">`;
             } else if (book.isbn) {
                 const isbn = Array.isArray(book.isbn) ? book.isbn[0] : book.isbn;
-                imgHtml = `<img src="https://covers.openlibrary.org/b/isbn/${isbn}-M.jpg" class="cover-placeholder" data-isbn="${isbn}" data-title="${book.title}" data-author="${book.author}" alt="${book.title}" loading="lazy" onerror="handleCoverError(this)">`;
+                imgHtml = `<img src="https://covers.openlibrary.org/b/isbn/${isbn}-M.jpg" class="cover-placeholder" data-isbn="${isbn}" data-title="${book.title}" data-original-title="${book.originalTitle || ''}" data-author="${book.author}" alt="${book.title}" loading="lazy" onerror="handleCoverError(this)">`;
             } else {
-                imgHtml = `<img src="" class="cover-placeholder" data-title="${book.title}" data-author="${book.author}" alt="${book.title}" loading="lazy" onerror="handleCoverError(this)" style="display:none">`;
-                setTimeout(() => fetchGoogleCover(null, book.title, book.author, card.querySelector('.cover-placeholder')), 0);
+                imgHtml = `<img src="" class="cover-placeholder" data-title="${book.title}" data-author="${book.author}" data-id="${book.id}" alt="${book.title}" loading="lazy" onerror="handleCoverError(this)" style="display:none">`;
+                setTimeout(() => fetchGoogleCover(null, book.title, book.author, card.querySelector('.cover-placeholder'), book.id), 0);
             }
 
             let seriesBadgeHtml = '';
@@ -580,6 +580,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         const isbn = img.dataset.isbn;
         const title = img.dataset.title;
         const author = img.dataset.author;
+        const bookId = img.dataset.id;
 
         if (img.dataset.triedGoogle) {
             img.style.display = 'none';
@@ -590,14 +591,34 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
 
         img.dataset.triedGoogle = "true";
-        fetchGoogleCover(isbn, title, author, img);
+        fetchGoogleCover(isbn, title, author, img, bookId);
     };
 
-    async function fetchGoogleCover(isbn, title, author, imgEl) {
+    async function fetchGoogleCover(isbn, title, author, imgEl, bookId) {
 
-        const cacheKey = `cover_${title}_${author}`; // Key based on title/author as fallback relies on it
-        // Or if ISBN is present use that, but logic below relies on multiple queries.
-        // Let's rely on stored URL directly.
+        // Clean Author Name (Penny, Louise -> Louise Penny)
+        let cleanAuthor = author;
+        if (cleanAuthor && cleanAuthor.includes(',')) {
+            const parts = cleanAuthor.split(',');
+            if (parts.length === 2) {
+                cleanAuthor = `${parts[1].trim()} ${parts[0].trim()}`;
+            }
+        }
+
+        const cacheKey = `cover_v5_${title}_${cleanAuthor}`; // bumped to v5 (revert strategy D)
+
+        // 1. Check Specific ID Cache (Shared with book.html)
+        if (bookId) {
+            const idCache = localStorage.getItem(`cover_fix_${bookId}`);
+            if (idCache) {
+                imgEl.src = idCache;
+                imgEl.style.display = 'block';
+                if (imgEl.parentElement.querySelector('.no-cover-text')) {
+                    imgEl.parentElement.querySelector('.no-cover-text').style.display = 'none';
+                }
+                return;
+            }
+        }
 
         const cachedUrl = localStorage.getItem(cacheKey);
         if (cachedUrl) {
@@ -659,7 +680,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         try {
             // Enhanced fallback: Fetch 5 results and find one with an image
-            let q = `intitle:${encodeURIComponent(title)}+inauthor:${encodeURIComponent(author)}`;
+            let q = `intitle:${encodeURIComponent(title)}+inauthor:${encodeURIComponent(cleanAuthor)}`;
+            console.log(`[Cover] Strategy B: ${q}`);
             let res = await fetch(`https://www.googleapis.com/books/v1/volumes?q=${q}&maxResults=5`);
             let data = await res.json();
 
@@ -668,11 +690,32 @@ document.addEventListener('DOMContentLoaded', async () => {
                 // Simple iteration: first item that has an image
                 for (let item of data.items) {
                     if (item.volumeInfo && item.volumeInfo.imageLinks) {
+                        console.log(`[Cover] Found via Strategy B: ${item.voteInfo?.title || 'Unknown'}`);
                         if (applyImage([item])) return;
                     }
                 }
+            } else {
+                console.log(`[Cover] Strategy B found no results.`);
             }
-        } catch (e) { }
+        } catch (e) { console.warn("[Cover] Strategy B failed", e); }
+
+        // Strategy C: Loose Search (Title + Author without intitle:)
+        try {
+            let qLoose = `${encodeURIComponent(title)}+${encodeURIComponent(cleanAuthor)}`;
+            console.log(`[Cover] Strategy C: ${qLoose}`);
+            let resLoose = await fetch(`https://www.googleapis.com/books/v1/volumes?q=${qLoose}&maxResults=3`);
+            let dataLoose = await resLoose.json();
+            if (dataLoose.items && dataLoose.items.length > 0) {
+                for (let item of dataLoose.items) {
+                    if (item.volumeInfo && item.volumeInfo.imageLinks) {
+                        console.log(`[Cover] Found via Strategy C: ${item.volumeInfo.title}`);
+                        if (applyImage([item])) return;
+                    }
+                }
+            } else {
+                console.log(`[Cover] Strategy C found no results.`);
+            }
+        } catch (e) { console.warn("[Cover] Strategy C failed", e); }
 
         if (imgEl.parentElement && imgEl.parentElement.querySelector('.no-cover-text')) {
             imgEl.parentElement.querySelector('.no-cover-text').style.display = 'flex';
