@@ -155,26 +155,56 @@ document.addEventListener('DOMContentLoaded', async () => {
                     }
                 });
 
-                // Merge into state (with duplicate removal based on title-author-year)
-                const existingKeys = new Set(Object.values(state.books).map(b => `${b.title}|${b.author}|${b.year}`));
+                // --- 2. DEDUPLICATION & MERGING ---
+                // Helper to get a deduplication key
+                const getDedupKey = (b) => `${b.cleanTitle || b.title}|${b.author}`.toLowerCase();
+
+                // Build a map of existing books for fast lookup
+                const existingKeyMap = {};
+                Object.values(state.books).forEach(eb => {
+                    const k = getDedupKey(eb);
+                    if (!existingKeyMap[k]) existingKeyMap[k] = [];
+                    existingKeyMap[k].push(eb);
+                });
 
                 const filteredNewBooks = [];
                 books.forEach(b => {
-                    const key = `${b.title}|${b.author}|${b.year}`;
-                    const existing = state.books[b.id];
-                    if (!existing && !existingKeys.has(key)) {
+                    const key = getDedupKey(b);
+                    const candidates = existingKeyMap[key] || [];
+
+                    // Look for an existing match: same title/author and year within 2 years (to handle future/past discrepancies)
+                    let match = candidates.find(c => {
+                        const y1 = parseInt(c.year);
+                        const y2 = parseInt(b.year);
+                        return Math.abs(y1 - y2) <= 2;
+                    });
+
+                    if (!match) {
+                        // No match found - add as new
                         state.books[b.id] = b;
-                        existingKeys.add(key);
+                        if (!existingKeyMap[key]) existingKeyMap[key] = [];
+                        existingKeyMap[key].push(b);
                         filteredNewBooks.push(b.id);
-                    } else if (existing) {
-                        filteredNewBooks.push(b.id);
-                        // If existing book has no image but the new fetch found one, update it
-                        if (!existing.image && b.image) existing.image = b.image;
+                    } else {
+                        // Found a duplicate! Merge metadata into the existing record
+                        console.log(`[Deduplicator] Merging duplicate: ${b.title} (${b.year} -> ${match.year})`);
+
+                        // Merge important fields if missing in the "winner"
+                        if (!match.image && b.image) match.image = b.image;
+                        if (!match.originalTitle && b.originalTitle) match.originalTitle = b.originalTitle;
+                        if (!match.isbn && b.isbn) match.isbn = b.isbn;
+                        if (!match.manualDate && b.manualDate) match.manualDate = b.manualDate;
+                        if (!match.description && b.description) match.description = b.description;
+                        if (b.series && !match.series) match.series = b.series;
+
+                        // Keep the Finna record if the original was static/scraper-only?
+                        // For now, we keep the original ID in the list to avoid UI jumps
+                        filteredNewBooks.push(match.id);
                     }
                 });
 
-                // Update author's book list
-                author.latest_books = filteredNewBooks;
+                // Update author's book list (unique IDs)
+                author.latest_books = [...new Set(filteredNewBooks)];
 
             } catch (e) {
                 console.error(`Could not fetch for ${author.name}`, e);
