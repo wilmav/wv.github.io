@@ -251,6 +251,35 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     function normalizeBookData(book, searchedAuthor = null) {
+        const author = extractAuthorName(book.authors, searchedAuthor);
+        let rawTitle = book.title || "";
+        let cleanTitle = rawTitle;
+
+        // 1. Strip Author prefix if present (e.g. "Kinsella, Sophie : Yllätä minut")
+        if (cleanTitle.includes(':')) {
+            const parts = cleanTitle.split(':');
+            const prefix = parts[0].toLowerCase();
+            const authLow = author.toLowerCase();
+            // Check if prefix matches author or reversed author or starts with last name
+            const lastName = authLow.split(',')[0].trim();
+            if (authLow.includes(prefix.trim()) || prefix.includes(lastName) || prefix.includes(authLow.split(' ')[0])) {
+                cleanTitle = parts.slice(1).join(':').trim();
+            } else {
+                // Not author? Still take first part as title if it has a colon (subtitle)
+                cleanTitle = parts[0].trim();
+            }
+        }
+
+        // 2. Strip standard clutter (Daisy, suomentanut, etc)
+        cleanTitle = cleanTitle.split(/[\/\(;]/)[0]
+            .replace(/\s+suomentanut.*$/i, '')
+            .replace(/\s+toimittanut.*$/i, '')
+            .replace(/[.,]$/, '')
+            .trim();
+
+        // 3. Fallback to raw if logic made it empty
+        if (!cleanTitle) cleanTitle = rawTitle;
+
         // Parse Series
         let seriesInfo = null;
         if (book.series && book.series.length > 0) {
@@ -278,13 +307,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         let manualIsbn = null;
 
         if (state.dates && book.title) {
-            // Robust Key Generation
-            const key = book.title.toLowerCase()
-                .split(':')[0]
-                .split('/')[0]
-                .replace(/[.,]/g, '')
-                .trim();
-
+            // Use cleanTitle logic for key matching
+            const key = cleanTitle.toLowerCase();
             const entry = state.dates[key];
             if (entry) {
                 if (entry.dates) {
@@ -300,10 +324,16 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
         }
 
+        let ot = book.uniformTitles ? book.uniformTitles[0] : null;
+        if (ot) {
+            ot = ot.replace(/^Alkuteos:\s*/i, "").replace(/^Alkuperäisteos:\s*/i, "").replace(/[\s.]*Suomi$/i, "").trim();
+        }
+
         return {
             id: book.id,
             title: book.title,
-            originalTitle: book.uniformTitles ? book.uniformTitles[0] : null,
+            cleanTitle: cleanTitle,
+            originalTitle: ot,
             author: extractAuthorName(book.authors, searchedAuthor),
             year: book.year,
             manualDate: manualDate,
@@ -588,13 +618,13 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             if (imgSrc) {
                 // IMPORTANT: Still use handleCoverError even for Finna images, in case they are broken
-                imgHtml = `<img src="${imgSrc}" class="book-cover-img" data-isbn="${book.isbn ? (Array.isArray(book.isbn) ? book.isbn[0] : book.isbn) : ''}" data-title="${book.title}" data-author="${book.author}" data-id="${book.id}" alt="${book.title}" loading="lazy" onerror="handleCoverError(this)">`;
+                imgHtml = `<img src="${imgSrc}" class="book-cover-img" data-isbn="${book.isbn ? (Array.isArray(book.isbn) ? book.isbn[0] : book.isbn) : ''}" data-title="${book.cleanTitle || book.title}" data-author="${book.author}" data-id="${book.id}" alt="${book.title}" loading="lazy" onerror="handleCoverError(this)">`;
             } else if (book.isbn) {
                 const isbn = Array.isArray(book.isbn) ? book.isbn[0] : book.isbn;
-                imgHtml = `<img src="https://covers.openlibrary.org/b/isbn/${isbn}-M.jpg" class="cover-placeholder" data-isbn="${isbn}" data-title="${book.title}" data-original-title="${book.originalTitle || ''}" data-author="${book.author}" data-id="${book.id}" alt="${book.title}" loading="lazy" onerror="handleCoverError(this)">`;
+                imgHtml = `<img src="https://covers.openlibrary.org/b/isbn/${isbn}-M.jpg" class="cover-placeholder" data-isbn="${isbn}" data-title="${book.cleanTitle || book.title}" data-original-title="${book.originalTitle || ''}" data-author="${book.author}" data-id="${book.id}" alt="${book.title}" loading="lazy" onerror="handleCoverError(this)">`;
             } else {
-                imgHtml = `<img src="" class="cover-placeholder" data-title="${book.title}" data-author="${book.author}" data-id="${book.id}" alt="${book.title}" loading="lazy" onerror="handleCoverError(this)" style="display:none">`;
-                setTimeout(() => fetchGoogleCover(null, book.title, book.author, card.querySelector('.cover-placeholder'), book.id), 0);
+                imgHtml = `<img src="" class="cover-placeholder" data-title="${book.cleanTitle || book.title}" data-author="${book.author}" data-id="${book.id}" alt="${book.title}" loading="lazy" onerror="handleCoverError(this)" style="display:none">`;
+                setTimeout(() => fetchGoogleCover(null, book.cleanTitle || book.title, book.author, card.querySelector('.cover-placeholder'), book.id), 0);
             }
 
             let seriesBadgeHtml = '';
@@ -635,8 +665,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                     <div class="no-cover-text" style="display:none; width:100%; height:100%; align-items:center; justify-content:center; text-align:center; color:#9fa6b2; font-size:0.85rem; padding:10px; background:#f6f8fa;">Ei kuvaa</div>
                 </div>
                 <div class="book-info">
-                    <h3 class="book-title" title="${book.title}">${book.cleanTitle || book.title}</h3>
-                    ${displayOriginalTitle ? `<div style="font-size:0.75rem; color:#666; font-style:italic; margin-bottom:4px;">Alkuteos: ${displayOriginalTitle}</div>` : ''}
+                    <h3 class="book-title" title="${book.title}">${book.cleanTitle}</h3>
+                    ${book.originalTitle ? `<div style="font-size:0.75rem; color:#666; font-style:italic; margin-bottom:4px;">Alkuteos: ${book.originalTitle}</div>` : ''}
                     <span class="author">${book.author}</span>
                     <div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:6px; align-items:center;">
                         ${formatBadgeHtml}
@@ -664,11 +694,18 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         // --- PREVENT INFINITE LOOPS ---
         if (img.dataset.triedGoogle) {
-            img.style.display = 'none';
-            if (img.parentElement.querySelector('.no-cover-text')) {
-                img.parentElement.querySelector('.no-cover-text').style.display = 'flex';
+            // New logic: If we have an ISBN now but haven't tried with it, allow ONE more go.
+            if (isbn && !img.dataset.triedWithIsbn) {
+                img.dataset.triedWithIsbn = "true";
+                // We'll reset triedGoogle for this one specific retry
+                delete img.dataset.triedGoogle;
+            } else {
+                img.style.display = 'none';
+                if (img.parentElement.querySelector('.no-cover-text')) {
+                    img.parentElement.querySelector('.no-cover-text').style.display = 'flex';
+                }
+                return;
             }
-            return;
         }
 
         // --- STRATEGY 1: SIBLING ENRICHMENT (Finna's own alternative records) ---
@@ -693,6 +730,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     async function enrichFromSiblings(bookId, title, author, imgEl) {
         if (!title) return;
+        console.log(`[Cover] Strategy 1 (Siblings) for: ${title}`);
         const params = new URLSearchParams({
             lookfor: `"${title}" ${author}`,
             type: 'AllFields',
@@ -718,6 +756,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     async function fetchGoogleCover(isbn, title, author, imgEl, bookId) {
+        // Fallback to ISBN from element if not passed
+        if (!isbn && imgEl.dataset.isbn) {
+            isbn = imgEl.dataset.isbn;
+        }
 
         // Clean Author Name (Penny, Louise -> Louise Penny)
         let cleanAuthor = author;
@@ -795,10 +837,11 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         if (isbn) {
             try {
+                console.log(`[Cover] Strategy A (ISBN): ${isbn}`);
                 let res = await fetch(`https://www.googleapis.com/books/v1/volumes?q=isbn:${isbn}&maxResults=1`);
                 let data = await res.json();
                 if (applyImage(data.items)) return;
-            } catch (e) { }
+            } catch (e) { console.warn("[Cover] Strategy A failed", e); }
         }
 
         try {
@@ -864,6 +907,12 @@ document.addEventListener('DOMContentLoaded', async () => {
                 container.innerHTML = renderIsbnPill(cached);
                 container.style.display = 'flex';
             }
+            // Trigger cover refresh if it was missing
+            const imgEl = cardEl.querySelector('.cover-placeholder, .book-cover-img');
+            if (imgEl && (imgEl.src === "" || imgEl.style.display === 'none')) {
+                imgEl.dataset.isbn = cached;
+                handleCoverError(imgEl); // Start the chain
+            }
             return;
         }
 
@@ -873,11 +922,14 @@ document.addEventListener('DOMContentLoaded', async () => {
             book.isbn = [isbn];
             const container = cardEl.querySelector('.isbn-container');
             if (container) {
-                console.log(`[ISBN] Container found. Setting innerHTML.`);
                 container.innerHTML = renderIsbnPill(isbn);
                 container.style.display = 'flex'; // Force display
-            } else {
-                console.error(`[ISBN] Container NOT found for ${book.title}`);
+            }
+            // Trigger cover refresh if it was missing
+            const imgEl = cardEl.querySelector('.cover-placeholder, .book-cover-img');
+            if (imgEl && (imgEl.src === "" || imgEl.style.display === 'none')) {
+                imgEl.dataset.isbn = isbn;
+                handleCoverError(imgEl);
             }
         };
 
@@ -903,9 +955,10 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         // 1. Google Books (Title + Clean Author)
         try {
-            console.log(`[ISBN] Searching Google for: ${book.title} | ${cleanAuthor}`);
+            const searchTitle = book.cleanTitle || book.title;
+            console.log(`[ISBN] Searching Google for: ${searchTitle} | ${cleanAuthor}`);
             // Strategy A: Specific
-            let q = `intitle:${encodeURIComponent(book.title)}+inauthor:${encodeURIComponent(cleanAuthor)}`;
+            let q = `intitle:${encodeURIComponent(searchTitle)}+inauthor:${encodeURIComponent(cleanAuthor)}`;
             // Increase maxResults to find a paperback edition if the first result is an ebook without ISBN
             let res = await fetch(`https://www.googleapis.com/books/v1/volumes?q=${q}&maxResults=5`);
             let data = await res.json();
@@ -919,7 +972,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             // Strategy B: Loose (just query words)
             console.log(`[ISBN] Retrying Strategy B (Loose)...`);
-            q = `${encodeURIComponent(book.title)}+${encodeURIComponent(cleanAuthor)}`;
+            q = `${encodeURIComponent(searchTitle)}+${encodeURIComponent(cleanAuthor)}`;
             res = await fetch(`https://www.googleapis.com/books/v1/volumes?q=${q}&maxResults=5`);
             data = await res.json();
 
@@ -948,9 +1001,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         } catch (e) { console.warn("[ISBN] Google fetch failed", e); }
 
         // 3. Fallback: Google Books (Title ONLY - if very long title or unique)
-        if (book.title.length > 10) {
+        if ((book.cleanTitle || book.title).length > 10) {
             try {
-                const q = `intitle:${encodeURIComponent(book.title)}`;
+                const searchTitle = book.cleanTitle || book.title;
+                const q = `intitle:${encodeURIComponent(searchTitle)}`;
                 const res = await fetch(`https://www.googleapis.com/books/v1/volumes?q=${q}&maxResults=1`);
                 const data = await res.json();
                 if (data.items && data.items.length > 0) {
