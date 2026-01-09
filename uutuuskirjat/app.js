@@ -511,7 +511,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 imgHtml = `<img src="${imgSrc}" alt="${book.title}" loading="lazy" onerror="this.style.display='none'">`;
             } else if (book.isbn) {
                 const isbn = Array.isArray(book.isbn) ? book.isbn[0] : book.isbn;
-                imgHtml = `<img src="https://covers.openlibrary.org/b/isbn/${isbn}-M.jpg" class="cover-placeholder" data-isbn="${isbn}" data-title="${book.title}" data-original-title="${book.originalTitle || ''}" data-author="${book.author}" alt="${book.title}" loading="lazy" onerror="handleCoverError(this)">`;
+                imgHtml = `<img src="https://covers.openlibrary.org/b/isbn/${isbn}-M.jpg" class="cover-placeholder" data-isbn="${isbn}" data-title="${book.title}" data-original-title="${book.originalTitle || ''}" data-author="${book.author}" data-id="${book.id}" alt="${book.title}" loading="lazy" onerror="handleCoverError(this)">`;
             } else {
                 imgHtml = `<img src="" class="cover-placeholder" data-title="${book.title}" data-author="${book.author}" data-id="${book.id}" alt="${book.title}" loading="lazy" onerror="handleCoverError(this)" style="display:none">`;
                 setTimeout(() => fetchGoogleCover(null, book.title, book.author, card.querySelector('.cover-placeholder'), book.id), 0);

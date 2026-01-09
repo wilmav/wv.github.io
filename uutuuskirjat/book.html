@@ -15,7 +15,7 @@
         <a href="../index.html" class="app-logo-link" style="text-decoration:none;">
             <div class="app-title">Sovellukset<span class="app-title-com">.com</span></div>
         </a>
-        <nav style="margin-top: auto; margin-bottom: 2rem;">
+        <nav>
             <ul>
                 <li><a href="../index.html">Etusivu</a></li>
                 <li><a href="index.html"><strong>Kirjavinkit</strong></a></li>
@@ -818,13 +818,11 @@
 
             if (!imgSrc && book.isbn) {
                 const isbn = Array.isArray(book.isbn) ? book.isbn[0] : book.isbn;
-                // Use OpenLibrary but add onerror that triggers Google Check inside detail view context?
-                // Actually easier to just put img and if it fails, the onerror handler swaps it.
                 imgSrc = `https://covers.openlibrary.org/b/isbn/${isbn}-L.jpg`;
             }
 
             if (imgSrc) {
-                coverDiv.innerHTML = `<img src="${imgSrc}" alt="${book.title}" style="width:100%; height:100%; object-fit:cover;" onerror="handleDetailCoverError(this)">`;
+                coverDiv.innerHTML = `<img src="${imgSrc}" alt="${book.title}" style="width:100%; height:100%; object-fit:cover;" onerror="handleDetailCoverError(this, '${book.id}')">`;
             } else {
                 // No ISBN and no Image? Start with loading placeholder then try Google Name search
                 coverDiv.innerHTML = `<div class="detail-loader" style="width:100%; height:100%; display:flex; align-items:center; justify-content:center; color:#888;">Haetaan kuvaa...</div>`;
@@ -832,11 +830,8 @@
             }
         }
 
-        window.handleDetailCoverError = function (img) {
-            // OpenLibrary failed. Try Google. We need the book object or params.
-            // We can infer enough from DOM or just trigger the enrichment again if we haven't?
-            // Actually, best to just hide it and show text if we can't contextually retry easily here without closure.
-            // BUT we can use the global enrichment function which checks DOM.
+        window.handleDetailCoverError = function (img, id) {
+            // OpenLibrary failed. Try Google.
             img.style.display = 'none';
 
             // Show "Ei kuvaa" text if not present
@@ -853,12 +848,17 @@
                 noCover.style.display = 'flex';
             }
 
-            // Trigger name search fallback
+            // Trigger name search fallback with the CORRECT ID or just inferred info
             const bookTitle = document.getElementById('book-title').textContent;
             const bookAuthor = document.getElementById('book-author').textContent;
-            // Fake book object for fallback
-            enrichWithGoogleBooks({ title: bookTitle, authors: { primary: { [bookAuthor]: [] } } }, "");
+            // Use ID if passed, otherwise fall back to name-only cache
+            enrichWithGoogleBooks({ id: id || null, title: bookTitle, authors: { primary: { [bookAuthor]: [] } } }, "");
         };
+
+        // Cache cleanup for faulty legacy key
+        if (localStorage.getItem('cover_fix_undefined')) {
+            localStorage.removeItem('cover_fix_undefined');
+        }
 
         // Separate function to fetch ISBN specifically
         async function enrichWithGoogleIsbn(book) {

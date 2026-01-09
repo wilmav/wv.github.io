@@ -18,7 +18,7 @@ main {
     max-width: 700px;
     margin: 0;
     /* Left align as requested */
-    padding: 0 40px;
+    padding: 2rem 40px 4rem 40px;
     width: 100%;
 }
 
@@ -31,20 +31,11 @@ header {
     color: white !important;
     border-right: none !important;
     box-shadow: 4px 0 12px rgba(255, 153, 0, 0.1);
-    /* Enforce layout for bottom alignment */
-    display: flex !important;
-    flex-direction: column !important;
-    min-height: 100vh !important;
-    height: 100vh !important;
 }
 
 header .app-title {
     color: white !important;
-    margin-bottom: 2rem !important;
     text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    min-height: auto;
-    display: block;
-    margin-top: 1rem !important;
 }
 
 /* HIGH SPECIFICITY to override tyyli.css */
@@ -61,31 +52,16 @@ header .app-title .app-title-com,
 }
 
 header nav {
-    flex-grow: 0 !important;
-    /* CRITICAL: Prevent taking up all space so margin-top: auto works */
-    justify-content: flex-start !important;
     padding-top: 1rem;
-    margin-top: auto !important;
-    /* Push to bottom */
-    margin-bottom: 2rem !important;
-    display: flex !important;
-    flex-direction: column !important;
 }
 
 header nav ul li a {
     color: rgba(255, 255, 255, 0.9) !important;
-    border-left: 3px solid transparent;
-    padding-left: 10px;
 }
 
 header nav ul li strong {
     color: white !important;
-    border-left: 3px solid white;
-    padding-left: 10px;
-    display: block;
-    font-weight: 700;
-    padding-top: 0.4rem;
-    padding-bottom: 0.4rem;
+    border-left-color: white !important;
 }
 
 header nav ul li a:hover {
