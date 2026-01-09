@@ -9,7 +9,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         userAuthors: [],   // From localStorage
         books: {},         // Combined static + fetched books
         selectedAuthor: null,
-        selectedLanguages: JSON.parse(localStorage.getItem('selectedLanguages')) || ['fin', 'swe', 'eng']
+        selectedLanguages: JSON.parse(localStorage.getItem('selectedLanguages')) || ['fin', 'swe', 'eng'],
+        dates: {}          // From dates.json
     };
 
     // --- DOM Elements ---
@@ -34,6 +35,15 @@ document.addEventListener('DOMContentLoaded', async () => {
             state.books = { ...BOOKS_DATA };
             staticDefaults = AUTHORS_DATA;
         }
+
+        // Load Dates (Prototype)
+        try {
+            const dateRes = await fetch('../dates.json');
+            if (dateRes.ok) {
+                state.dates = await dateRes.json();
+                console.log("Loaded manual dates:", state.dates);
+            }
+        } catch (e) { console.warn("Could not load dates.json"); }
 
         // 1. Initialize User Data (Bootstrap)
         const saved = localStorage.getItem('user_authors');
@@ -73,32 +83,36 @@ document.addEventListener('DOMContentLoaded', async () => {
     // --- Logic: Data Fetching ---
 
     async function fetchBooksForUserAuthors() {
-        const currentYear = new Date().getFullYear();
-
         for (const author of state.userAuthors) {
             try {
                 // Fetch ALL books (or at least a large history), not just recent ones.
-                // Finna "sort: main_date_str desc" will give us the newest first.
-                // We ask for e.g. 100 items to cover the bibliography reasonably well.
                 const books = await searchFinnaBooks(author.name, 1900);
 
                 // --- 1. OPTIMIZATION: Propagate Images ---
-                // If "Talonvahti" (print) has an image, give it to "Talonvahti" (ebook) if missing.
                 const imageMap = {};
+
+                // Helper: Create a loose key
+                const getTitleKey = (t) => {
+                    if (!t) return "";
+                    return t.toLowerCase()
+                        .split(':')[0] // Ignore subtitles
+                        .split('/')[0] // Ignore slashes
+                        .replace(/[.,]/g, '') // Remove dots/commas
+                        .trim();
+                };
+
                 // First pass: Find existing images
                 books.forEach(b => {
                     if (b.image && b.title) {
-                        // Use a normalized title key to match loosely
-                        const key = b.title.toLowerCase().trim();
-                        // Prefer the first one we find (newest usually)
-                        if (!imageMap[key]) imageMap[key] = b.image;
+                        const key = getTitleKey(b.title);
+                        if (key && !imageMap[key]) imageMap[key] = b.image;
                     }
                 });
                 // Second pass: Apply to missing
                 books.forEach(b => {
                     if (!b.image && b.title) {
-                        const key = b.title.toLowerCase().trim();
-                        if (imageMap[key]) {
+                        const key = getTitleKey(b.title);
+                        if (key && imageMap[key]) {
                             b.image = imageMap[key];
                         }
                     }
@@ -123,13 +137,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     async function searchFinnaBooks(authorName, minYear) {
-        // Did not swap "Penny, Louise" -> "Louise Penny" because type=Author expects "Last, First" often.
-        const searchName = authorName;
-
-        // Use "author" search field explicitly.
         // limit: 100 to get a good coverage of "all" books as requested.
         const params = new URLSearchParams();
-        params.append("lookfor", searchName);
+        params.append("lookfor", authorName);
         params.append("type", "Author");
         params.append("sort", "main_date_str desc");
         params.append("limit", "100");
@@ -145,7 +155,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             const res = await fetch(url);
             const data = await res.json();
             const records = data.records || [];
-            console.log(`Found ${records.length} books for ${searchName}`);
+            console.log(`Found ${records.length} books for ${authorName}`);
 
             return records
                 .filter(book => {
@@ -154,7 +164,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 })
                 .map(normalizeBookData);
         } catch (e) {
-            console.error("Search failed for " + searchName, e);
+            console.error("Search failed for " + authorName, e);
             return [];
         }
     }
@@ -164,7 +174,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         let seriesInfo = null;
         if (book.series && book.series.length > 0) {
             const sRaw = book.series[0];
-            // Simple parse attempt "Name ; No"
             let parts = sRaw.name ? [sRaw.name, sRaw.number] : sRaw.split(';'); // Handle if object or string
             seriesInfo = {
                 name: parts[0]?.trim(),
@@ -183,29 +192,42 @@ document.addEventListener('DOMContentLoaded', async () => {
             });
         }
 
+        // Check for Manual Date (Scraper)
+        let manualDate = null;
+        if (state.dates && book.title) {
+            const key = book.title.toLowerCase().trim();
+            const entry = state.dates[key];
+            if (entry && entry.dates) {
+                if (isAudio && entry.dates.audiobook) manualDate = entry.dates.audiobook;
+                else if (isEbook && entry.dates.ebook) manualDate = entry.dates.ebook;
+                else if (entry.dates.print) manualDate = entry.dates.print;
+                // Fallback: any date is better than just year
+                if (!manualDate) manualDate = entry.dates.audiobook || entry.dates.ebook || entry.dates.print;
+            }
+        }
+
         return {
             id: book.id,
             title: book.title,
             originalTitle: book.uniformTitles ? book.uniformTitles[0] : null,
             author: extractAuthorName(book.authors),
             year: book.year,
+            manualDate: manualDate,
             description: book.summary,
             image: book.images && book.images.length ? `https://api.finna.fi${book.images[0]}` : null,
             language: book.languages,
             series: seriesInfo,
             formats: { isEbook, isAudio },
-            isbn: book.isbn // Pass ISBN through
+            isbn: book.isbn
         };
     }
 
     function extractAuthorName(authorsObj) {
         if (!authorsObj) return "Unknown";
-        // API returns { "primary": { "Name": ... }, "secondary": ... }
         if (authorsObj.primary) {
             const names = Object.keys(authorsObj.primary);
             if (names.length > 0) return names[0];
         }
-        // Fallback to any other role
         for (const role in authorsObj) {
             if (authorsObj[role]) {
                 const names = Object.keys(authorsObj[role]);
@@ -219,15 +241,11 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     async function searchAuthor(query) {
         searchResults.innerHTML = '<div class="search-result-item">Haetaan...</div>';
-
-        // Use "Author" type + limit 100 to cast a wide enough net for "Penny" -> "Penny, Louise"
-        // even if many other "Penny" surnames exist.
         const url = `${API_SEARCH}?lookfor=${encodeURIComponent(query)}&type=Author&limit=100&field[]=authors`;
 
         try {
             const res = await fetch(url);
             const data = await res.json();
-
             searchResults.innerHTML = '';
 
             if (!data.records || data.records.length === 0) {
@@ -235,14 +253,12 @@ document.addEventListener('DOMContentLoaded', async () => {
                 return;
             }
 
-            // Extract all authors from book results
             const foundAuthors = new Set();
             data.records.forEach(r => {
                 if (r.authors) {
                     Object.values(r.authors).forEach(roleObj => {
                         if (roleObj) {
                             Object.keys(roleObj).forEach(name => {
-                                // Normalize: trim and collapse multiple spaces (e.g. "Penny,  Louise" -> "Penny, Louise")
                                 const normalized = name.replace(/\s+/g, ' ').trim();
                                 if (normalized) foundAuthors.add(normalized);
                             });
@@ -251,34 +267,24 @@ document.addEventListener('DOMContentLoaded', async () => {
                 }
             });
 
-            // FILTER: Strict token matching
             const queryTokens = query.toLowerCase().trim().split(/\s+/);
-
             const filteredAuthors = Array.from(foundAuthors).filter(name => {
                 const lowerName = name.toLowerCase();
                 return queryTokens.every(token => lowerName.includes(token));
             });
 
-            // Sort and log
             const sortedAuthors = filteredAuthors.sort((a, b) => {
                 const lowerA = a.toLowerCase();
                 const lowerB = b.toLowerCase();
                 const qLower = query.toLowerCase().trim();
-
                 const startsA = lowerA.startsWith(qLower);
                 const startsB = lowerB.startsWith(qLower);
-
                 if (startsA && !startsB) return -1;
                 if (!startsA && startsB) return 1;
-
                 return lowerA.localeCompare(lowerB);
             });
 
-            console.log("Found authors (Set):", [...foundAuthors]);
-            console.log("Sorted authors:", sortedAuthors);
-
             if (sortedAuthors.length === 0) {
-                // Fallback to partial matches
                 const partialMatches = Array.from(foundAuthors).filter(name => {
                     const lowerName = name.toLowerCase();
                     return queryTokens.some(token => lowerName.includes(token));
@@ -324,15 +330,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         state.userAuthors.push(newAuthor);
         saveUserAuthors();
 
-        // Reset UI
         toggleSearch(false);
-        // Clear search
         searchInput.value = '';
         searchResults.innerHTML = '';
-
         renderAuthors();
-
-        // Fetch their books
         await fetchBooksForUserAuthors();
     }
 
@@ -350,26 +351,20 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     function renderAuthors() {
         authorList.innerHTML = '';
-
         const selectedLangs = state.selectedLanguages;
 
-        // ONLY render userAuthors (which now includes bootstrapped defaults)
         state.userAuthors.forEach(author => {
             const isActive = state.selectedAuthor === author.name;
-
-            // Calculate filtered count
             let count = 0;
             if (author.latest_books) {
                 count = author.latest_books.filter(bookId => {
                     const book = state.books[bookId];
                     if (!book) return false;
-                    // Apply Language Filter
                     if (selectedLangs.length > 0) {
                         if (!book.language) return false;
                         return book.language.some(langCode => selectedLangs.some(sel => langCode.includes(sel)));
                     }
-                    return false; // If no language selected, show 0? Or maybe all? Logic says 0 if selected.length > 0 is false check.
-                    // Actually if selected.length == 0, renderBooks shows 0. So count should be 0.
+                    return false;
                 }).length;
             }
 
@@ -381,14 +376,13 @@ document.addEventListener('DOMContentLoaded', async () => {
                 <span class="remove-author" title="Poista">×</span>
             `;
 
-            // Click to select
             el.addEventListener('click', (e) => {
                 if (e.target.classList.contains('remove-author')) {
-                    e.stopPropagation(); // Stop selection when removing
+                    e.stopPropagation();
                     removeUserAuthor(author.name);
                 } else {
                     state.selectedAuthor = isActive ? null : author.name;
-                    renderAuthors(); // re-render to update active state
+                    renderAuthors();
                     renderBooks();
                 }
             });
@@ -399,23 +393,18 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     function renderBooks() {
         bookGrid.innerHTML = '';
-
         let booksToShow = [];
+        const currentYear = new Date().getFullYear();
 
-        // 1. Filter by Author
-        // 1. Filter by Author using IDs (Strict Match)
         if (state.selectedAuthor) {
             const authorObj = state.userAuthors.find(a => a.name === state.selectedAuthor);
             if (authorObj && authorObj.latest_books) {
-                // Filter state.books based on the IDs tied to this author
-                // This prevents "Penny, Louise" books from being hidden if name string doesn't match perfectly
                 const authorBookIds = new Set(authorObj.latest_books);
                 booksToShow = Object.values(state.books).filter(b => authorBookIds.has(b.id));
             } else {
                 booksToShow = [];
             }
         } else {
-            // Show all from tracked authors
             const allTrackedIds = new Set();
             state.userAuthors.forEach(a => {
                 if (a.latest_books) a.latest_books.forEach(id => allTrackedIds.add(id));
@@ -423,30 +412,19 @@ document.addEventListener('DOMContentLoaded', async () => {
             booksToShow = Object.values(state.books).filter(b => allTrackedIds.has(b.id));
         }
 
-        // 2. Filter by Language
-        // Strict limit: only show books that have one of the SELECTED languages.
-        // This also handles the "never show other languages" rule because we only check against available checkboxes.
         const selected = state.selectedLanguages;
         if (selected.length > 0) {
             booksToShow = booksToShow.filter(b => {
                 if (!b.language) return false;
-                // b.language is array of codes (e.g. ['fin']). Check intersection.
                 return b.language.some(langCode => selected.some(sel => langCode.includes(sel)));
             });
         } else {
-            // If nothing selected, show nothing (or all? usually nothing implies user unchecked all)
             booksToShow = [];
         }
 
-        // Sort by year desc.
-        // If years are equal, use title for stability
-        // Sort: Future > Newest > Title
-        const currentYear = new Date().getFullYear();
         booksToShow.sort((a, b) => {
             const yearA = parseInt(a.year) || 0;
             const yearB = parseInt(b.year) || 0;
-
-            // Prioritize future releases
             const isFutureA = yearA > currentYear;
             const isFutureB = yearB > currentYear;
 
@@ -466,38 +444,29 @@ document.addEventListener('DOMContentLoaded', async () => {
         booksToShow.forEach(book => {
             const card = document.createElement('div');
             card.className = 'book-card';
-            // Make clickable
             card.style.cursor = 'pointer';
             card.onclick = () => {
                 window.location.href = `book.html?id=${book.id}`;
             };
 
-            // Clean Original Title
             let displayOriginalTitle = book.originalTitle || "";
             if (displayOriginalTitle) {
                 displayOriginalTitle = displayOriginalTitle.replace(/^Alkuteos:\s*/i, "").replace(/^Alkuperäisteos:\s*/i, "").replace(/\.\s*Suomi$/i, "").trim();
             }
 
-            // Image Logic: Finna -> OpenLibrary -> Google Books (Lazy)
             let imgSrc = book.image ? `https://api.finna.fi${book.image}` : '';
             let imgHtml = '';
 
             if (imgSrc) {
                 imgHtml = `<img src="${imgSrc}" alt="${book.title}" loading="lazy" onerror="this.style.display='none'">`;
             } else if (book.isbn) {
-                // OpenLibrary Check
                 const isbn = Array.isArray(book.isbn) ? book.isbn[0] : book.isbn;
-                // We create an ID for this image to update it later if needed or just let it load
                 imgHtml = `<img src="https://covers.openlibrary.org/b/isbn/${isbn}-M.jpg" class="cover-placeholder" data-isbn="${isbn}" data-title="${book.title}" data-author="${book.author}" alt="${book.title}" loading="lazy" onerror="handleCoverError(this)">`;
             } else {
-                // No ISBN? Try Google via Title/Author
-                // STRICT MODE: Only search with current title (Finnish/Swedish), NO fallback to original title.
                 imgHtml = `<img src="" class="cover-placeholder" data-title="${book.title}" data-author="${book.author}" alt="${book.title}" loading="lazy" onerror="handleCoverError(this)" style="display:none">`;
-                // Trigger fetch immediately
                 setTimeout(() => fetchGoogleCover(null, book.title, book.author, card.querySelector('.cover-placeholder')), 0);
             }
 
-            // Series Badge logic
             let seriesBadgeHtml = '';
             if (book.series && book.series.number) {
                 seriesBadgeHtml = `
@@ -510,9 +479,16 @@ document.addEventListener('DOMContentLoaded', async () => {
                  `;
             }
 
-            // Format Badges
+            let dateDisplay = book.year;
+            let dateStyle = parseInt(book.year) === currentYear ? ' current-year' : '';
+
+            if (book.manualDate) {
+                dateDisplay = book.manualDate;
+                dateStyle = ' current-year';
+            }
+
             let formatBadgeHtml = `
-                <span class="year-tag${parseInt(book.year) === currentYear ? ' current-year' : ''}">${book.year}</span>
+                <span class="year-tag${dateStyle}" title="${book.manualDate ? 'Julkaisupäivä: ' + book.manualDate : 'Julkaisuvuosi'}">${dateDisplay}</span>
                 ${book.formats.isEbook ? '<span class="year-tag" style="background:#eef; color:#44a;">E-kirja</span>' : ''}
                 ${book.formats.isAudio ? '<span class="year-tag" style="background:#efe; color:#064;">Äänikirja</span>' : ''}
                 ${!book.formats.isEbook && !book.formats.isAudio ? '<span class="year-tag" style="background:#f0f0f0; color:#444;">Kirja</span>' : ''}
@@ -537,14 +513,11 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     }
 
-    // Lazy Fetch Logic
     window.handleCoverError = function (img) {
-        // OpenLibrary failed (or was empty). Try Google Books.
         const isbn = img.dataset.isbn;
         const title = img.dataset.title;
         const author = img.dataset.author;
 
-        // Prevent infinite loop if we already tried
         if (img.dataset.triedGoogle) {
             img.style.display = 'none';
             if (img.parentElement.querySelector('.no-cover-text')) {
@@ -558,15 +531,39 @@ document.addEventListener('DOMContentLoaded', async () => {
     };
 
     async function fetchGoogleCover(isbn, title, author, imgEl) {
-        // Helper to apply image from data
+
         const applyImage = (items) => {
             if (items && items.length > 0 && items[0].volumeInfo.imageLinks) {
                 const link = items[0].volumeInfo.imageLinks.thumbnail || items[0].volumeInfo.imageLinks.smallThumbnail;
                 if (link) {
-                    imgEl.src = link.replace('&edge=curl', '');
+                    const safeLink = link.replace('&edge=curl', '');
+                    imgEl.src = safeLink;
                     imgEl.style.display = 'block';
                     if (imgEl.parentElement.querySelector('.no-cover-text')) {
                         imgEl.parentElement.querySelector('.no-cover-text').style.display = 'none';
+                    }
+
+                    // LIVE PROPAGATION
+                    if (title) {
+                        const allPlaceholders = document.querySelectorAll('.cover-placeholder');
+                        const myKey = title.toLowerCase().split(':')[0].trim();
+
+                        allPlaceholders.forEach(ph => {
+                            if (ph === imgEl) return;
+                            const otherTitle = ph.dataset.title || "";
+                            const otherKey = otherTitle.toLowerCase().split(':')[0].trim();
+
+                            if (otherKey && otherKey === myKey) {
+                                if (ph.style.display === 'none' || ph.getAttribute('src') === '') {
+                                    ph.src = safeLink;
+                                    ph.style.display = 'block';
+                                    if (ph.parentElement.querySelector('.no-cover-text')) {
+                                        ph.parentElement.querySelector('.no-cover-text').style.display = 'none';
+                                    }
+                                    ph.dataset.triedGoogle = "true";
+                                }
+                            }
+                        });
                     }
                     return true;
                 }
@@ -574,7 +571,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             return false;
         };
 
-        // 1. Try ISBN first if available
         if (isbn) {
             try {
                 let res = await fetch(`https://www.googleapis.com/books/v1/volumes?q=isbn:${isbn}&maxResults=1`);
@@ -583,7 +579,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             } catch (e) { }
         }
 
-        // 2. Fallback: Title + Author (if ISBN failed or wasn't provided)
         try {
             let q = `intitle:${encodeURIComponent(title)}+inauthor:${encodeURIComponent(author)}`;
             let res = await fetch(`https://www.googleapis.com/books/v1/volumes?q=${q}&maxResults=1`);
@@ -591,44 +586,30 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (applyImage(data.items)) return;
         } catch (e) { }
 
-        // If we get here, failure.
         imgEl.style.display = 'none';
         if (imgEl.parentElement && imgEl.parentElement.querySelector('.no-cover-text')) {
             imgEl.parentElement.querySelector('.no-cover-text').style.display = 'flex';
         }
     }
 
-    // --- UI Interactions ---
-
     function setupEventListeners() {
-        // Toggle Search
         addAuthorBtn.addEventListener('click', () => toggleSearch());
-
-        // Search Action
         searchActionBtn.addEventListener('click', () => {
             const q = searchInput.value.trim();
             if (q) searchAuthor(q);
         });
-
-        // Search on Enter
         searchInput.addEventListener('keypress', (e) => {
             if (e.key === 'Enter') searchActionBtn.click();
         });
 
-        initLangFilter();
-    }
-
-    function initLangFilter() {
         const langFilter = document.getElementById('lang-filters');
         if (!langFilter) return;
 
-        // Sync checkboxes with current state (loaded from LS at start)
         const checkboxes = langFilter.querySelectorAll('input[type="checkbox"]');
         checkboxes.forEach(cb => {
             cb.checked = state.selectedLanguages.includes(cb.value);
         });
 
-        // Filter Change
         langFilter.addEventListener('change', () => {
             const checkboxes = langFilter.querySelectorAll('input[type="checkbox"]');
             const checked = Array.from(checkboxes)
@@ -636,9 +617,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                 .map(cb => cb.value);
 
             state.selectedLanguages = checked;
-            localStorage.setItem('selectedLanguages', JSON.stringify(checked)); // Save state
+            localStorage.setItem('selectedLanguages', JSON.stringify(checked));
 
-            // Re-calc counts since they depend on language now
             renderAuthors();
             renderBooks();
         });
@@ -656,7 +636,5 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
 
-    // Run
     init();
-
 });
