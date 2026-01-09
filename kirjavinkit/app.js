@@ -155,13 +155,23 @@ document.addEventListener('DOMContentLoaded', async () => {
                     }
                 });
 
-                // Merge into state
+                // Merge into state (with duplicate removal based on title-author-year)
+                const existingKeys = new Set(Object.values(state.books).map(b => `${b.title}|${b.author}|${b.year}`));
+
+                const filteredNewBooks = [];
                 books.forEach(b => {
-                    state.books[b.id] = b;
+                    const key = `${b.title}|${b.author}|${b.year}`;
+                    if (!state.books[b.id] && !existingKeys.has(key)) {
+                        state.books[b.id] = b;
+                        existingKeys.add(key);
+                        filteredNewBooks.push(b.id);
+                    } else if (state.books[b.id]) {
+                        filteredNewBooks.push(b.id);
+                    }
                 });
 
                 // Update author's book list
-                author.latest_books = books.map(b => b.id);
+                author.latest_books = filteredNewBooks;
 
             } catch (e) {
                 console.error(`Could not fetch for ${author.name}`, e);
@@ -184,6 +194,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         const fields = ["id", "title", "authors", "year", "images", "summary", "languages", "series", "uniformTitles", "formats", "isbn"];
         fields.forEach(f => params.append("field[]", f));
 
+        // Ensure only books/docs, excluding videos
+        params.append("filter[]", 'format:"0/Book/"');
+
         // Finna API handling
         const url = `${API_SEARCH}?${params.toString()}`;
         console.log("Fetching books with URL:", url);
@@ -197,7 +210,23 @@ document.addEventListener('DOMContentLoaded', async () => {
             return records
                 .filter(book => {
                     const y = parseInt(book.year);
-                    return !isNaN(y) && y >= minYear;
+                    const yearOk = !isNaN(y) && y >= minYear;
+
+                    // Strict Author Check: The searched author should be a primary author
+                    // This avoids general results like "Kansalliskirjasto"
+                    let authorOk = true;
+                    if (book.authors && book.authors.primary) {
+                        const primaryNames = Object.keys(book.authors.primary);
+                        // Check if any primary author name includes the searched author's last name or similar
+                        // Improved check: query tokens match primary author
+                        const queryTokens = authorName.toLowerCase().split(/\s+/).filter(t => t.length > 2);
+                        authorOk = primaryNames.some(pName => {
+                            const lowP = pName.toLowerCase();
+                            return queryTokens.every(token => lowP.includes(token));
+                        });
+                    }
+
+                    return yearOk && authorOk;
                 })
                 .map(normalizeBookData);
         } catch (e) {
@@ -291,7 +320,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     async function searchAuthor(query) {
         searchResults.innerHTML = '<div class="search-result-item">Haetaan...</div>';
-        const url = `${API_SEARCH}?lookfor=${encodeURIComponent(query)}&type=Author&limit=100&field[]=authors`;
+        const url = `${API_SEARCH}?lookfor=${encodeURIComponent(query)}&type=Author&limit=100&field[]=authors&filter[]=format:\"0/Book/\"`;
 
         try {
             const res = await fetch(url);
@@ -484,6 +513,15 @@ document.addEventListener('DOMContentLoaded', async () => {
             const diff = yearB - yearA;
             if (diff !== 0) return diff;
             return a.title.localeCompare(b.title);
+        });
+
+        // --- DUPLICATE REMOVAL (Extra layer to be sure) ---
+        const seen = new Set();
+        booksToShow = booksToShow.filter(b => {
+            const key = `${b.title}|${b.author}|${b.year}`;
+            if (seen.has(key)) return false;
+            seen.add(key);
+            return true;
         });
 
         if (booksToShow.length === 0) {
