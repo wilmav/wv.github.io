@@ -215,30 +215,42 @@ document.addEventListener('DOMContentLoaded', async () => {
                     const y = parseInt(book.year);
                     const yearOk = !isNaN(y) && y >= minYear;
 
-                    // Strict Author Check: The searched author should be a primary author
-                    // This avoids general results like "Kansalliskirjasto"
-                    let authorOk = true;
+                    // Ultra-Strict Author Check: The searched author should be a primary author
+                    // AND we filter out massive compilations where they are just one of many.
+                    let authorOk = false;
                     if (book.authors && book.authors.primary) {
                         const primaryNames = Object.keys(book.authors.primary);
-                        // Check if any primary author name includes the searched author's last name or similar
-                        // Improved check: query tokens match primary author
                         const queryTokens = authorName.toLowerCase().split(/\s+/).filter(t => t.length > 2);
-                        authorOk = primaryNames.some(pName => {
+
+                        const matchIndex = primaryNames.findIndex(pName => {
                             const lowP = pName.toLowerCase();
                             return queryTokens.every(token => lowP.includes(token));
                         });
+
+                        // Criteria:
+                        // 1. Searched author must be in primary authors
+                        // 2. If many authors, searched one must be the first (prominence)
+                        // 3. Filter out corporate-heavy collections (like Kansalliskirjasto)
+                        if (matchIndex !== -1) {
+                            const isCorporateHeavy = book.authors.corporate &&
+                                Object.keys(book.authors.corporate).some(c => c.includes("Kansalliskirjasto") || c.includes("Kirjastopalvelu"));
+
+                            if (!isCorporateHeavy && (primaryNames.length <= 3 || matchIndex === 0)) {
+                                authorOk = true;
+                            }
+                        }
                     }
 
                     return yearOk && authorOk;
                 })
-                .map(normalizeBookData);
+                .map(b => normalizeBookData(b, authorName));
         } catch (e) {
             console.error("Search failed for " + authorName, e);
             return [];
         }
     }
 
-    function normalizeBookData(book) {
+    function normalizeBookData(book, searchedAuthor = null) {
         // Parse Series
         let seriesInfo = null;
         if (book.series && book.series.length > 0) {
@@ -292,7 +304,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             id: book.id,
             title: book.title,
             originalTitle: book.uniformTitles ? book.uniformTitles[0] : null,
-            author: extractAuthorName(book.authors),
+            author: extractAuthorName(book.authors, searchedAuthor),
             year: book.year,
             manualDate: manualDate,
             description: book.summary,
@@ -304,12 +316,32 @@ document.addEventListener('DOMContentLoaded', async () => {
         };
     }
 
-    function extractAuthorName(authorsObj) {
+    function extractAuthorName(authorsObj, searchName = null) {
         if (!authorsObj) return "Unknown";
+
+        const searchTokens = searchName ? searchName.toLowerCase().split(/\s+/).filter(t => t.length > 2) : [];
+        const isMatch = (name) => {
+            if (searchTokens.length === 0) return false;
+            const lowN = name.toLowerCase();
+            return searchTokens.every(token => lowN.includes(token));
+        };
+
+        // 1. Prioritize searched author in Primary
         if (authorsObj.primary) {
             const names = Object.keys(authorsObj.primary);
+            const match = names.find(isMatch);
+            if (match) return match;
             if (names.length > 0) return names[0];
         }
+
+        // 2. Try Secondary (if searching)
+        if (authorsObj.secondary) {
+            const names = Object.keys(authorsObj.secondary);
+            const match = names.find(isMatch);
+            if (match) return match;
+        }
+
+        // 3. Fallback
         for (const role in authorsObj) {
             if (authorsObj[role]) {
                 const names = Object.keys(authorsObj[role]);
