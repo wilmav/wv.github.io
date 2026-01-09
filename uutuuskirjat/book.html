@@ -115,6 +115,7 @@
             apiParams.append('field[]', 'targetAudience');// For minimal filter
             apiParams.append('field[]', 'isbn');
             apiParams.append('field[]', 'notes');
+            apiParams.append('field[]', 'publicationDates'); // Request detailed dates
 
             const url = `https://api.finna.fi/v1/search?${apiParams.toString()}`;
 
@@ -305,7 +306,7 @@
 
                     // STRICT FORMAT FILTERING
                     if (r.formats) {
-                        const forbidden = ['elokuva', 'video', 'dvd', 'blu-ray', 'musiikki', 'nuotti', 'peli', 'kartta', 'esine', 'partituuri', 'cd-levy'];
+                        const forbidden = ['elokuva', 'video', 'dvd', 'blu-ray', 'musiikki', 'nuotti', 'peli', 'kartta', 'esine', 'partituuri', 'cd-levy', 'opinnäyte', 'thesis', 'väitöskirja', 'artikkeli', 'gradu'];
                         // Check if ANY format is forbidden (case-insensitive). Formats are objects { value, translated } or strings.
                         const hasForbidden = r.formats.some(f => {
                             const val = (typeof f === 'string' ? f : (f.translated || f.value || "")).toLowerCase();
@@ -531,7 +532,7 @@
             const params = new URLSearchParams({
                 lookfor: `"${title}" ${author}`,
                 type: 'AllFields',
-                limit: 5,
+                limit: 20,
                 'field[]': ['summary', 'id']
             });
 
@@ -582,7 +583,15 @@
 
             const authorName = extractAuthor(book) || "Tuntematon";
             document.getElementById('book-author').textContent = authorName;
-            document.getElementById('book-year').textContent = book.year || "";
+
+            // Year with Tooltip
+            const yearEl = document.getElementById('book-year');
+            yearEl.textContent = book.year || "";
+            if (book.publicationDates && book.publicationDates.length > 0) {
+                yearEl.title = "Julkaistu: " + book.publicationDates.join(", ");
+                yearEl.style.cursor = "help";
+                yearEl.style.textDecoration = "underline dotted";
+            }
 
             let desc = "";
             if (book.summary && book.summary.length > 0) {

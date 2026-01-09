@@ -490,7 +490,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             // Format Badges
             let formatBadgeHtml = `
-                <span class="year-tag">${book.year}</span>
+                <span class="year-tag${parseInt(book.year) === currentYear ? ' current-year' : ''}">${book.year}</span>
                 ${book.formats.isEbook ? '<span class="year-tag" style="background:#eef; color:#44a;">E-kirja</span>' : ''}
                 ${book.formats.isAudio ? '<span class="year-tag" style="background:#efe; color:#064;">Äänikirja</span>' : ''}
                 ${!book.formats.isEbook && !book.formats.isAudio ? '<span class="year-tag" style="background:#f0f0f0; color:#444;">Kirja</span>' : ''}

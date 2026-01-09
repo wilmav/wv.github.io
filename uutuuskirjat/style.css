@@ -746,3 +746,12 @@ select:focus {
 .info-tooltip p:last-child {
     margin-bottom: 0;
 }
+
+/* Current Year Highlight (2026 etc) */
+.year-tag.current-year {
+    background-color: #FFF8E1;
+    border-color: #DFAF2B;
+    color: #7b5e00;
+    font-weight: 700;
+    box-shadow: 0 0 0 1px rgba(223, 175, 43, 0.3);
+}
