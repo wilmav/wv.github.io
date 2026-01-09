@@ -101,7 +101,12 @@
             document.getElementById('book-title').textContent = "Virhe: Kirjan tunnistetta ei annettu.";
         }
 
+        let globalDates = {}; // Store dates globally
+
         async function fetchBookDetails(id) {
+            // Start Date Fetch immediately
+            fetch('../dates.json').then(r => r.json()).then(d => { globalDates = d; }).catch(e => console.warn("Dates fetch fail", e));
+
             const apiParams = new URLSearchParams();
             apiParams.append('lookfor', id);
             apiParams.append('type', 'id');
@@ -116,6 +121,7 @@
             apiParams.append('field[]', 'isbn');
             apiParams.append('field[]', 'notes');
             apiParams.append('field[]', 'publicationDates'); // Request detailed dates
+            apiParams.append('field[]', 'formats'); // Need formats for date matching
 
             const url = `https://api.finna.fi/v1/search?${apiParams.toString()}`;
 
@@ -136,6 +142,17 @@
                     }
                     book.parsedOriginalTitle = originalTitle; // Store for usage
 
+                    // Wait a tiny bit for dates if they are racing, or just re-render when dates arrive?
+                    // We'll just render with what we have, then re-render if needed? 
+                    // Simpler: Just render. The date fetch is fast local file.
+                    // Let's await it to be sure for this view.
+                    if (Object.keys(globalDates).length === 0) {
+                        try {
+                            const dateRes = await fetch('../dates.json');
+                            if (dateRes.ok) globalDates = await dateRes.json();
+                        } catch (e) { }
+                    }
+
                     renderBook(book); // Render initial state
 
                     // PARALLEL ENRICHMENT PIPELINE (Optimized)
@@ -147,6 +164,7 @@
                     }
 
                     // 2. Google Books Enrichment (Covers & Summaries)
+                    // Always try Google if image is missing, even if Finna has Summary
                     if ((!book.images || book.images.length === 0) || (!book.summary)) {
                         enrichmentTasks.push(enrichWithGoogleBooks(book, originalTitle));
                     }
@@ -614,8 +632,8 @@
             document.getElementById('book-title').textContent = book.title;
 
             // Original Title
-            let ot = "";
-            if (book.notes) {
+            let ot = book.parsedOriginalTitle || "";
+            if (!ot && book.notes) {
                 const otNote = book.notes.find(n => n.includes("Alkuteos:") || n.includes("Alkuperäisteos:"));
                 if (otNote) ot = otNote;
             }
@@ -627,14 +645,37 @@
             const authorName = extractAuthor(book) || "Tuntematon";
             document.getElementById('book-author').textContent = authorName;
 
-            // Year with Tooltip
+            // Year & Manual Date
             const yearEl = document.getElementById('book-year');
-            yearEl.textContent = book.year || "";
-            if (book.publicationDates && book.publicationDates.length > 0) {
-                yearEl.title = "Julkaistu: " + book.publicationDates.join(", ");
-                yearEl.style.cursor = "help";
-                yearEl.style.textDecoration = "underline dotted";
+            let dateDisplay = book.year;
+
+            // Check manual dates
+            if (globalDates && book.title) {
+                const key = book.title.toLowerCase().trim(); // Simple normalization
+                const entry = globalDates[key];
+                if (entry && entry.dates) {
+                    let isEbook = false;
+                    let isAudio = false;
+                    if (book.formats) {
+                        book.formats.forEach(f => {
+                            const val = (typeof f === 'string' ? f : f.value) || "";
+                            if (val.includes("eBook") || val.includes("EBook")) isEbook = true;
+                            if (val.includes("AudioBook") || val.includes("Sound")) isAudio = true;
+                        });
+                    }
+
+                    let manualDate = null;
+                    if (isAudio && entry.dates.audiobook) manualDate = entry.dates.audiobook;
+                    else if (isEbook && entry.dates.ebook) manualDate = entry.dates.ebook;
+                    else if (entry.dates.print) manualDate = entry.dates.print;
+
+                    if (manualDate) {
+                        dateDisplay = `<span style="background:#fff9c4; padding:2px 6px; border-radius:4px; font-weight:bold; border:1px solid #fdd835;">${manualDate}</span>`;
+                    }
+                }
             }
+
+            yearEl.innerHTML = dateDisplay || "";
 
             let desc = "";
             if (book.summary && book.summary.length > 0) {
@@ -652,21 +693,38 @@
                 descContainer.style.display = 'none';
             }
 
-            // Image with Fallback (Finna -> OpenLibrary -> Placeholder)
+            // Image with Fallback (Finna -> OpenLibrary -> Google Placeholder -> Error)
             const coverDiv = document.getElementById('book-cover');
             let imgSrc = (book.images && book.images.length > 0) ? `https://api.finna.fi${book.images[0]}` : null;
 
             if (!imgSrc && book.isbn) {
                 const isbn = Array.isArray(book.isbn) ? book.isbn[0] : book.isbn;
-                imgSrc = `https://covers.openlibrary.org/b/isbn/${isbn}-L.jpg`; // Use Large size for main cover
+                // Use OpenLibrary but add onerror that triggers Google Check inside detail view context?
+                // Actually easier to just put img and if it fails, the onerror handler swaps it.
+                imgSrc = `https://covers.openlibrary.org/b/isbn/${isbn}-L.jpg`;
             }
 
             if (imgSrc) {
-                coverDiv.innerHTML = `<img src="${imgSrc}" alt="${book.title}" style="width:100%; height:100%; object-fit:cover;" onerror="this.parentElement.innerHTML='<div style=\\'display:flex; align-items:center; justify-content:center; height:100%; color:#888;\\'>Ei kuvaa</div>'">`;
+                coverDiv.innerHTML = `<img src="${imgSrc}" alt="${book.title}" style="width:100%; height:100%; object-fit:cover;" onerror="handleDetailCoverError(this)">`;
             } else {
-                coverDiv.innerHTML = `<div style="display:flex; align-items:center; justify-content:center; height:100%; color:#888;">Ei kuvaa</div>`;
+                // No ISBN and no Image? Start with loading placeholder then try Google Name search
+                coverDiv.innerHTML = `<div class="detail-loader" style="width:100%; height:100%; display:flex; align-items:center; justify-content:center; color:#888;">Haetaan kuvaa...</div>`;
+                enrichWithGoogleBooks(book, ot); // This handles the DOM update if found
             }
         }
+
+        window.handleDetailCoverError = function (img) {
+            // OpenLibrary failed. Try Google. We need the book object or params.
+            // We can infer enough from DOM or just trigger the enrichment again if we haven't?
+            // Actually, best to just hide it and show text if we can't contextually retry easily here without closure.
+            // BUT we can use the global enrichment function which checks DOM.
+            img.style.display = 'none';
+            // Trigger name search fallback
+            const bookTitle = document.getElementById('book-title').textContent;
+            const bookAuthor = document.getElementById('book-author').textContent;
+            // Fake book object for fallback
+            enrichWithGoogleBooks({ title: bookTitle, authors: { primary: { [bookAuthor]: [] } } }, "");
+        };
     </script>
 </body>
 
