@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="fi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kaikuun - Avoin Demokratia</title>
+    <link rel="stylesheet" href="kaikuun.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&family=Inter:wght@400;500;700&display=swap"
+        rel="stylesheet">
+</head>
+
+<body>
+    <div class="glass-bg"></div>
+
+    <header>
+        <div class="logo">KAIKUUN</div>
+        <div class="subtitle">Yhteisymmärrystä rakentamassa</div>
+    </header>
+
+    <main id="app">
+        <section id="topic-info">
+            <h1 id="current-topic">Ladataan aihetta...</h1>
+            <p id="topic-description">Käydään keskustelua ja etsitään konsensusta.</p>
+        </section>
+
+        <section id="voting-area">
+            <div class="statement-card" id="statement-container">
+                <p id="statement-text">Ladataan väitettä...</p>
+                <div class="source-indicators" id="source-indicators">
+                    <!-- Source icons will appear here -->
+                </div>
+            </div>
+
+            <div class="vote-controls">
+                <button class="vote-btn disagree" id="vote-disagree">Eri mieltä</button>
+                <button class="vote-btn pass" id="vote-pass">En osaa sanoa</button>
+                <button class="vote-btn agree" id="vote-agree">Samaa mieltä</button>
+            </div>
+        </section>
+
+        <section id="source-management" class="hidden">
+            <div class="source-panel">
+                <button class="close-panel" id="close-source">×</button>
+                <h3>Lähteet ja Viitteet</h3>
+                <div id="source-list">
+                    <!-- Sources will be rendered here -->
+                </div>
+                <div class="add-source">
+                    <h4>Ehdota lähdettä</h4>
+                    <input type="text" id="source-url" placeholder="URL-osoite">
+                    <button id="submit-source">Lähetä</button>
+                </div>
+            </div>
+        </section>
+
+        <section id="stats">
+            <div class="progress-bar">
+                <div id="progress-fill" style="width: 0%;"></div>
+            </div>
+            <p id="progress-text">0/0 väitettä käsitelty</p>
+        </section>
+    </main>
+
+    <footer>
+        <p>&copy; 2026 Kaikuun - Prototype v0.1 | Perustuu Voxit/Pol.is konseptiin</p>
+    </footer>
+
+    <script src="kaikuun.js"></script>
+</body>
+
+</html>
