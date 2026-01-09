@@ -308,7 +308,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             year: book.year,
             manualDate: manualDate,
             description: book.summary,
-            image: book.images && book.images.length ? `https://api.finna.fi${book.images[0]}` : null,
+            image: book.images && book.images.length ? (book.images[0].startsWith('http') ? book.images[0] : `https://api.finna.fi${book.images[0]}`) : null,
             language: book.languages,
             series: seriesInfo,
             formats: { isEbook, isAudio },
@@ -587,7 +587,8 @@ document.addEventListener('DOMContentLoaded', async () => {
             let imgHtml = '';
 
             if (imgSrc) {
-                imgHtml = `<img src="${imgSrc}" alt="${book.title}" loading="lazy" onerror="this.style.display='none'">`;
+                // IMPORTANT: Still use handleCoverError even for Finna images, in case they are broken
+                imgHtml = `<img src="${imgSrc}" class="book-cover-img" data-isbn="${book.isbn ? (Array.isArray(book.isbn) ? book.isbn[0] : book.isbn) : ''}" data-title="${book.title}" data-author="${book.author}" data-id="${book.id}" alt="${book.title}" loading="lazy" onerror="handleCoverError(this)">`;
             } else if (book.isbn) {
                 const isbn = Array.isArray(book.isbn) ? book.isbn[0] : book.isbn;
                 imgHtml = `<img src="https://covers.openlibrary.org/b/isbn/${isbn}-M.jpg" class="cover-placeholder" data-isbn="${isbn}" data-title="${book.title}" data-original-title="${book.originalTitle || ''}" data-author="${book.author}" data-id="${book.id}" alt="${book.title}" loading="lazy" onerror="handleCoverError(this)">`;
@@ -661,6 +662,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         const author = img.dataset.author;
         const bookId = img.dataset.id;
 
+        // --- PREVENT INFINITE LOOPS ---
         if (img.dataset.triedGoogle) {
             img.style.display = 'none';
             if (img.parentElement.querySelector('.no-cover-text')) {
@@ -669,9 +671,51 @@ document.addEventListener('DOMContentLoaded', async () => {
             return;
         }
 
+        // --- STRATEGY 1: SIBLING ENRICHMENT (Finna's own alternative records) ---
+        // We only do this if it's a Finna ID and we haven't tried siblings yet
+        if (bookId && !img.dataset.triedSiblings) {
+            img.dataset.triedSiblings = "true";
+            enrichFromSiblings(bookId, title, author, img);
+            return;
+        }
+
+        // --- STRATEGY 2: OPEN LIBRARY (Fast, ISBN based) ---
+        if (isbn && !img.dataset.triedOL && !img.src.includes('openlibrary.org')) {
+            img.dataset.triedOL = "true";
+            img.src = `https://covers.openlibrary.org/b/isbn/${isbn}-M.jpg`;
+            return;
+        }
+
+        // --- STRATEGY 3: GOOGLE BOOKS (Slow but powerful) ---
         img.dataset.triedGoogle = "true";
         fetchGoogleCover(isbn, title, author, img, bookId);
     };
+
+    async function enrichFromSiblings(bookId, title, author, imgEl) {
+        if (!title) return;
+        const params = new URLSearchParams({
+            lookfor: `"${title}" ${author}`,
+            type: 'AllFields',
+            limit: 10,
+            'field[]': ['images', 'id']
+        });
+
+        try {
+            const res = await fetch(`https://api.finna.fi/v1/search?${params.toString()}`);
+            const data = await res.json();
+            if (data.records && data.records.length > 0) {
+                const betterImageRecord = data.records.find(r => r.id !== bookId && r.images && r.images.length > 0);
+                if (betterImageRecord) {
+                    const imgSrc = `https://api.finna.fi${betterImageRecord.images[0]}`;
+                    imgEl.src = imgSrc;
+                    return;
+                }
+            }
+        } catch (e) { }
+
+        // If siblings fail, manually trigger next step
+        handleCoverError(imgEl);
+    }
 
     async function fetchGoogleCover(isbn, title, author, imgEl, bookId) {
 
@@ -710,46 +754,40 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
 
         const applyImage = (items) => {
-            if (items && items.length > 0 && items[0].volumeInfo.imageLinks) {
-                const link = items[0].volumeInfo.imageLinks.thumbnail || items[0].volumeInfo.imageLinks.smallThumbnail;
-                if (link) {
-                    const safeLink = link.replace('&edge=curl', '');
-                    localStorage.setItem(cacheKey, safeLink); // Cache it!
+            if (items && items.length > 0) {
+                for (let item of items) {
+                    if (item.volumeInfo && item.volumeInfo.imageLinks) {
+                        const link = item.volumeInfo.imageLinks.thumbnail || item.volumeInfo.imageLinks.smallThumbnail;
+                        if (link) {
+                            // Upgrade to HTTPS to avoid Mixed Content issues
+                            const safeLink = link.replace('http://', 'https://').replace('&edge=curl', '');
+                            localStorage.setItem(cacheKey, safeLink);
+                            localStorage.setItem(`cover_fix_${bookId}`, safeLink);
 
-                    // Persistent state update so it doesn't disappear on re-render
-                    if (state.books[bookId]) {
-                        state.books[bookId].image = safeLink;
-                    }
+                            if (state.books[bookId]) state.books[bookId].image = safeLink;
 
-                    imgEl.src = safeLink;
-                    imgEl.style.display = 'block';
-                    if (imgEl.parentElement.querySelector('.no-cover-text')) {
-                        imgEl.parentElement.querySelector('.no-cover-text').style.display = 'none';
-                    }
+                            imgEl.src = safeLink;
+                            imgEl.style.display = 'block';
+                            if (imgEl.parentElement.querySelector('.no-cover-text')) {
+                                imgEl.parentElement.querySelector('.no-cover-text').style.display = 'none';
+                            }
 
-                    // LIVE PROPAGATION
-                    if (title) {
-                        const allPlaceholders = document.querySelectorAll('.cover-placeholder');
-                        const myKey = title.toLowerCase().split(':')[0].trim();
-
-                        allPlaceholders.forEach(ph => {
-                            if (ph === imgEl) return;
-                            const otherTitle = ph.dataset.title || "";
-                            const otherKey = otherTitle.toLowerCase().split(':')[0].trim();
-
-                            if (otherKey && otherKey === myKey) {
-                                if (ph.style.display === 'none' || ph.getAttribute('src') === '') {
+                            // Propagation
+                            const allPlaceholders = document.querySelectorAll('.cover-placeholder, .book-cover-img');
+                            const myKey = title.toLowerCase().split(':')[0].trim();
+                            allPlaceholders.forEach(ph => {
+                                if (ph === imgEl) return;
+                                if (ph.dataset.title?.toLowerCase().includes(myKey)) {
                                     ph.src = safeLink;
                                     ph.style.display = 'block';
                                     if (ph.parentElement.querySelector('.no-cover-text')) {
                                         ph.parentElement.querySelector('.no-cover-text').style.display = 'none';
                                     }
-                                    ph.dataset.triedGoogle = "true";
                                 }
-                            }
-                        });
+                            });
+                            return true;
+                        }
                     }
-                    return true;
                 }
             }
             return false;
@@ -775,7 +813,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 // Simple iteration: first item that has an image
                 for (let item of data.items) {
                     if (item.volumeInfo && item.volumeInfo.imageLinks) {
-                        console.log(`[Cover] Found via Strategy B: ${item.voteInfo?.title || 'Unknown'}`);
+                        console.log(`[Cover] Found via Strategy B: ${item.volumeInfo?.title || 'Unknown'}`);
                         if (applyImage([item])) return;
                     }
                 }
