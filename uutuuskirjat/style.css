@@ -785,3 +785,241 @@ select:focus {
     background: #e4e6ea;
     transform: translateY(1px);
 }
+
+/* -----------------------------------------
+/* -----------------------------------------
+   Dark Mode (Deep Blue / Navy Slate)
+   Colors:
+   Bg: #0f172a (Slate 900)
+   Card: #1e293b (Slate 800)
+   Text Main: #f1f5f9 (Slate 100)
+   Text Muted: #94a3b8 (Slate 400)
+   Border: #334155 (Slate 700)
+------------------------------------------ */
+
+body.dark-mode,
+body.dark-mode .content-wrapper,
+body.dark-mode main {
+    background-color: #0f172a !important;
+    color: #f1f5f9 !important;
+}
+
+body.dark-mode .app-hero h1,
+body.dark-mode h2,
+body.dark-mode h3,
+body.dark-mode .filter-label {
+    color: #f1f5f9 !important;
+}
+
+body.dark-mode .hero-subtitle,
+body.dark-mode p {
+    color: #cbd5e1 !important;
+}
+
+/* Sidebar / Header Override */
+/* User: "tummansininen toimii erinomaisesti". The orange sidebar is branding, but maybe we can darken it slightly or keep it.
+   Current issue: layout background is white. Fixed above. */
+
+body.dark-mode nav ul li a {
+    color: rgba(255, 255, 255, 0.7) !important;
+}
+
+body.dark-mode nav ul li a:hover {
+    color: white !important;
+}
+
+/* Cards */
+body.dark-mode .book-card,
+body.dark-mode .search-panel,
+body.dark-mode #detail-container,
+body.dark-mode .scrollable-content {
+    background-color: #1e293b !important;
+    /* Ensure bg color wins */
+    background: #1e293b !important;
+    border-color: #334155 !important;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3) !important;
+}
+
+body.dark-mode .book-info h3 {
+    color: #e2e8f0 !important;
+}
+
+body.dark-mode .book-info .author {
+    color: #94a3b8 !important;
+}
+
+/* Inputs */
+body.dark-mode select,
+body.dark-mode input {
+    background-color: #0f172a !important;
+    border-color: #334155 !important;
+    color: #f1f5f9 !important;
+}
+
+/* Search results */
+body.dark-mode .search-results-container {
+    background-color: #1e293b !important;
+    border-color: #334155 !important;
+}
+
+body.dark-mode .search-result-item {
+    color: #e2e8f0 !important;
+    border-bottom-color: #334155 !important;
+}
+
+body.dark-mode .search-result-item:hover {
+    background-color: #334155 !important;
+    color: #38bdf8 !important;
+}
+
+/* Tags */
+body.dark-mode .year-tag,
+body.dark-mode .isbn-pill {
+    background: #0f172a !important;
+    border-color: #334155 !important;
+    color: #cbd5e1 !important;
+}
+
+body.dark-mode .isbn-pill:hover {
+    border-color: #38bdf8 !important;
+    color: #38bdf8 !important;
+}
+
+
+/* Chips */
+body.dark-mode .author-chip {
+    background: #1e293b !important;
+    border-color: #334155 !important;
+    color: #e2e8f0 !important;
+}
+
+body.dark-mode .author-chip:hover {
+    border-color: #38bdf8 !important;
+    box-shadow: 0 0 0 1px #38bdf8 !important;
+}
+
+/* Active Chip specifically */
+body.dark-mode .author-chip.active {
+    background-color: #334155 !important;
+    border-color: #fbbf24 !important;
+    /* Amber border */
+    color: #fbbf24 !important;
+}
+
+body.dark-mode .author-chip.active .count {
+    background-color: #fbbf24 !important;
+    color: #1e293b !important;
+}
+
+/* Manual Date Tag (Yellow) override & Current Year */
+/* "Hillitympi" dark mode style: Transparent bg + Yellow Border/Text */
+body.dark-mode span[style*="background:#fff9c4"],
+body.dark-mode .year-tag.current-year {
+    background-color: transparent !important;
+    background: transparent !important;
+    border: 1px solid #fbbf24 !important;
+    /* Amber border */
+    color: #fbbf24 !important;
+}
+
+/* Also target class if needed later, but style* selector works for inline styles */
+
+/* Footer & Links */
+body.dark-mode .app-footer {
+    border-top-color: #334155 !important;
+}
+
+body.dark-mode a {
+    color: #38bdf8 !important;
+    /* Ensure links correspond to dark theme */
+}
+
+body.dark-mode .app-title .app-title-com {
+    color: #fbbf24 !important;
+    /* Yellow logo text in dark mode */
+}
+
+/* Dark Mode Sidebar Override */
+body.dark-mode header {
+    background: #0f172a !important;
+    /* Dark Slate to match body, or slightly different */
+    background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%) !important;
+    border-right-color: #334155 !important;
+    box-shadow: 4px 0 12px rgba(0, 0, 0, 0.3) !important;
+}
+
+body.dark-mode header .app-title,
+body.dark-mode header nav ul li strong {
+    color: #f1f5f9 !important;
+    border-left-color: #38bdf8 !important;
+    /* Accent color for strong border */
+}
+
+body.dark-mode header nav ul li a {
+    color: #94a3b8 !important;
+}
+
+body.dark-mode header nav ul li a:hover {
+    color: #38bdf8 !important;
+    background: rgba(56, 189, 248, 0.1);
+    border-left-color: #38bdf8 !important;
+}
+
+body.dark-mode .app-title-com {
+    color: #38bdf8 !important;
+}
+
+/* Info Icon - Floating Position */
+.info-icon-container {
+    position: fixed;
+    top: 90px;
+    /* More space below the 20px + 40px toggle */
+    right: 20px;
+    width: 40px;
+    /* Match toggle width for alignment */
+    z-index: 1000;
+    display: flex;
+    justify-content: center;
+}
+
+/* Dark Mode Tooltip */
+body.dark-mode .info-tooltip {
+    background-color: #1e293b;
+    border-color: #334155;
+    color: #f1f5f9;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+}
+
+body.dark-mode .info-tooltip a {
+    color: #38bdf8 !important;
+}
+
+/* Toggle Button Style */
+.theme-toggle {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 1000;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: 1px solid #d0d7de;
+    background: white;
+    color: #24292f;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    transition: all 0.2s;
+}
+
+body.dark-mode .theme-toggle {
+    background: #1e293b;
+    border-color: #334155;
+    color: #fbbf24;
+}
+
+.theme-toggle:hover {
+    transform: scale(1.1);
+}
