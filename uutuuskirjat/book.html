@@ -138,20 +138,28 @@
 
                     renderBook(book); // Render initial state
 
-                    // ENRICHMENT PIPELINE
-                    if (!book.summary || book.summary.length === 0) {
-                        enrichWithFinnaCopies(book.title, extractAuthor(book));
+                    // PARALLEL ENRICHMENT PIPELINE (Optimized)
+                    const enrichmentTasks = [];
+
+                    // 1. Siblings Enrichment (Summary & Cover from other formats)
+                    if ((!book.summary || book.summary.length === 0) || (!book.images || book.images.length === 0)) {
+                        enrichmentTasks.push(enrichFromSiblings(book));
                     }
 
-                    // Google Books Enrichment (Covers & Summaries)
+                    // 2. Google Books Enrichment (Covers & Summaries)
                     if ((!book.images || book.images.length === 0) || (!book.summary)) {
-                        enrichWithGoogleBooks(book, originalTitle);
+                        enrichmentTasks.push(enrichWithGoogleBooks(book, originalTitle));
                     }
 
-                    if (book.isbn) fetchReviews(book.isbn);
-                    else fetchReviewsByTitle(book.title, extractAuthor(book));
+                    // 3. Reviews (OpenLibrary)
+                    if (book.isbn) enrichmentTasks.push(fetchReviews(book.isbn));
+                    else enrichmentTasks.push(fetchReviewsByTitle(book.title, extractAuthor(book)));
 
+                    // 4. Similar Books (Independent)
                     findSimilarBooks(book);
+
+                    // Execute all independent fetch tasks
+                    await Promise.allSettled(enrichmentTasks);
 
                 } else {
                     document.getElementById('book-title').textContent = "Kirjaa ei löytynyt.";
@@ -163,52 +171,61 @@
         }
 
         async function enrichWithGoogleBooks(book, originalTitle) {
-            let q = "";
-            let isbn = (book.isbn && book.isbn.length) ? book.isbn[0] : null;
+            const applyData = (items) => {
+                if (items && items.length > 0) {
+                    const info = items[0].volumeInfo;
 
-            if (isbn) {
-                q = `isbn:${isbn}`;
-            } else {
-                const author = extractAuthor(book);
-                q = `intitle:${encodeURIComponent(book.title)}+inauthor:${encodeURIComponent(author)}`;
-            }
-
-            try {
-                let res = await fetch(`https://www.googleapis.com/books/v1/volumes?q=${q}&maxResults=1`);
-                let data = await res.json();
-
-                // NO FALLBACK to original title anymore.
-                // Strict matching only to avoid English covers/descriptions for Finnish books.
-
-                if (data.items && data.items.length > 0) {
-                    const info = data.items[0].volumeInfo;
-
-                    // 1. Enrich Description if missing
+                    // 1. Enrich Description
                     const descEl = document.getElementById('book-desc');
                     if (descEl.innerText === "" && info.description) {
                         descEl.innerText = info.description;
                         descEl.parentElement.style.display = 'block';
-                        // Add attribution
                         descEl.parentElement.insertAdjacentHTML('beforeend', '<div style="font-size:0.8rem; color:#888; margin-top:8px;">Kuvaus: Google Books</div>');
                     }
 
-                    // 2. Enrich Cover if missing
+                    // 2. Enrich Cover
                     const coverDiv = document.getElementById('book-cover');
-                    // Check if we currently show "Ei kuvaa" (placeholder)
                     const hasImage = coverDiv.querySelector('img') && !coverDiv.querySelector('img').src.includes('openlibrary');
 
                     if (!hasImage && info.imageLinks) {
                         const imgUrl = info.imageLinks.thumbnail || info.imageLinks.smallThumbnail;
                         if (imgUrl) {
-                            // Use zoom=1 (thumbnail) which is reliable.
-                            // Forcing zoom=0 or zoom=2 often results in "Image Not Available" placeholder.
-                            const safeUrl = imgUrl.replace('&edge=curl', ''); // Remove curl for flat image
+                            const safeUrl = imgUrl.replace('&edge=curl', '');
                             coverDiv.innerHTML = `<img src="${safeUrl}" alt="${book.title}" style="width:100%; height:100%; object-fit:cover;">`;
                         }
                     }
-                } else if (!isbn) {
-                    // Fallback: If no google result and we want cover, try OpenLibrary logic in renderBook
+                    return true; // Found something
                 }
+                return false;
+            };
+
+            let isbn = (book.isbn && book.isbn.length) ? book.isbn[0] : null;
+
+            // 1. Try ISBN
+            if (isbn) {
+                try {
+                    let res = await fetch(`https://www.googleapis.com/books/v1/volumes?q=isbn:${isbn}&maxResults=1`);
+                    let data = await res.json();
+                    // If we found valid data that enriched something (or just existed), stop.
+                    // Actually, we should try Title fallback if ISBN found nothing relevant (e.g. no image/desc).
+                    if (data.items && data.items.length > 0) {
+                        applyData(data.items);
+                        // We assume specific ISBN match is best, even if it lacked image.
+                        // But if it lacked image, maybe Title search finds another edition? 
+                        // Let's stick to simple "if found items, good".
+                        return;
+                    }
+                } catch (e) { }
+            }
+
+            // 2. Fallback: Title + Author
+            // Especially important for "Talonvahti" where specific ISBN might fail but generic search works.
+            const author = extractAuthor(book);
+            try {
+                let q = `intitle:${encodeURIComponent(book.title)}+inauthor:${encodeURIComponent(author)}`;
+                let res = await fetch(`https://www.googleapis.com/books/v1/volumes?q=${q}&maxResults=1`);
+                let data = await res.json();
+                applyData(data.items);
             } catch (e) { }
         }
 
@@ -524,16 +541,19 @@
             `;
         }
 
-        async function enrichWithFinnaCopies(title, author) {
+        async function enrichFromSiblings(book) {
+            const title = book.title;
+            const author = extractAuthor(book);
             if (!title) return;
-            console.log("Attempting to enrich data via Finna copies for", title);
+            console.log("Attempting to enrich data via Siblings for", title);
 
-            // Search for other records (e.g. audiobook, ebook) that might have a summary
+            // Search for other records (e.g. audiobook, ebook)
+            // Limit 20 to cast a wide enough net
             const params = new URLSearchParams({
                 lookfor: `"${title}" ${author}`,
                 type: 'AllFields',
                 limit: 20,
-                'field[]': ['summary', 'id']
+                'field[]': ['summary', 'id', 'images']
             });
 
             try {
@@ -541,23 +561,46 @@
                 const data = await res.json();
 
                 if (data.records && data.records.length > 0) {
-                    // Find any record that has a non-empty summary
-                    const betterRecord = data.records.find(r => r.summary && r.summary.length > 0);
 
-                    if (betterRecord) {
-                        console.log("Found better description from sibling record:", betterRecord.id);
-                        const desc = Array.isArray(betterRecord.summary) ? betterRecord.summary.join('\n\n') : betterRecord.summary;
+                    // A. Enrich SUMMARY
+                    if (!book.summary || book.summary.length === 0) {
+                        const betterRecord = data.records.find(r => r.summary && r.summary.length > 0);
+                        if (betterRecord) {
+                            console.log("Found better description from sibling:", betterRecord.id);
+                            const desc = Array.isArray(betterRecord.summary) ? betterRecord.summary.join('\n\n') : betterRecord.summary;
 
-                        // Update UI if current description is empty
-                        const dEl = document.getElementById('book-desc');
-                        if (dEl.innerText.trim() === "") {
-                            dEl.innerText = desc;
-                            dEl.parentElement.style.display = 'block';
+                            const dEl = document.getElementById('book-desc');
+                            // Ensure we haven't already filled it via another method
+                            if (dEl.innerText.trim() === "") {
+                                dEl.innerText = desc;
+                                dEl.parentElement.style.display = 'block';
+                            }
+                        }
+                    }
+
+                    // B. Enrich IMAGE
+                    // Only if we currently lack a Finna image OR are showing a placeholder/broken one
+                    if (!book.images || book.images.length === 0) {
+                        const betterImageRecord = data.records.find(r => r.images && r.images.length > 0);
+                        if (betterImageRecord) {
+                            console.log("Found better image from sibling:", betterImageRecord.id);
+                            const imgSrc = `https://api.finna.fi${betterImageRecord.images[0]}`;
+
+                            const coverDiv = document.getElementById('book-cover');
+                            // Check if we are still showing placeholder text or empty
+                            // We do NOT want to overwrite if Google Books already found something good? 
+                            // Finna images are usually high quality, so we can prioritize them if Google hasn't finished yet or failed.
+
+                            const currentImg = coverDiv.querySelector('img');
+                            // If no image, or if image is hidden (onerror), or if it is the "Ei kuvaa" text div
+                            if (!currentImg || currentImg.style.display === 'none') {
+                                coverDiv.innerHTML = `<img src="${imgSrc}" alt="${book.title}" style="width:100%; height:100%; object-fit:cover;" onerror="this.style.display='none'">`;
+                            }
                         }
                     }
                 }
             } catch (e) {
-                console.warn("Finna enrichment failed", e);
+                console.warn("Sibling enrichment failed", e);
             }
         }
 

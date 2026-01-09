@@ -82,6 +82,28 @@ document.addEventListener('DOMContentLoaded', async () => {
                 // We ask for e.g. 100 items to cover the bibliography reasonably well.
                 const books = await searchFinnaBooks(author.name, 1900);
 
+                // --- 1. OPTIMIZATION: Propagate Images ---
+                // If "Talonvahti" (print) has an image, give it to "Talonvahti" (ebook) if missing.
+                const imageMap = {};
+                // First pass: Find existing images
+                books.forEach(b => {
+                    if (b.image && b.title) {
+                        // Use a normalized title key to match loosely
+                        const key = b.title.toLowerCase().trim();
+                        // Prefer the first one we find (newest usually)
+                        if (!imageMap[key]) imageMap[key] = b.image;
+                    }
+                });
+                // Second pass: Apply to missing
+                books.forEach(b => {
+                    if (!b.image && b.title) {
+                        const key = b.title.toLowerCase().trim();
+                        if (imageMap[key]) {
+                            b.image = imageMap[key];
+                        }
+                    }
+                });
+
                 // Merge into state
                 books.forEach(b => {
                     state.books[b.id] = b;
@@ -106,14 +128,13 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         // Use "author" search field explicitly.
         // limit: 100 to get a good coverage of "all" books as requested.
-        // limit: 100 to get a good coverage of "all" books as requested.
         const params = new URLSearchParams();
         params.append("lookfor", searchName);
         params.append("type", "Author");
         params.append("sort", "main_date_str desc");
         params.append("limit", "100");
 
-        const fields = ["id", "title", "authors", "year", "images", "summary", "languages", "series", "uniformTitles", "formats"];
+        const fields = ["id", "title", "authors", "year", "images", "summary", "languages", "series", "uniformTitles", "formats", "isbn"];
         fields.forEach(f => params.append("field[]", f));
 
         // Finna API handling
@@ -172,7 +193,8 @@ document.addEventListener('DOMContentLoaded', async () => {
             image: book.images && book.images.length ? `https://api.finna.fi${book.images[0]}` : null,
             language: book.languages,
             series: seriesInfo,
-            formats: { isEbook, isAudio }
+            formats: { isEbook, isAudio },
+            isbn: book.isbn // Pass ISBN through
         };
     }
 
@@ -536,25 +558,37 @@ document.addEventListener('DOMContentLoaded', async () => {
     };
 
     async function fetchGoogleCover(isbn, title, author, imgEl) {
-        let q = "";
-        if (isbn) q = `isbn:${isbn}`;
-        else q = `intitle:${encodeURIComponent(title)}+inauthor:${encodeURIComponent(author)}`;
-
-        try {
-            let res = await fetch(`https://www.googleapis.com/books/v1/volumes?q=${q}&maxResults=1`);
-            let data = await res.json();
-
-            if (data.items && data.items.length > 0 && data.items[0].volumeInfo.imageLinks) {
-                const link = data.items[0].volumeInfo.imageLinks.thumbnail || data.items[0].volumeInfo.imageLinks.smallThumbnail;
+        // Helper to apply image from data
+        const applyImage = (items) => {
+            if (items && items.length > 0 && items[0].volumeInfo.imageLinks) {
+                const link = items[0].volumeInfo.imageLinks.thumbnail || items[0].volumeInfo.imageLinks.smallThumbnail;
                 if (link) {
                     imgEl.src = link.replace('&edge=curl', '');
                     imgEl.style.display = 'block';
                     if (imgEl.parentElement.querySelector('.no-cover-text')) {
                         imgEl.parentElement.querySelector('.no-cover-text').style.display = 'none';
                     }
-                    return;
+                    return true;
                 }
             }
+            return false;
+        };
+
+        // 1. Try ISBN first if available
+        if (isbn) {
+            try {
+                let res = await fetch(`https://www.googleapis.com/books/v1/volumes?q=isbn:${isbn}&maxResults=1`);
+                let data = await res.json();
+                if (applyImage(data.items)) return;
+            } catch (e) { }
+        }
+
+        // 2. Fallback: Title + Author (if ISBN failed or wasn't provided)
+        try {
+            let q = `intitle:${encodeURIComponent(title)}+inauthor:${encodeURIComponent(author)}`;
+            let res = await fetch(`https://www.googleapis.com/books/v1/volumes?q=${q}&maxResults=1`);
+            let data = await res.json();
+            if (applyImage(data.items)) return;
         } catch (e) { }
 
         // If we get here, failure.
