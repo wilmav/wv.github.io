@@ -374,7 +374,13 @@ document.addEventListener('DOMContentLoaded', async () => {
                         if (roleObj) {
                             Object.keys(roleObj).forEach(name => {
                                 const normalized = name.replace(/\s+/g, ' ').trim();
-                                if (normalized) foundAuthors.add(normalized);
+                                if (normalized) {
+                                    const lowerN = normalized.toLowerCase();
+                                    const blocklist = ["(yhtye)", "esittäjä", "esitt.", "elokuva", "ohjaaja", "näyttelijä", "säveltäjä", "tuottaja", "musiikki", "orkesteri", "kuoro", "yhtye", "band"];
+                                    if (!blocklist.some(term => lowerN.includes(term))) {
+                                        foundAuthors.add(normalized);
+                                    }
+                                }
                             });
                         }
                     });
