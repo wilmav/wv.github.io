@@ -280,6 +280,16 @@ document.addEventListener('DOMContentLoaded', async () => {
         // 3. Fallback to raw if logic made it empty
         if (!cleanTitle) cleanTitle = rawTitle;
 
+        let ot = book.uniformTitles ? book.uniformTitles[0] : null;
+        if (ot) {
+            // Aggressive Original Title cleaning
+            ot = ot.replace(/^Alkuteos:\s*/i, "")
+                .replace(/^Alkuperäisteos:\s*/i, "")
+                .replace(/[\s./,]*suom(i|ennus).*$/i, "") // Strip ". Suomi", " suomennos", etc.
+                .replace(/[\s./,]*engl(anti|ish).*$/i, "")
+                .trim();
+        }
+
         // Parse Series
         let seriesInfo = null;
         if (book.series && book.series.length > 0) {
@@ -307,7 +317,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         let manualIsbn = null;
 
         if (state.dates && book.title) {
-            // Use cleanTitle logic for key matching
             const key = cleanTitle.toLowerCase();
             const entry = state.dates[key];
             if (entry) {
@@ -315,18 +324,10 @@ document.addEventListener('DOMContentLoaded', async () => {
                     if (isAudio && entry.dates.audiobook) manualDate = entry.dates.audiobook;
                     else if (isEbook && entry.dates.ebook) manualDate = entry.dates.ebook;
                     else if (entry.dates.print) manualDate = entry.dates.print;
-                    // Fallback: any date is better than just year
                     if (!manualDate) manualDate = entry.dates.audiobook || entry.dates.ebook || entry.dates.print;
                 }
-                if (entry.isbn) {
-                    manualIsbn = [entry.isbn];
-                }
+                if (entry.isbn) manualIsbn = [entry.isbn];
             }
-        }
-
-        let ot = book.uniformTitles ? book.uniformTitles[0] : null;
-        if (ot) {
-            ot = ot.replace(/^Alkuteos:\s*/i, "").replace(/^Alkuperäisteos:\s*/i, "").replace(/[\s.]*Suomi$/i, "").trim();
         }
 
         return {
@@ -334,7 +335,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             title: book.title,
             cleanTitle: cleanTitle,
             originalTitle: ot,
-            author: extractAuthorName(book.authors, searchedAuthor),
+            author: author,
             year: book.year,
             manualDate: manualDate,
             description: book.summary,
@@ -618,13 +619,13 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             if (imgSrc) {
                 // IMPORTANT: Still use handleCoverError even for Finna images, in case they are broken
-                imgHtml = `<img src="${imgSrc}" class="book-cover-img" data-isbn="${book.isbn ? (Array.isArray(book.isbn) ? book.isbn[0] : book.isbn) : ''}" data-title="${book.cleanTitle || book.title}" data-author="${book.author}" data-id="${book.id}" alt="${book.title}" loading="lazy" onerror="handleCoverError(this)">`;
+                imgHtml = `<img src="${imgSrc}" class="book-cover-img" data-isbn="${book.isbn ? (Array.isArray(book.isbn) ? book.isbn[0] : book.isbn) : ''}" data-title="${book.cleanTitle || book.title}" data-original-title="${book.originalTitle || ''}" data-author="${book.author}" data-id="${book.id}" alt="${book.title}" loading="lazy" onerror="handleCoverError(this)">`;
             } else if (book.isbn) {
                 const isbn = Array.isArray(book.isbn) ? book.isbn[0] : book.isbn;
                 imgHtml = `<img src="https://covers.openlibrary.org/b/isbn/${isbn}-M.jpg" class="cover-placeholder" data-isbn="${isbn}" data-title="${book.cleanTitle || book.title}" data-original-title="${book.originalTitle || ''}" data-author="${book.author}" data-id="${book.id}" alt="${book.title}" loading="lazy" onerror="handleCoverError(this)">`;
             } else {
-                imgHtml = `<img src="" class="cover-placeholder" data-title="${book.cleanTitle || book.title}" data-author="${book.author}" data-id="${book.id}" alt="${book.title}" loading="lazy" onerror="handleCoverError(this)" style="display:none">`;
-                setTimeout(() => fetchGoogleCover(null, book.cleanTitle || book.title, book.author, card.querySelector('.cover-placeholder'), book.id), 0);
+                imgHtml = `<img src="" class="cover-placeholder" data-title="${book.cleanTitle || book.title}" data-original-title="${book.originalTitle || ''}" data-author="${book.author}" data-id="${book.id}" alt="${book.title}" loading="lazy" onerror="handleCoverError(this)" style="display:none">`;
+                setTimeout(() => fetchGoogleCover(null, book.cleanTitle || book.title, book.author, card.querySelector('.cover-placeholder'), book.id, book.originalTitle), 0);
             }
 
             let seriesBadgeHtml = '';
@@ -689,6 +690,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     window.handleCoverError = function (img) {
         const isbn = img.dataset.isbn;
         const title = img.dataset.title;
+        const originalTitle = img.dataset.originalTitle;
         const author = img.dataset.author;
         const bookId = img.dataset.id;
 
@@ -725,7 +727,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         // --- STRATEGY 3: GOOGLE BOOKS (Slow but powerful) ---
         img.dataset.triedGoogle = "true";
-        fetchGoogleCover(isbn, title, author, img, bookId);
+        fetchGoogleCover(isbn, title, author, img, bookId, originalTitle);
     };
 
     async function enrichFromSiblings(bookId, title, author, imgEl) {
@@ -755,7 +757,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         handleCoverError(imgEl);
     }
 
-    async function fetchGoogleCover(isbn, title, author, imgEl, bookId) {
+    async function fetchGoogleCover(isbn, title, author, imgEl, bookId, originalTitle) {
         // Fallback to ISBN from element if not passed
         if (!isbn && imgEl.dataset.isbn) {
             isbn = imgEl.dataset.isbn;
@@ -882,6 +884,23 @@ document.addEventListener('DOMContentLoaded', async () => {
                 console.log(`[Cover] Strategy C found no results.`);
             }
         } catch (e) { console.warn("[Cover] Strategy C failed", e); }
+
+        // Strategy D: Original Title Search
+        if (originalTitle && originalTitle !== title) {
+            try {
+                let q = `intitle:${encodeURIComponent(originalTitle)}+inauthor:${encodeURIComponent(cleanAuthor)}`;
+                console.log(`[Cover] Strategy D (Original Title): ${q}`);
+                let res = await fetch(`https://www.googleapis.com/books/v1/volumes?q=${q}&maxResults=1`);
+                let data = await res.json();
+                if (applyImage(data.items)) return;
+
+                // Loose D
+                let qLoose = `${encodeURIComponent(originalTitle)}+${encodeURIComponent(cleanAuthor)}`;
+                let resLoose = await fetch(`https://www.googleapis.com/books/v1/volumes?q=${qLoose}&maxResults=1`);
+                let dataLoose = await resLoose.json();
+                if (applyImage(dataLoose.items)) return;
+            } catch (e) { }
+        }
 
         if (imgEl.parentElement && imgEl.parentElement.querySelector('.no-cover-text')) {
             imgEl.parentElement.querySelector('.no-cover-text').style.display = 'flex';
