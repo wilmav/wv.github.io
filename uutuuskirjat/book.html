@@ -7,6 +7,7 @@
     <title>Kirjan tiedot | Kirjavinkit</title>
     <link rel="stylesheet" href="../tyyli.css">
     <link rel="stylesheet" href="style.css">
+    <script src="../dates_data.js"></script>
 </head>
 
 <body>
@@ -95,17 +96,24 @@
         const params = new URLSearchParams(window.location.search);
         const bookId = params.get('id');
 
+        let globalDates = {}; // Store dates globally
+
+        // Load from global if available (CORS fix)
+        if (typeof window.MANUAL_DATES !== 'undefined') {
+            globalDates = window.MANUAL_DATES;
+        } else {
+            // Fallback to fetch
+            fetch('../dates.json').then(r => r.json()).then(d => { globalDates = d; }).catch(e => console.warn("Dates fetch fail", e));
+        }
+
         if (bookId) {
             fetchBookDetails(bookId);
         } else {
             document.getElementById('book-title').textContent = "Virhe: Kirjan tunnistetta ei annettu.";
         }
 
-        let globalDates = {}; // Store dates globally
-
         async function fetchBookDetails(id) {
-            // Start Date Fetch immediately
-            fetch('../dates.json').then(r => r.json()).then(d => { globalDates = d; }).catch(e => console.warn("Dates fetch fail", e));
+            // (Removed redundant fetch call here since it's handled above)
 
             const apiParams = new URLSearchParams();
             apiParams.append('lookfor', id);
@@ -190,6 +198,7 @@
 
         async function enrichWithGoogleBooks(book, originalTitle) {
             const applyData = (items) => {
+                let imgApplied = false;
                 if (items && items.length > 0) {
                     const info = items[0].volumeInfo;
 
@@ -210,11 +219,11 @@
                         if (imgUrl) {
                             const safeUrl = imgUrl.replace('&edge=curl', '');
                             coverDiv.innerHTML = `<img src="${safeUrl}" alt="${book.title}" style="width:100%; height:100%; object-fit:cover;">`;
+                            imgApplied = true;
                         }
                     }
-                    return true; // Found something
                 }
-                return false;
+                return imgApplied;
             };
 
             let isbn = (book.isbn && book.isbn.length) ? book.isbn[0] : null;
@@ -224,14 +233,9 @@
                 try {
                     let res = await fetch(`https://www.googleapis.com/books/v1/volumes?q=isbn:${isbn}&maxResults=1`);
                     let data = await res.json();
-                    // If we found valid data that enriched something (or just existed), stop.
-                    // Actually, we should try Title fallback if ISBN found nothing relevant (e.g. no image/desc).
                     if (data.items && data.items.length > 0) {
-                        applyData(data.items);
-                        // We assume specific ISBN match is best, even if it lacked image.
-                        // But if it lacked image, maybe Title search finds another edition? 
-                        // Let's stick to simple "if found items, good".
-                        return;
+                        const gotImage = applyData(data.items);
+                        if (gotImage) return;
                     }
                 } catch (e) { }
             }
@@ -651,7 +655,13 @@
 
             // Check manual dates
             if (globalDates && book.title) {
-                const key = book.title.toLowerCase().trim(); // Simple normalization
+                // Robust Key Gen
+                const key = book.title.toLowerCase()
+                    .split(':')[0]
+                    .split('/')[0]
+                    .replace(/[.,]/g, '')
+                    .trim();
+
                 const entry = globalDates[key];
                 if (entry && entry.dates) {
                     let isEbook = false;
@@ -669,8 +679,12 @@
                     else if (isEbook && entry.dates.ebook) manualDate = entry.dates.ebook;
                     else if (entry.dates.print) manualDate = entry.dates.print;
 
+                    // Fallback: If strict format date is missing, use ANY available date
+                    if (!manualDate) manualDate = entry.dates.audiobook || entry.dates.ebook || entry.dates.print;
+
                     if (manualDate) {
-                        dateDisplay = `<span style="background:#fff9c4; padding:2px 6px; border-radius:4px; font-weight:bold; border:1px solid #fdd835;">${manualDate}</span>`;
+                        // User request: Visible: Year. Hover: "Julkaisu: [date]"
+                        dateDisplay = `<span style="background:#fff9c4; padding:2px 6px; border-radius:4px; font-weight:bold; border:1px solid #fdd835; cursor:help;" title="Julkaisu: ${manualDate}">${book.year}</span>`;
                     }
                 }
             }
@@ -719,6 +733,21 @@
             // Actually, best to just hide it and show text if we can't contextually retry easily here without closure.
             // BUT we can use the global enrichment function which checks DOM.
             img.style.display = 'none';
+
+            // Show "Ei kuvaa" text if not present
+            const coverDiv = img.parentElement;
+            if (coverDiv) {
+                let noCover = coverDiv.querySelector('.no-cover-text');
+                if (!noCover) {
+                    noCover = document.createElement('div');
+                    noCover.className = 'no-cover-text';
+                    noCover.style.cssText = "width:100%; height:100%; display:flex; align-items:center; justify-content:center; text-align:center; color:#9fa6b2; font-size:0.85rem; padding:10px; background:#f6f8fa;";
+                    noCover.textContent = "Ei kuvaa";
+                    coverDiv.appendChild(noCover);
+                }
+                noCover.style.display = 'flex';
+            }
+
             // Trigger name search fallback
             const bookTitle = document.getElementById('book-title').textContent;
             const bookAuthor = document.getElementById('book-author').textContent;

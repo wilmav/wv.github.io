@@ -36,14 +36,21 @@ document.addEventListener('DOMContentLoaded', async () => {
             staticDefaults = AUTHORS_DATA;
         }
 
-        // Load Dates (Prototype)
-        try {
-            const dateRes = await fetch('../dates.json');
-            if (dateRes.ok) {
-                state.dates = await dateRes.json();
-                console.log("Loaded manual dates:", state.dates);
-            }
-        } catch (e) { console.warn("Could not load dates.json"); }
+        // Load Dates
+        // 1. Try global variable (JS file approach for CORS/local support)
+        if (typeof window.MANUAL_DATES !== 'undefined') {
+            state.dates = window.MANUAL_DATES;
+            console.log("Loaded manual dates from global:", state.dates);
+        } else {
+            // 2. Try Fetch (Server environment)
+            try {
+                const dateRes = await fetch('../dates.json');
+                if (dateRes.ok) {
+                    state.dates = await dateRes.json();
+                    console.log("Loaded manual dates from JSON:", state.dates);
+                }
+            } catch (e) { console.warn("Could not load dates.json"); }
+        }
 
         // 1. Initialize User Data (Bootstrap)
         const saved = localStorage.getItem('user_authors');
@@ -195,7 +202,13 @@ document.addEventListener('DOMContentLoaded', async () => {
         // Check for Manual Date (Scraper)
         let manualDate = null;
         if (state.dates && book.title) {
-            const key = book.title.toLowerCase().trim();
+            // Robust Key Generation
+            const key = book.title.toLowerCase()
+                .split(':')[0]
+                .split('/')[0]
+                .replace(/[.,]/g, '')
+                .trim();
+
             const entry = state.dates[key];
             if (entry && entry.dates) {
                 if (isAudio && entry.dates.audiobook) manualDate = entry.dates.audiobook;
@@ -479,16 +492,20 @@ document.addEventListener('DOMContentLoaded', async () => {
                  `;
             }
 
+            // Format Badges
             let dateDisplay = book.year;
             let dateStyle = parseInt(book.year) === currentYear ? ' current-year' : '';
+            let dateTitle = 'Julkaisuvuosi';
 
+            // If we have a precise date, use it for tooltip only
             if (book.manualDate) {
-                dateDisplay = book.manualDate;
+                // dateDisplay remains book.year (User request: "näkyy edelleen vain vuosi")
                 dateStyle = ' current-year';
+                dateTitle = `Julkaisu: ${book.manualDate}`;
             }
 
             let formatBadgeHtml = `
-                <span class="year-tag${dateStyle}" title="${book.manualDate ? 'Julkaisupäivä: ' + book.manualDate : 'Julkaisuvuosi'}">${dateDisplay}</span>
+                <span class="year-tag${dateStyle}" title="${dateTitle}">${dateDisplay}</span>
                 ${book.formats.isEbook ? '<span class="year-tag" style="background:#eef; color:#44a;">E-kirja</span>' : ''}
                 ${book.formats.isAudio ? '<span class="year-tag" style="background:#efe; color:#064;">Äänikirja</span>' : ''}
                 ${!book.formats.isEbook && !book.formats.isAudio ? '<span class="year-tag" style="background:#f0f0f0; color:#444;">Kirja</span>' : ''}
