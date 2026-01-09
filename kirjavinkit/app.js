@@ -161,12 +161,15 @@ document.addEventListener('DOMContentLoaded', async () => {
                 const filteredNewBooks = [];
                 books.forEach(b => {
                     const key = `${b.title}|${b.author}|${b.year}`;
-                    if (!state.books[b.id] && !existingKeys.has(key)) {
+                    const existing = state.books[b.id];
+                    if (!existing && !existingKeys.has(key)) {
                         state.books[b.id] = b;
                         existingKeys.add(key);
                         filteredNewBooks.push(b.id);
-                    } else if (state.books[b.id]) {
+                    } else if (existing) {
                         filteredNewBooks.push(b.id);
+                        // If existing book has no image but the new fetch found one, update it
+                        if (!existing.image && b.image) existing.image = b.image;
                     }
                 });
 
@@ -542,7 +545,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 displayOriginalTitle = displayOriginalTitle.replace(/^Alkuteos:\s*/i, "").replace(/^Alkuperäisteos:\s*/i, "").replace(/\.\s*Suomi$/i, "").trim();
             }
 
-            let imgSrc = book.image ? `https://api.finna.fi${book.image}` : '';
+            let imgSrc = book.image || ''; // Already normalized in normalizeBookData or updated via Google
             let imgHtml = '';
 
             if (imgSrc) {
@@ -674,6 +677,12 @@ document.addEventListener('DOMContentLoaded', async () => {
                 if (link) {
                     const safeLink = link.replace('&edge=curl', '');
                     localStorage.setItem(cacheKey, safeLink); // Cache it!
+
+                    // Persistent state update so it doesn't disappear on re-render
+                    if (state.books[bookId]) {
+                        state.books[bookId].image = safeLink;
+                    }
+
                     imgEl.src = safeLink;
                     imgEl.style.display = 'block';
                     if (imgEl.parentElement.querySelector('.no-cover-text')) {
