@@ -718,14 +718,8 @@ document.addEventListener('DOMContentLoaded', async () => {
             return;
         }
 
-        // --- STRATEGY 2: OPEN LIBRARY (Fast, ISBN based) ---
-        if (isbn && !img.dataset.triedOL && !img.src.includes('openlibrary.org')) {
-            img.dataset.triedOL = "true";
-            img.src = `https://covers.openlibrary.org/b/isbn/${isbn}-M.jpg`;
-            return;
-        }
-
-        // --- STRATEGY 3: GOOGLE BOOKS (Slow but powerful) ---
+        // --- STRATEGY 2: GOOGLE BOOKS (Slow but powerful) ---
+        // We skip OpenLibrary because it often returns valid placeholder images that break the fallback chain.
         img.dataset.triedGoogle = "true";
         fetchGoogleCover(isbn, title, author, img, bookId, originalTitle);
     };
@@ -758,6 +752,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     async function fetchGoogleCover(isbn, title, author, imgEl, bookId, originalTitle) {
+        console.log(`[Cover] Starting Google Search for: ${title} (${isbn || 'No ISBN'})`);
         // Fallback to ISBN from element if not passed
         if (!isbn && imgEl.dataset.isbn) {
             isbn = imgEl.dataset.isbn;
