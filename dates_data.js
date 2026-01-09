@@ -6,7 +6,8 @@ window.MANUAL_DATES = {
             "audiobook": "20.1.2026",
             "ebook": "20.1.2026",
             "print": null
-        }
+        },
+        "isbn": "9789510510636"
     },
     "sokeiden valtakunta": {
         "title": "Sokeiden valtakunta",

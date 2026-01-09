@@ -60,8 +60,16 @@
                                 style="font-size: 0.9rem; color: #57606a; font-style: italic; margin-bottom: 0.5rem; display:none;">
                             </div>
 
-                            <!-- Year secondary -->
-                            <p id="book-year" style="color: #57606a; font-size: 0.95rem; margin-bottom: 1.5rem;"></p>
+                            <!-- Meta Tags Row (Year, Format, ISBN) -->
+                            <div id="book-meta-tags"
+                                style="display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin-bottom: 1.5rem;">
+                                <!-- Year will be injected here -->
+                                <span id="book-year"></span>
+                                <!-- Format tags injected here via JS -->
+                                <span id="book-formats"></span>
+                                <!-- ISBN injected here -->
+                                <div id="book-isbn-container" style="display:none;"></div>
+                            </div>
 
                             <!-- Reviews Section (Hidden until valid) -->
                             <div id="reviews-container" style="margin-bottom: 1.5rem; display:none;">
@@ -196,34 +204,43 @@
             }
         }
 
+        // Use Google Books API to enrich data (description, cover, etc.)
         async function enrichWithGoogleBooks(book, originalTitle) {
+            const coverDiv = document.getElementById('book-cover');
+
+            const cacheKey = `cover_${book.id}`;
+            const cachedUrl = localStorage.getItem(cacheKey);
+            if (cachedUrl) {
+                coverDiv.innerHTML = `<img src="${cachedUrl}" alt="${book.title}" style="width:100%; height:100%; object-fit:cover;" onerror="handleDetailCoverError(this)">`;
+            }
+
             const applyData = (items) => {
-                let imgApplied = false;
                 if (items && items.length > 0) {
                     const info = items[0].volumeInfo;
 
-                    // 1. Enrich Description
+                    // 1. Description (if missing)
                     const descEl = document.getElementById('book-desc');
-                    if (descEl.innerText === "" && info.description) {
+                    if ((!descEl.innerText || descEl.innerText.length < 10) && info.description) {
                         descEl.innerText = info.description;
                         descEl.parentElement.style.display = 'block';
                         descEl.parentElement.insertAdjacentHTML('beforeend', '<div style="font-size:0.8rem; color:#888; margin-top:8px;">Kuvaus: Google Books</div>');
                     }
 
-                    // 2. Enrich Cover
-                    const coverDiv = document.getElementById('book-cover');
-                    const hasImage = coverDiv.querySelector('img') && !coverDiv.querySelector('img').src.includes('openlibrary');
-
-                    if (!hasImage && info.imageLinks) {
-                        const imgUrl = info.imageLinks.thumbnail || info.imageLinks.smallThumbnail;
-                        if (imgUrl) {
-                            const safeUrl = imgUrl.replace('&edge=curl', '');
-                            coverDiv.innerHTML = `<img src="${safeUrl}" alt="${book.title}" style="width:100%; height:100%; object-fit:cover;">`;
-                            imgApplied = true;
+                    // 2. Cover (if missing)
+                    if (info.imageLinks) {
+                        const link = info.imageLinks.thumbnail || info.imageLinks.smallThumbnail;
+                        if (link) {
+                            const safeLink = link.replace('&edge=curl', '');
+                            // Only update if not already set (or if we are updating placeholder)
+                            if (coverDiv.innerText.includes("Haetaan") || !coverDiv.querySelector('img')) {
+                                localStorage.setItem(cacheKey, safeLink);
+                                coverDiv.innerHTML = `<img src="${safeLink}" alt="${book.title}" style="width:100%; height:100%; object-fit:cover;" onerror="handleDetailCoverError(this)">`;
+                            }
+                            return true;
                         }
                     }
                 }
-                return imgApplied;
+                return false;
             };
 
             let isbn = (book.isbn && book.isbn.length) ? book.isbn[0] : null;
@@ -241,7 +258,6 @@
             }
 
             // 2. Fallback: Title + Author
-            // Especially important for "Talonvahti" where specific ISBN might fail but generic search works.
             const author = extractAuthor(book);
             try {
                 let q = `intitle:${encodeURIComponent(book.title)}+inauthor:${encodeURIComponent(author)}`;
@@ -524,28 +540,9 @@
             });
         }
 
-        async function fetchReviews(isbn) {
-            if (Array.isArray(isbn)) isbn = isbn[0];
-            const url = `https://openlibrary.org/search.json?q=${isbn}&fields=ratings_average,ratings_count,key&limit=1`;
-            try {
-                const res = await fetch(url);
-                const data = await res.json();
-                if (data.docs && data.docs.length > 0 && data.docs[0].ratings_average) {
-                    renderRating(data.docs[0]);
-                }
-            } catch (e) { }
-        }
-
-        async function fetchReviewsByTitle(title, author) {
-            const url = `https://openlibrary.org/search.json?title=${encodeURIComponent(title)}&author=${encodeURIComponent(author)}&fields=ratings_average,ratings_count&limit=1`;
-            try {
-                const res = await fetch(url);
-                const data = await res.json();
-                if (data.docs && data.docs.length > 0 && data.docs[0].ratings_average) {
-                    renderRating(data.docs[0]);
-                }
-            } catch (e) { }
-        }
+        // Reviews removed due to CORS/Local file restrictions
+        function fetchReviews(isbn) { }
+        function fetchReviewsByTitle(title, author) { }
 
         function renderRating(data) {
             const container = document.getElementById('reviews-container');
@@ -653,43 +650,85 @@
             const yearEl = document.getElementById('book-year');
             let dateDisplay = book.year;
 
-            // Check manual dates
+            // Apply manual date if available
+            let manualDate = null;
+            let manualIsbn = null;
+
             if (globalDates && book.title) {
-                // Robust Key Gen
                 const key = book.title.toLowerCase()
                     .split(':')[0]
                     .split('/')[0]
                     .replace(/[.,]/g, '')
                     .trim();
-
                 const entry = globalDates[key];
-                if (entry && entry.dates) {
-                    let isEbook = false;
-                    let isAudio = false;
-                    if (book.formats) {
-                        book.formats.forEach(f => {
-                            const val = (typeof f === 'string' ? f : f.value) || "";
-                            if (val.includes("eBook") || val.includes("EBook")) isEbook = true;
-                            if (val.includes("AudioBook") || val.includes("Sound")) isAudio = true;
-                        });
+                if (entry) {
+                    if (entry.dates) {
+                        // Logic matching app.js
+                        let isAudio = false, isEbook = false;
+                        if (book.formats) {
+                            book.formats.forEach(f => {
+                                const val = (typeof f === 'string' ? f : f.value) || "";
+                                if (val.includes("AudioBook") || val.includes("Sound")) isAudio = true;
+                                if (val.includes("eBook") || val.includes("EBook")) isEbook = true;
+                            });
+                        }
+
+                        if (isAudio && entry.dates.audiobook) manualDate = entry.dates.audiobook;
+                        else if (isEbook && entry.dates.ebook) manualDate = entry.dates.ebook;
+                        else if (entry.dates.print) manualDate = entry.dates.print;
+                        if (!manualDate) manualDate = entry.dates.audiobook || entry.dates.ebook || entry.dates.print;
                     }
-
-                    let manualDate = null;
-                    if (isAudio && entry.dates.audiobook) manualDate = entry.dates.audiobook;
-                    else if (isEbook && entry.dates.ebook) manualDate = entry.dates.ebook;
-                    else if (entry.dates.print) manualDate = entry.dates.print;
-
-                    // Fallback: If strict format date is missing, use ANY available date
-                    if (!manualDate) manualDate = entry.dates.audiobook || entry.dates.ebook || entry.dates.print;
-
-                    if (manualDate) {
-                        // User request: Visible: Year. Hover: "Julkaisu: [date]"
-                        dateDisplay = `<span style="background:#fff9c4; padding:2px 6px; border-radius:4px; font-weight:bold; border:1px solid #fdd835; cursor:help;" title="Julkaisu: ${manualDate}">${book.year}</span>`;
+                    if (entry.isbn) {
+                        manualIsbn = entry.isbn;
                     }
                 }
             }
 
+            // Use manual ISBN if available, otherwise what's in the book object
+            const finalIsbn = manualIsbn || (book.isbn ? (Array.isArray(book.isbn) ? book.isbn[0] : book.isbn) : null);
+
+            // Hide/Show ISBN container
+            const isbnContainer = document.getElementById('book-isbn-container');
+            if (finalIsbn) {
+                isbnContainer.innerHTML = `<button class="isbn-pill" title="${finalIsbn}" onclick="event.stopPropagation(); copyIsbn('${finalIsbn}', this)">ISBN</button>`;
+                isbnContainer.style.display = 'flex';
+            } else {
+                isbnContainer.style.display = 'none';
+                // Trigger fallback fetch ONLY if no manual ISBN and no API ISBN
+                enrichWithGoogleIsbn(book);
+            }
+
+            // Formats Badge Generation
+            let formatBadgeHtml = "";
+            let isEbook = false;
+            let isAudio = false;
+
+            if (book.formats) {
+                book.formats.forEach(f => {
+                    const val = (typeof f === 'string' ? f : f.value) || "";
+                    if (val.includes("eBook") || val.includes("EBook")) isEbook = true;
+                    if (val.includes("AudioBook") || val.includes("Sound")) isAudio = true;
+                });
+            }
+
+            formatBadgeHtml += isEbook ? '<span class="year-tag" style="background:#eef; color:#44a;">E-kirja</span> ' : '';
+            formatBadgeHtml += isAudio ? '<span class="year-tag" style="background:#efe; color:#064;">Äänikirja</span> ' : '';
+            if (!isEbook && !isAudio) {
+                formatBadgeHtml += '<span class="year-tag" style="background:#f0f0f0; color:#444;">Kirja</span> ';
+            }
+
+            document.getElementById('book-formats').innerHTML = formatBadgeHtml;
+
+
+            if (manualDate) {
+                // User request: Visible: Year. Hover: "Julkaisu: [date]"
+                dateDisplay = `<span style="background:#fff9c4; padding:2px 8px; border-radius:12px; font-weight:bold; border:1px solid #fdd835; cursor:help;" title="Julkaisu: ${manualDate}">${book.year}</span>`;
+            }
+
             yearEl.innerHTML = dateDisplay || "";
+
+            // Redundant ISBN logic removed (handled above)
+
 
             let desc = "";
             if (book.summary && book.summary.length > 0) {
@@ -754,6 +793,123 @@
             // Fake book object for fallback
             enrichWithGoogleBooks({ title: bookTitle, authors: { primary: { [bookAuthor]: [] } } }, "");
         };
+
+        // Separate function to fetch ISBN specifically
+        async function enrichWithGoogleIsbn(book) {
+            try {
+                const cacheKey = `isbn_${book.id}`;
+                const cached = localStorage.getItem(cacheKey);
+                if (cached) {
+                    console.log(`[Detail ISBN] Cache hit: ${cached}`);
+                    const isbnEl = document.getElementById('book-isbn-container');
+                    isbnEl.innerHTML = `<button class="isbn-pill" title="${cached}" onclick="event.stopPropagation(); copyIsbn('${cached}', this)">ISBN</button>`;
+                    isbnEl.style.display = 'flex';
+                    return;
+                }
+
+                // Use same search logic: Title + Author
+                let author = extractAuthor(book);
+
+                // Fix "Sager, Riley" -> "Riley Sager"
+                if (author && author.includes(',')) {
+                    const parts = author.split(',');
+                    if (parts.length === 2) {
+                        author = `${parts[1].trim()} ${parts[0].trim()}`;
+                    }
+                }
+
+                console.log(`[Detail ISBN] Searching: ${book.title} | ${author}`);
+
+                // Helper to find ISBN from items
+                const findIsbnFromItems = (items) => {
+                    if (!items) return null;
+                    for (const item of items) {
+                        const ids = item.volumeInfo.industryIdentifiers || [];
+                        const isbn = ids.find(i => i.type === "ISBN_13" || i.type === "ISBN_10");
+                        if (isbn) return isbn.identifier;
+                    }
+                    return null;
+                };
+
+                // Strategy A: Specific (intitle + inauthor)
+                let q = `intitle:${encodeURIComponent(book.title)}+inauthor:${encodeURIComponent(author)}`;
+                let res = await fetch(`https://www.googleapis.com/books/v1/volumes?q=${q}&maxResults=5`);
+                let data = await res.json();
+
+                let found = findIsbnFromItems(data.items);
+
+                if (found) console.log(`[Detail ISBN] Found via Strategy A: ${found}`);
+
+                // Strategy B: Loose (just query words) if A failed
+                if (!found) {
+                    console.log("[Detail ISBN] Strategy A failed. Trying Strategy B...");
+                    q = `${encodeURIComponent(book.title)}+${encodeURIComponent(author)}`;
+                    res = await fetch(`https://www.googleapis.com/books/v1/volumes?q=${q}&maxResults=5`);
+                    data = await res.json();
+                    found = findIsbnFromItems(data.items);
+                    if (found) console.log(`[Detail ISBN] Found via Strategy B: ${found}`);
+                }
+
+                // Strategy C: Original Title (if available)
+                if (!found && book.uniformTitles && book.uniformTitles.length > 0) {
+                    const originalTitle = book.uniformTitles[0];
+                    console.log(`[Detail ISBN] Retrying Strategy C (Original Title): ${originalTitle}...`);
+                    q = `intitle:${encodeURIComponent(originalTitle)}+inauthor:${encodeURIComponent(author)}`;
+                    res = await fetch(`https://www.googleapis.com/books/v1/volumes?q=${q}&maxResults=5`);
+                    data = await res.json();
+
+                    found = findIsbnFromItems(data.items);
+                    if (found) console.log(`[Detail ISBN] Found via Strategy C: ${found}`);
+                }
+
+                if (found) {
+                    localStorage.setItem(cacheKey, found);
+                    const isbnEl = document.getElementById('book-isbn-container');
+                    isbnEl.innerHTML = `<button class="isbn-pill" title="${found}" onclick="event.stopPropagation(); copyIsbn('${found}', this)">ISBN</button>`;
+                    isbnEl.style.display = 'flex';
+                } else {
+                    console.warn("[Detail ISBN] No ISBN found after all strategies.");
+                }
+
+            } catch (e) {
+                console.warn("[Detail ISBN] Fetch error:", e);
+            }
+        }
+
+        window.copyIsbn = function (text, btn) {
+            if (!text) return;
+            const originalText = btn.textContent;
+
+            const feedback = (success) => {
+                btn.textContent = success ? "Kopioitu!" : "Virhe";
+                // Keep style neutral or success
+                btn.style.borderColor = success ? "#2da44e" : "#cf222e";
+                btn.style.color = success ? "#2da44e" : "#cf222e";
+                setTimeout(() => {
+                    btn.textContent = originalText;
+                    btn.style.borderColor = "";
+                    btn.style.color = "";
+                }, 2000);
+            };
+
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(text).then(() => feedback(true)).catch(() => feedback(false));
+            } else {
+                try {
+                    const textArea = document.createElement("textarea");
+                    textArea.value = text;
+                    document.body.appendChild(textArea);
+                    textArea.select();
+                    document.execCommand('copy');
+                    document.body.removeChild(textArea);
+                    feedback(true);
+                } catch (err) {
+                    prompt("Kopioi ISBN:", text);
+                    feedback(true);
+                }
+            }
+        };
+
     </script>
 </body>
 

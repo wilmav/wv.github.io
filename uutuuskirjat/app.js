@@ -199,8 +199,10 @@ document.addEventListener('DOMContentLoaded', async () => {
             });
         }
 
-        // Check for Manual Date (Scraper)
+        // Check for Manual Date (Scraper) & Manual ISBN
         let manualDate = null;
+        let manualIsbn = null;
+
         if (state.dates && book.title) {
             // Robust Key Generation
             const key = book.title.toLowerCase()
@@ -210,12 +212,17 @@ document.addEventListener('DOMContentLoaded', async () => {
                 .trim();
 
             const entry = state.dates[key];
-            if (entry && entry.dates) {
-                if (isAudio && entry.dates.audiobook) manualDate = entry.dates.audiobook;
-                else if (isEbook && entry.dates.ebook) manualDate = entry.dates.ebook;
-                else if (entry.dates.print) manualDate = entry.dates.print;
-                // Fallback: any date is better than just year
-                if (!manualDate) manualDate = entry.dates.audiobook || entry.dates.ebook || entry.dates.print;
+            if (entry) {
+                if (entry.dates) {
+                    if (isAudio && entry.dates.audiobook) manualDate = entry.dates.audiobook;
+                    else if (isEbook && entry.dates.ebook) manualDate = entry.dates.ebook;
+                    else if (entry.dates.print) manualDate = entry.dates.print;
+                    // Fallback: any date is better than just year
+                    if (!manualDate) manualDate = entry.dates.audiobook || entry.dates.ebook || entry.dates.print;
+                }
+                if (entry.isbn) {
+                    manualIsbn = [entry.isbn];
+                }
             }
         }
 
@@ -231,7 +238,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             language: book.languages,
             series: seriesInfo,
             formats: { isEbook, isAudio },
-            isbn: book.isbn
+            isbn: manualIsbn || book.isbn // Prefer manual
         };
     }
 
@@ -521,11 +528,20 @@ document.addEventListener('DOMContentLoaded', async () => {
                     <h3 class="book-title" title="${book.title}">${book.cleanTitle || book.title}</h3>
                     ${displayOriginalTitle ? `<div style="font-size:0.75rem; color:#666; font-style:italic; margin-bottom:4px;">Alkuteos: ${displayOriginalTitle}</div>` : ''}
                     <span class="author">${book.author}</span>
-                    <div style="display:flex; gap:6px; flex-wrap:wrap; margin-top:4px;">
+                    <div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:6px; align-items:center;">
                         ${formatBadgeHtml}
+                        <div class="isbn-container" style="display:${book.isbn ? 'flex' : 'none'};">
+                            ${book.isbn ? renderIsbnPill(Array.isArray(book.isbn) ? book.isbn[0] : book.isbn) : ''}
+                        </div>
                     </div>
                 </div>
             `;
+
+            // Trigger background fetch if missing ISBN
+            if (!book.isbn) {
+                fetchMissingIsbn(book, card);
+            }
+
             bookGrid.appendChild(card);
         });
     }
@@ -549,11 +565,26 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     async function fetchGoogleCover(isbn, title, author, imgEl) {
 
+        const cacheKey = `cover_${title}_${author}`; // Key based on title/author as fallback relies on it
+        // Or if ISBN is present use that, but logic below relies on multiple queries.
+        // Let's rely on stored URL directly.
+
+        const cachedUrl = localStorage.getItem(cacheKey);
+        if (cachedUrl) {
+            imgEl.src = cachedUrl;
+            imgEl.style.display = 'block';
+            if (imgEl.parentElement.querySelector('.no-cover-text')) {
+                imgEl.parentElement.querySelector('.no-cover-text').style.display = 'none';
+            }
+            return;
+        }
+
         const applyImage = (items) => {
             if (items && items.length > 0 && items[0].volumeInfo.imageLinks) {
                 const link = items[0].volumeInfo.imageLinks.thumbnail || items[0].volumeInfo.imageLinks.smallThumbnail;
                 if (link) {
                     const safeLink = link.replace('&edge=curl', '');
+                    localStorage.setItem(cacheKey, safeLink); // Cache it!
                     imgEl.src = safeLink;
                     imgEl.style.display = 'block';
                     if (imgEl.parentElement.querySelector('.no-cover-text')) {
@@ -603,11 +634,164 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (applyImage(data.items)) return;
         } catch (e) { }
 
-        imgEl.style.display = 'none';
         if (imgEl.parentElement && imgEl.parentElement.querySelector('.no-cover-text')) {
             imgEl.parentElement.querySelector('.no-cover-text').style.display = 'flex';
         }
     }
+
+    // Helper to render the ISBN pill HTML
+    function renderIsbnPill(isbn) {
+        return `<button class="isbn-pill" title="${isbn}" onclick="event.stopPropagation(); copyIsbn('${isbn}', this)">ISBN</button>`;
+    }
+
+    async function fetchMissingIsbn(book, cardEl) {
+        if (book.triedIsbnFetch) return;
+        book.triedIsbnFetch = true;
+
+        const cacheKey = `isbn_${book.id}`;
+        const cached = localStorage.getItem(cacheKey);
+        if (cached) {
+            console.log(`[ISBN] Cache hit for ${book.title}: ${cached}`);
+            book.isbn = [cached];
+            const container = cardEl.querySelector('.isbn-container');
+            if (container) {
+                container.innerHTML = renderIsbnPill(cached);
+                container.style.display = 'flex';
+            }
+            return;
+        }
+
+        const updateUI = (isbn) => {
+            console.log(`[ISBN] Updating UI for ${book.title}. ISBN: ${isbn}`);
+            localStorage.setItem(cacheKey, isbn); // Store in cache
+            book.isbn = [isbn];
+            const container = cardEl.querySelector('.isbn-container');
+            if (container) {
+                console.log(`[ISBN] Container found. Setting innerHTML.`);
+                container.innerHTML = renderIsbnPill(isbn);
+                container.style.display = 'flex'; // Force display
+            } else {
+                console.error(`[ISBN] Container NOT found for ${book.title}`);
+            }
+        };
+
+        // Helper to formatting author "Sager, Riley" -> "Riley Sager"
+        let cleanAuthor = book.author;
+        if (cleanAuthor.includes(',')) {
+            const parts = cleanAuthor.split(',');
+            if (parts.length === 2) {
+                cleanAuthor = `${parts[1].trim()} ${parts[0].trim()}`;
+            }
+        }
+
+        // Helper to find ISBN from items
+        const findIsbnFromItems = (items) => {
+            if (!items) return null;
+            for (const item of items) {
+                const ids = item.volumeInfo.industryIdentifiers || [];
+                const isbn = ids.find(i => i.type === "ISBN_13" || i.type === "ISBN_10");
+                if (isbn) return isbn.identifier;
+            }
+            return null;
+        };
+
+        // 1. Google Books (Title + Clean Author)
+        try {
+            console.log(`[ISBN] Searching Google for: ${book.title} | ${cleanAuthor}`);
+            // Strategy A: Specific
+            let q = `intitle:${encodeURIComponent(book.title)}+inauthor:${encodeURIComponent(cleanAuthor)}`;
+            // Increase maxResults to find a paperback edition if the first result is an ebook without ISBN
+            let res = await fetch(`https://www.googleapis.com/books/v1/volumes?q=${q}&maxResults=5`);
+            let data = await res.json();
+
+            let foundIsbn = findIsbnFromItems(data.items);
+            if (foundIsbn) {
+                console.log(`[ISBN] Found via Strategy A: ${foundIsbn}`);
+                updateUI(foundIsbn);
+                return;
+            }
+
+            // Strategy B: Loose (just query words)
+            console.log(`[ISBN] Retrying Strategy B (Loose)...`);
+            q = `${encodeURIComponent(book.title)}+${encodeURIComponent(cleanAuthor)}`;
+            res = await fetch(`https://www.googleapis.com/books/v1/volumes?q=${q}&maxResults=5`);
+            data = await res.json();
+
+            foundIsbn = findIsbnFromItems(data.items);
+            if (foundIsbn) {
+                console.log(`[ISBN] Found via Strategy B: ${foundIsbn}`);
+                updateUI(foundIsbn);
+                return;
+            }
+
+            // Strategy C: Original Title + Clean Author (if available)
+            if (book.originalTitle) {
+                console.log(`[ISBN] Retrying Strategy C (Original Title): ${book.originalTitle}...`);
+                q = `intitle:${encodeURIComponent(book.originalTitle)}+inauthor:${encodeURIComponent(cleanAuthor)}`;
+                res = await fetch(`https://www.googleapis.com/books/v1/volumes?q=${q}&maxResults=5`);
+                data = await res.json();
+
+                foundIsbn = findIsbnFromItems(data.items);
+                if (foundIsbn) {
+                    console.log(`[ISBN] Found via Strategy C: ${foundIsbn}`);
+                    updateUI(foundIsbn);
+                    return;
+                }
+            }
+
+        } catch (e) { console.warn("[ISBN] Google fetch failed", e); }
+
+        // 3. Fallback: Google Books (Title ONLY - if very long title or unique)
+        if (book.title.length > 10) {
+            try {
+                const q = `intitle:${encodeURIComponent(book.title)}`;
+                const res = await fetch(`https://www.googleapis.com/books/v1/volumes?q=${q}&maxResults=1`);
+                const data = await res.json();
+                if (data.items && data.items.length > 0) {
+                    const info = data.items[0].volumeInfo;
+                    // Only accept if author fuzzy matches to avoid wrong book
+                    if (info.authors && info.authors.some(a => book.author.toLowerCase().includes(a.toLowerCase().split(' ')[1] || "xyz"))) {
+                        const id = (info.industryIdentifiers || []).find(i => i.type === "ISBN_13" || i.type === "ISBN_10");
+                        if (id) {
+                            updateUI(id.identifier);
+                        }
+                    }
+                }
+            } catch (e) { }
+        }
+    }
+
+    window.copyIsbn = function (text, btn) {
+        if (!text) return;
+
+        const feedback = (success) => {
+            const originalText = btn.textContent;
+            btn.textContent = success ? "Kopioitu!" : "Virhe";
+            btn.style.color = success ? "#1a7f37" : "#cf222e";
+            setTimeout(() => {
+                btn.textContent = originalText;
+                btn.style.color = "";
+            }, 2000);
+        };
+
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(text).then(() => feedback(true)).catch(() => feedback(false));
+        } else {
+            // Fallback
+            try {
+                const textArea = document.createElement("textarea");
+                textArea.value = text;
+                document.body.appendChild(textArea);
+                textArea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textArea);
+                feedback(true);
+            } catch (err) {
+                prompt("Kopioi ISBN:", text);
+                feedback(true); // Assume they copied it manually
+            }
+        }
+    };
 
     function setupEventListeners() {
         addAuthorBtn.addEventListener('click', () => toggleSearch());

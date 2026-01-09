@@ -752,10 +752,36 @@ select:focus {
 }
 
 /* Current Year Highlight (2026 etc) */
-.year-tag.current-year {
-    background-color: #FFF8E1;
-    border-color: #DFAF2B;
-    color: #7b5e00;
+.current-year {
+    background-color: #fff9c4 !important;
+    border: 1px solid #fdd835 !important;
     font-weight: 700;
-    box-shadow: 0 0 0 1px rgba(223, 175, 43, 0.3);
+}
+
+/* ISBN Pill */
+.isbn-pill {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #57606a;
+    background: #f3f4f6;
+    padding: 2px 8px;
+    border-radius: 999px;
+    border: 1px solid #d0d7de;
+    cursor: pointer;
+    text-decoration: none;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    line-height: 1.4;
+}
+
+.isbn-pill:hover {
+    background: #eef1f4;
+    color: #0969da;
+    border-color: #0969da;
+}
+
+.isbn-pill:active {
+    background: #e4e6ea;
+    transform: translateY(1px);
 }
