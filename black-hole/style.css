@@ -1,0 +1,449 @@
+/* -----------------------------------------
+   Dark theme for Black Hole
+------------------------------------------ */
+
+:root {
+    --bg: #0a0a0a;
+    --text: #e0e0e0;
+    --text-soft: #a0a0a0;
+    --border: #333333;
+    --accent: #4deeea;
+    /* Neon Cyan */
+    --accent-glow: rgba(77, 238, 234, 0.4);
+    --sidebar-bg: #0f1212;
+    --radius: 12px;
+    --sidebar-width: 260px;
+    --font: system-ui, -apple-system, BlinkMacSystemFont, "Inter", sans-serif;
+}
+
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    padding: 0;
+    min-height: 100vh;
+    font-family: var(--font);
+    background: var(--bg);
+    color: var(--text);
+    display: flex;
+    overflow: hidden;
+    /* Prevent scroll during animations */
+    transition: background 2s ease;
+}
+
+/* -----------------------------------------
+   Sidebar (Dark Version)
+------------------------------------------ */
+
+header {
+    width: var(--sidebar-width);
+    min-width: var(--sidebar-width);
+    height: 100vh;
+    position: fixed;
+    top: 0;
+    left: 0;
+    background: var(--sidebar-bg);
+    color: var(--text);
+    padding: 1.2rem;
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    z-index: 100;
+}
+
+.app-title {
+    font-weight: 800;
+    font-size: 1.9rem;
+    letter-spacing: -0.05em;
+    color: var(--text);
+    margin-top: 1rem;
+    margin-bottom: 2rem;
+    padding-left: 10px;
+}
+
+.app-title-com {
+    color: var(--accent);
+}
+
+nav {
+    margin-top: auto;
+    margin-bottom: 2rem;
+}
+
+nav ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+nav ul li {
+    margin: 0.5rem 0;
+}
+
+nav ul li a {
+    text-decoration: none;
+    color: var(--text-soft);
+    font-weight: 500;
+    display: block;
+    padding: 0.5rem 10px;
+    border-left: 3px solid transparent;
+    transition: all 0.2s ease;
+}
+
+nav ul li a:hover {
+    color: var(--text);
+    border-left-color: var(--accent);
+    background: rgba(255, 255, 255, 0.05);
+}
+
+/* -----------------------------------------
+   Main Layout
+------------------------------------------ */
+
+.content-wrapper {
+    margin-left: var(--sidebar-width);
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    /* Changed from center to allow natural flow/scrolling */
+    justify-content: flex-start;
+    padding: 2rem;
+    position: relative;
+    min-height: 100vh;
+    overflow-y: auto;
+}
+
+/* -----------------------------------------
+   Vortex Component (Enhanced)
+------------------------------------------ */
+
+.vortex-container {
+    position: relative;
+    width: 320px;
+    height: 320px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    perspective: 1200px;
+    margin-bottom: 0.5rem;
+    flex-shrink: 0;
+}
+
+.vortex {
+    position: absolute;
+    width: 130px;
+    height: 130px;
+    background: #000;
+    border-radius: 50%;
+    box-shadow:
+        0 0 60px #000,
+        0 0 30px var(--accent-glow);
+    z-index: 5;
+    animation: pulse 4s infinite alternate ease-in-out;
+}
+
+/* Accretion Disk - Cyan Swirl */
+.vortex-disk {
+    position: absolute;
+    width: 300px;
+    height: 300px;
+    border-radius: 50%;
+    background: radial-gradient(circle,
+            transparent 35%,
+            rgba(77, 238, 234, 0.5) 45%,
+            rgba(77, 238, 234, 0.1) 65%,
+            transparent 75%);
+    filter: blur(12px);
+    animation: rotate-disk 80s linear infinite;
+}
+
+/* Swirling Layers */
+.vortex-ring-1,
+.vortex-ring-2 {
+    position: absolute;
+    border-radius: 50%;
+    border: 1px solid rgba(77, 238, 234, 0.2);
+    box-shadow: 0 0 20px rgba(77, 238, 234, 0.1);
+}
+
+.vortex-ring-1 {
+    width: 200px;
+    height: 200px;
+    animation: rotate-ring 60s linear infinite reverse;
+}
+
+.vortex-ring-2 {
+    width: 260px;
+    height: 260px;
+    border-style: dotted;
+    animation: rotate-ring 90s linear infinite;
+}
+
+@keyframes rotate-disk {
+    from {
+        transform: rotate(0deg) scale(1);
+    }
+
+    to {
+        transform: rotate(360deg) scale(1.05);
+    }
+}
+
+@keyframes rotate-ring {
+    from {
+        transform: rotate(0deg);
+    }
+
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+@keyframes pulse {
+    from {
+        transform: scale(1);
+        box-shadow: 0 0 30px #000;
+    }
+
+    to {
+        transform: scale(1.03);
+        box-shadow: 0 0 50px #000;
+    }
+}
+
+/* -----------------------------------------
+   Note List UI
+------------------------------------------ */
+
+.input-container {
+    width: 100%;
+    max-width: 500px;
+    background: rgba(10, 15, 15, 0.95);
+    backdrop-filter: blur(20px);
+    padding: 1.5rem 2rem 2rem 2rem;
+    border-radius: var(--radius);
+    border: 1px solid rgba(77, 238, 234, 0.2);
+    box-shadow: 0 30px 60px rgba(0, 0, 0, 0.9);
+    z-index: 10;
+    transition: opacity 1s ease, transform 1s ease;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    max-height: calc(100vh - 380px);
+    /* Clamp height to fit screen */
+}
+
+.note-list {
+    margin-bottom: 0.5rem;
+    overflow-y: auto;
+    padding-right: 5px;
+    flex-grow: 1;
+    /* Take up available space */
+}
+
+/* Custom Scrollbar for Note List */
+.note-list::-webkit-scrollbar {
+    width: 6px;
+}
+
+.note-list::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 10px;
+}
+
+.note-list::-webkit-scrollbar-thumb {
+    background: var(--accent);
+    border-radius: 10px;
+}
+
+.note-item {
+    display: flex;
+    align-items: center;
+    margin-bottom: 0.6rem;
+    background: rgba(255, 255, 255, 0.03);
+    padding: 0.6rem;
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.note-input {
+    flex-grow: 1;
+    background: transparent;
+    border: none;
+    color: var(--text);
+    font-family: var(--font);
+    font-size: 1rem;
+    outline: none;
+}
+
+.remove-btn {
+    background: transparent;
+    border: none;
+    color: #666;
+    cursor: pointer;
+    padding: 0 0.5rem;
+    font-size: 1.2rem;
+}
+
+.remove-btn:hover {
+    color: #f44;
+}
+
+.add-line-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: transparent;
+    border: 1px dashed #444;
+    color: var(--text-soft);
+    padding: 0.6rem;
+    width: 100%;
+    border-radius: 8px;
+    cursor: pointer;
+    justify-content: center;
+    transition: all 0.2s;
+}
+
+.add-line-btn:hover {
+    background: rgba(255, 255, 255, 0.05);
+    border-color: var(--accent);
+    color: var(--text);
+}
+
+.absorb-btn {
+    width: 100%;
+    margin-top: 1.5rem;
+    /* Better spacing from the list */
+    padding: 1.1rem;
+    background: var(--accent);
+    border: none;
+    border-radius: var(--radius);
+    color: #000;
+    font-weight: 700;
+    font-size: 1.1rem;
+    cursor: pointer;
+    transition: transform 0.2s, background 0.2s, box-shadow 0.2s;
+    box-shadow: 0 4px 15px rgba(223, 175, 43, 0.3);
+}
+
+.absorb-btn:hover {
+    background: #f0c54d;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(223, 175, 43, 0.4);
+}
+
+/* -----------------------------------------
+   Animations
+------------------------------------------ */
+
+.flying-item {
+    position: absolute;
+    background: #fff;
+    padding: 0.8rem 1.5rem;
+    border-radius: 4px;
+    /* Sharper corners for "paper" feel */
+    color: #333;
+    /* Darker text on white paper */
+    border: 1px solid #ddd;
+    pointer-events: none;
+    z-index: 100;
+    transition: all 5s cubic-bezier(0.42, 0, 0.58, 1);
+    /* Even slower, more natural */
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+    font-weight: 500;
+    /* Paper-like texture */
+    background-image: linear-gradient(rgba(0, 0, 0, 0.02) 1px, transparent 1px);
+    background-size: 100% 1.2rem;
+}
+
+/* -----------------------------------------
+   Sunny Sky State (Realistic Moving Sky)
+------------------------------------------ */
+
+/* Sky background handled by .sky-background */
+
+.sky-background {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(to bottom, #7fb7ff 0%, #b3e2ff 100%);
+    opacity: 0;
+    z-index: -1;
+    transition: opacity 5s ease;
+    /* Slower, more cinematic fade */
+    overflow: hidden;
+}
+
+.sky-gradient-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: radial-gradient(circle at 50% 30%, rgba(255, 255, 255, 0.4) 0%, transparent 70%);
+    pointer-events: none;
+}
+
+.cloud {
+    position: absolute;
+    background: #fff;
+    filter: blur(60px);
+    border-radius: 100px;
+    opacity: 0.6;
+    animation: move-clouds var(--duration) linear infinite;
+    box-shadow: 0 0 40px rgba(255, 255, 255, 0.5);
+}
+
+@keyframes move-clouds {
+    from {
+        transform: translateX(-400px);
+    }
+
+    to {
+        transform: translateX(calc(100vw + 400px));
+    }
+}
+
+body.sunny .sky-background {
+    opacity: 1 !important;
+}
+
+.sunny-content {
+    display: none;
+    text-align: center;
+    z-index: 100;
+    opacity: 0;
+    transition: opacity 2s ease 1s;
+    /* Delay for better feel */
+}
+
+body.sunny .sunny-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+body.sunny .input-container,
+body.sunny .vortex-container {
+    display: none;
+}
+
+.start-over-btn {
+    margin-top: 2rem;
+    padding: 1rem 2rem;
+    background: #fff;
+    border: none;
+    border-radius: 30px;
+    color: #00f2fe;
+    font-weight: 700;
+    cursor: pointer;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
