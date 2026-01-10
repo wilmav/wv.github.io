@@ -145,19 +145,23 @@ document.addEventListener('DOMContentLoaded', () => {
             const vortexCenterX = vortexRect.left + vortexRect.width / 2;
             const vortexCenterY = vortexRect.top + vortexRect.height / 2;
 
-            // 2. Random Start Position
-            const side = Math.floor(Math.random() * 3); // 0: Left, 1: Right, 2: Bottom
+            // 2. Random Start Position (Avoiding Left Sidebar)
+            // Sidebar width is ~260px. Let's use 300px as a safe zone.
+            const safeLeft = 300;
+            const safeWidth = window.innerWidth - safeLeft;
+
+            // Random side: 0=Bottom (Random X), 1=Right (Random Y)
+            const side = Math.random() < 0.6 ? 0 : 1; // 60% Bottom, 40% Right
+
             let startX, startY;
 
-            if (side === 0) { // Left
-                startX = Math.random() * (window.innerWidth * 0.2); // Left 20%
-                startY = window.innerHeight * 0.5 + Math.random() * (window.innerHeight * 0.5); // Bottom half
-            } else if (side === 1) { // Right
-                startX = window.innerWidth * 0.8 + Math.random() * (window.innerWidth * 0.2); // Right 20%
-                startY = window.innerHeight * 0.5 + Math.random() * (window.innerHeight * 0.5); // Bottom half
-            } else { // Bottom
-                startX = Math.random() * window.innerWidth;
-                startY = window.innerHeight - Math.random() * 150; // Bottom 150px
+            if (side === 0) { // Bottom
+                // Random X within the safe width, offset by safeLeft
+                startX = safeLeft + Math.random() * (safeWidth - 50);
+                startY = window.innerHeight - Math.random() * 100; // Bottom 100px
+            } else { // Right
+                startX = window.innerWidth - Math.random() * 50; // Right edge buffer
+                startY = window.innerHeight * 0.3 + Math.random() * (window.innerHeight * 0.6); // Middle-ish vertical
             }
 
             flyingItem.style.left = `${startX}px`;
