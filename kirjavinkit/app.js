@@ -645,10 +645,23 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
 
             let imgSrc = book.image || ''; // Already normalized in normalizeBookData or updated via Google
+
+            // --- CACHE PRIORITY ---
+            if (!imgSrc && book.id) {
+                imgSrc = localStorage.getItem(`cover_fix_${book.id}`);
+            }
+            if (!imgSrc) {
+                const cleanAuthorForCache = book.author.includes(',')
+                    ? `${book.author.split(',')[1].trim()} ${book.author.split(',')[0].trim()}`
+                    : book.author;
+                const cacheKey = `cover_v5_${book.cleanTitle || book.title}_${cleanAuthorForCache}`;
+                imgSrc = localStorage.getItem(cacheKey);
+            }
+
             let imgHtml = '';
 
             if (imgSrc) {
-                // IMPORTANT: Still use handleCoverError even for Finna images, in case they are broken
+                // IMPORTANT: Still use handleCoverError even for Finna/Cached images, in case they are broken
                 imgHtml = `<img src="${imgSrc}" class="book-cover-img" data-isbn="${book.isbn ? (Array.isArray(book.isbn) ? book.isbn[0] : book.isbn) : ''}" data-title="${book.cleanTitle || book.title}" data-original-title="${book.originalTitle || ''}" data-author="${book.author}" data-id="${book.id}" alt="${book.title}" loading="lazy" onerror="handleCoverError(this)">`;
             } else if (book.isbn) {
                 const isbn = Array.isArray(book.isbn) ? book.isbn[0] : book.isbn;
@@ -723,6 +736,17 @@ document.addEventListener('DOMContentLoaded', async () => {
         const originalTitle = img.dataset.originalTitle;
         const author = img.dataset.author;
         const bookId = img.dataset.id;
+
+        // --- CACHE CLEANUP ---
+        // If an image that we THOUGHT was valid (from cache or Finna) fails, it might be an expired link.
+        if (img.classList.contains('book-cover-img')) {
+            console.log(`[Cover] ${title} failed from primary source. Clearing cache and trying fallbacks.`);
+            if (bookId) localStorage.removeItem(`cover_fix_${bookId}`);
+            const cleanAuthorForCache = author.includes(',')
+                ? `${author.split(',')[1].trim()} ${author.split(',')[0].trim()}`
+                : author;
+            localStorage.removeItem(`cover_v5_${title}_${cleanAuthorForCache}`);
+        }
 
         // --- PREVENT INFINITE LOOPS ---
         if (img.dataset.triedGoogle) {
