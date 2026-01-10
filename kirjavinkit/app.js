@@ -1024,8 +1024,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         };
 
         // Helper to formatting author "Sager, Riley" -> "Riley Sager"
-        let cleanAuthor = book.author;
-        if (cleanAuthor.includes(',')) {
+        let cleanAuthor = book.author || "";
+        if (cleanAuthor && cleanAuthor.includes(',')) {
             const parts = cleanAuthor.split(',');
             if (parts.length === 2) {
                 cleanAuthor = `${parts[1].trim()} ${parts[0].trim()}`;
@@ -1035,8 +1035,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         // Helper to find ISBN from items with strict verification
         const findIsbnFromItems = (items) => {
             if (!items) return null;
-            const searchTitle = (book.cleanTitle || book.title).toLowerCase();
-            const searchAuthorLow = book.author.toLowerCase();
+            const searchTitle = (book.cleanTitle || book.title || "").toLowerCase();
+            const searchAuthorLow = (book.author || "").toLowerCase();
 
             for (const item of items) {
                 const info = item.volumeInfo;
@@ -1069,7 +1069,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         // 1. Google Books (Title + Clean Author)
         try {
-            const searchTitle = book.cleanTitle || book.title;
+            const searchTitle = book.cleanTitle || book.title || "Unknown";
             console.log(`[ISBN] Searching Google for: ${searchTitle} | ${cleanAuthor}`);
             // Strategy A: Specific
             let q = `intitle:${encodeURIComponent(searchTitle)}+inauthor:${encodeURIComponent(cleanAuthor)}`;

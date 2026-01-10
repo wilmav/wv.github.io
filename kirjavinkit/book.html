@@ -345,7 +345,8 @@
             }
 
             try {
-                let q = `intitle:${encodeURIComponent(book.title)}+inauthor:${encodeURIComponent(author)}`;
+                const searchTitle = book.title || "Unknown";
+                let q = `intitle:${encodeURIComponent(searchTitle)}+inauthor:${encodeURIComponent(author)}`;
                 console.log(`[Detail Cover] Strategy A: ${q}`);
                 let res = await fetch(`https://www.googleapis.com/books/v1/volumes?q=${q}&maxResults=1`);
                 let data = await res.json();
@@ -353,7 +354,7 @@
 
                 // Strategy B: Loose
                 console.log(`[Detail Cover] Retrying Strategy B (Loose)...`);
-                let qLoose = `${encodeURIComponent(book.title)}+${encodeURIComponent(author)}`;
+                let qLoose = `${encodeURIComponent(searchTitle)}+${encodeURIComponent(author)}`;
                 let resLoose = await fetch(`https://www.googleapis.com/books/v1/volumes?q=${qLoose}&maxResults=1`);
                 let dataLoose = await resLoose.json();
                 applyData(dataLoose.items);
@@ -742,9 +743,10 @@
         }
 
         function extractAuthor(book) {
-            if (!book.authors) return "";
+            if (!book || !book.authors) return "";
             const primary = book.authors.primary || Object.values(book.authors)[0];
-            return primary ? Object.keys(primary)[0] : "";
+            if (!primary) return "";
+            return Object.keys(primary)[0] || "";
         }
 
         function renderBook(book) {
@@ -874,9 +876,9 @@
                 imgSrc = localStorage.getItem(`cover_fix_${book.id}`);
             }
             if (!imgSrc) {
-                const author = extractAuthor(book);
+                const author = extractAuthor(book) || "";
                 const cleanAuthor = author.includes(',') ? `${author.split(',')[1].trim()} ${author.split(',')[0].trim()}` : author;
-                const cacheKey = `cover_v5_${book.title}_${cleanAuthor}`;
+                const cacheKey = `cover_v5_${(book.title || 'no-title')}_${cleanAuthor}`;
                 imgSrc = localStorage.getItem(cacheKey);
             }
 
@@ -975,9 +977,9 @@
 
                 // Cleanup bad legacy cache if current author is not Penny
                 const oldVal = localStorage.getItem(oldCacheKey);
-                const bookAuthor = extractAuthor(book).toLowerCase();
+                const bookAuthor = (extractAuthor(book) || "").toLowerCase();
                 if (oldVal === '9789523765061' && !bookAuthor.includes('penny')) {
-                    console.log(`[Detail ISBN] Purging bad cached ISBN for ${book.title}`);
+                    console.log(`[Detail ISBN] Purging bad cached ISBN for ${book.title || 'Unknown'}`);
                     localStorage.removeItem(oldCacheKey);
                 }
 
@@ -1006,8 +1008,8 @@
                 // Helper to find ISBN from items with strict verification
                 const findIsbnFromItems = (items) => {
                     if (!items) return null;
-                    const searchTitle = book.title.toLowerCase();
-                    const searchAuthorLow = extractAuthor(book).toLowerCase();
+                    const searchTitle = (book.title || "").toLowerCase();
+                    const searchAuthorLow = (extractAuthor(book) || "").toLowerCase();
 
                     for (const item of items) {
                         const info = item.volumeInfo;
