@@ -150,6 +150,15 @@
         });
         document.body.appendChild(toggleBtn);
 
+        // --- Aggressive Cache Cleanup ---
+        Object.keys(localStorage).forEach(key => {
+            if (key.startsWith('isbn_') || key.startsWith('cover_')) {
+                const val = localStorage.getItem(key);
+                if (val === '9789523765061') localStorage.removeItem(key);
+                if (key.includes('undefined') || val === 'undefined') localStorage.removeItem(key);
+            }
+        });
+
 
         const params = new URLSearchParams(window.location.search);
         const bookId = params.get('id');
@@ -256,36 +265,54 @@
 
         // Use Google Books API to enrich data (description, cover, etc.)
         async function enrichWithGoogleBooks(book, originalTitle) {
-            const coverDiv = document.getElementById('book-cover');
-
             const cacheKey = `cover_fix_${book.id}`;
             const cachedUrl = localStorage.getItem(cacheKey);
+
+            const updateImages = (url) => {
+                // 1. Update Main Cover if it matches
+                const detailCover = document.getElementById('book-cover');
+                const urlParams = new URLSearchParams(window.location.search);
+                if (urlParams.get('id') === book.id || detailCover.dataset.id === book.id) {
+                    detailCover.innerHTML = `<img src="${url}" alt="${book.title}" style="width:100%; height:100%; object-fit:cover;" onerror="handleDetailCoverError(this, '${book.id}')">`;
+                }
+
+                // 2. Update Similar Books
+                const similarImgs = document.querySelectorAll(`.similar-book-img[data-id="${book.id}"]`);
+                similarImgs.forEach(img => {
+                    img.src = url;
+                    img.style.display = 'block';
+                    if (img.parentElement.querySelector('div')) {
+                        img.parentElement.querySelector('div').style.display = 'none';
+                    }
+                });
+            };
+
             if (cachedUrl) {
-                coverDiv.innerHTML = `<img src="${cachedUrl}" alt="${book.title}" style="width:100%; height:100%; object-fit:cover;" onerror="handleDetailCoverError(this)">`;
+                updateImages(cachedUrl);
             }
 
             const applyData = (items) => {
                 if (items && items.length > 0) {
                     const info = items[0].volumeInfo;
 
-                    // 1. Description (if missing)
-                    const descEl = document.getElementById('book-desc');
-                    if ((!descEl.innerText || descEl.innerText.length < 10) && info.description) {
-                        descEl.innerText = info.description;
-                        descEl.parentElement.style.display = 'block';
-                        descEl.parentElement.insertAdjacentHTML('beforeend', '<div style="font-size:0.8rem; color:#888; margin-top:8px;">Kuvaus: Google Books</div>');
+                    // 1. Description (if missing and is main book)
+                    const urlParams = new URLSearchParams(window.location.search);
+                    if (urlParams.get('id') === book.id) {
+                        const descEl = document.getElementById('book-desc');
+                        if ((!descEl.innerText || descEl.innerText.length < 10) && info.description) {
+                            descEl.innerText = info.description;
+                            descEl.parentElement.style.display = 'block';
+                            descEl.parentElement.insertAdjacentHTML('beforeend', '<div style="font-size:0.8rem; color:#888; margin-top:8px;">Kuvaus: Google Books</div>');
+                        }
                     }
 
-                    // 2. Cover (if missing)
+                    // 2. Cover
                     if (info.imageLinks) {
                         const link = info.imageLinks.thumbnail || info.imageLinks.smallThumbnail;
                         if (link) {
                             const safeLink = link.replace('&edge=curl', '');
-                            // Only update if not already set (or if we are updating placeholder)
-                            if (coverDiv.innerText.includes("Haetaan") || !coverDiv.querySelector('img')) {
-                                localStorage.setItem(cacheKey, safeLink);
-                                coverDiv.innerHTML = `<img src="${safeLink}" alt="${book.title}" style="width:100%; height:100%; object-fit:cover;" onerror="handleDetailCoverError(this)">`;
-                            }
+                            localStorage.setItem(cacheKey, safeLink);
+                            updateImages(safeLink);
                             return true;
                         }
                     }
@@ -580,12 +607,20 @@
                 // Unique reasons, join with newlines
                 const reasonText = [...new Set(item.reasons)].join('\n');
 
-                // Image Logic: Finna -> Google Fallback -> OpenLibrary Fallback -> Placeholder
+                // Image Logic: Finna -> Cache -> Google Fallback -> OpenLibrary Fallback -> Placeholder
                 let imgSrc = (b.images && b.images.length) ? `https://api.finna.fi${b.images[0]}` : '';
 
-                // We'll rely on the onerror handlers for Google/OL fallbacks in the HTML string, 
-                // but strictly speaking, we don't have the Google URL here easily without async.
-                // For recommendations, sticking to Finna + OpenLibrary is fastest.
+                // --- CACHE PRIORITY ---
+                if (!imgSrc && b.id) {
+                    imgSrc = localStorage.getItem(`cover_fix_${b.id}`);
+                }
+                if (!imgSrc) {
+                    const author = extractAuthor(b) || "";
+                    const cleanAuthor = author.includes(',') ? `${author.split(',')[1].trim()} ${author.split(',')[0].trim()}` : author;
+                    const cacheKey = `cover_v5_${b.title || 'no-title'}_${cleanAuthor}`;
+                    imgSrc = localStorage.getItem(cacheKey);
+                }
+
                 if (!imgSrc && b.isbn) {
                     const isbn = Array.isArray(b.isbn) ? b.isbn[0] : b.isbn;
                     imgSrc = `https://covers.openlibrary.org/b/isbn/${isbn}-M.jpg`;
@@ -596,14 +631,30 @@
                 el.onclick = () => window.location.href = `book.html?id=${b.id}`;
                 el.title = reasonText; // Simple tooltip
 
+                // Harmonize title for cache/search
+                const cleanTitle = (b.title || "").split(/[\/\(:;]/)[0].trim();
+
                 el.innerHTML = `
                     <div style="width:100%; aspect-ratio:2/3; background:#f0f0f0; border-radius:4px; overflow:hidden; margin-bottom:4px; position:relative;">
-                        ${imgSrc ? `<img src="${imgSrc}" style="width:100%; height:100%; object-fit:cover;" onerror="this.style.display='none'">` : '<div style="width:100%; height:100%; display:flex; align-items:center; justify-content:center; color:#ccc; font-size:0.8rem;">Ei kuvaa</div>'}
+                        <img src="${imgSrc || ''}" class="similar-book-img" 
+                             data-id="${b.id}" data-title="${cleanTitle}" 
+                             data-author="${extractAuthor(b)}" 
+                             style="width:100%; height:100%; object-fit:cover; display:${imgSrc ? 'block' : 'none'}" 
+                             onerror="handleSimilarCoverError(this)">
+                        <div class="no-cover-placeholder" style="width:100%; height:100%; display:${imgSrc ? 'none' : 'flex'}; align-items:center; justify-content:center; color:#ccc; font-size:0.8rem;">
+                            ${imgSrc ? '' : 'Ei kuvaa'}
+                        </div>
                     </div>
                     <div style="font-size:0.75rem; font-weight:600; line-height:1.2; overflow:hidden; text-overflow:ellipsis; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; margin-bottom:2px;">${b.title}</div>
                     <div style="font-size:0.7rem; color:#666; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${extractAuthor(b)}</div>
                 `;
                 list.appendChild(el);
+
+                // If no image source at all, trigger background search immediately/manually
+                if (!imgSrc) {
+                    const img = el.querySelector('.similar-book-img');
+                    handleSimilarCoverError(img);
+                }
             });
         }
 
@@ -815,6 +866,7 @@
 
             // Image with Fallback (Finna -> Cache -> OpenLibrary -> Google Placeholder -> Error)
             const coverDiv = document.getElementById('book-cover');
+            coverDiv.dataset.id = book.id; // Store ID for propagation
             let imgSrc = (book.images && book.images.length > 0) ? `https://api.finna.fi${book.images[0]}` : null;
 
             // --- CACHE PRIORITY ---
@@ -832,8 +884,17 @@
                 coverDiv.innerHTML = `<img src="${imgSrc}" class="book-cover-img" alt="${book.title}" style="width:100%; height:100%; object-fit:cover;" onerror="handleDetailCoverError(this, '${book.id}')">`;
             } else if (book.isbn) {
                 const isbn = Array.isArray(book.isbn) ? book.isbn[0] : book.isbn;
-                imgSrc = `https://covers.openlibrary.org/b/isbn/${isbn}-L.jpg`;
-                coverDiv.innerHTML = `<img src="${imgSrc}" alt="${book.title}" style="width:100%; height:100%; object-fit:cover;" onerror="handleDetailCoverError(this, '${book.id}')">`;
+                const authorLow = authorName.toLowerCase();
+
+                // Blacklist Penny ISBN from ever showing up for other authors
+                if (isbn === '9789523765061' && !authorLow.includes('penny')) {
+                    console.warn(`[Detail Cover] Blacklisting bad ISBN ${isbn} for cover.`);
+                    coverDiv.innerHTML = `<div class="detail-loader" style="width:100%; height:100%; display:flex; align-items:center; justify-content:center; color:#888;">Haetaan kuvaa...</div>`;
+                    enrichWithGoogleBooks(book, ot);
+                } else {
+                    imgSrc = `https://covers.openlibrary.org/b/isbn/${isbn}-L.jpg`;
+                    coverDiv.innerHTML = `<img src="${imgSrc}" alt="${book.title}" style="width:100%; height:100%; object-fit:cover;" onerror="handleDetailCoverError(this, '${book.id}')">`;
+                }
             } else {
                 // No ISBN and no Image? Start with loading placeholder then try Google Name search
                 coverDiv.innerHTML = `<div class="detail-loader" style="width:100%; height:100%; display:flex; align-items:center; justify-content:center; color:#888;">Haetaan kuvaa...</div>`;
@@ -843,7 +904,7 @@
 
         window.handleDetailCoverError = function (img, id) {
             console.log(`[Detail Cover] Error loading image: ${img.src}`);
-            
+
             // --- CACHE CLEANUP ---
             if (img.classList.contains('book-cover-img')) {
                 console.log(`[Detail Cover] Primary source failed. Clearing cache.`);
@@ -876,6 +937,31 @@
             enrichWithGoogleBooks({ id: id || null, title: bookTitle, authors: { primary: { [bookAuthor]: [] } } }, "");
         };
 
+        window.handleSimilarCoverError = function (img) {
+            const id = img.dataset.id;
+            const title = img.dataset.title;
+            const author = img.dataset.author;
+
+            if (img.classList.contains('similar-book-img')) {
+                if (id) localStorage.removeItem(`cover_fix_${id}`);
+            }
+
+            img.style.display = 'none';
+            const coverDiv = img.parentElement;
+            if (coverDiv) {
+                const placeholder = coverDiv.querySelector('.no-cover-placeholder');
+                if (placeholder) {
+                    placeholder.style.display = 'flex';
+                    placeholder.textContent = "Ei kuvaa";
+                }
+            }
+
+            if (!img.dataset.triedGoogle) {
+                img.dataset.triedGoogle = "true";
+                enrichWithGoogleBooks({ id: id, title: title, authors: { primary: { [author]: [] } } }, "");
+            }
+        };
+
         // Cache cleanup for faulty legacy key
         if (localStorage.getItem('cover_fix_undefined')) {
             localStorage.removeItem('cover_fix_undefined');
@@ -884,10 +970,20 @@
         // Separate function to fetch ISBN specifically
         async function enrichWithGoogleIsbn(book) {
             try {
-                const cacheKey = `isbn_${book.id}`;
-                const cached = localStorage.getItem(cacheKey);
+                const oldCacheKey = `isbn_${book.id}`;
+                const newCacheKey = `isbn_v2_${book.id}`;
+
+                // Cleanup bad legacy cache if current author is not Penny
+                const oldVal = localStorage.getItem(oldCacheKey);
+                const bookAuthor = extractAuthor(book).toLowerCase();
+                if (oldVal === '9789523765061' && !bookAuthor.includes('penny')) {
+                    console.log(`[Detail ISBN] Purging bad cached ISBN for ${book.title}`);
+                    localStorage.removeItem(oldCacheKey);
+                }
+
+                const cached = localStorage.getItem(newCacheKey);
                 if (cached) {
-                    console.log(`[Detail ISBN] Cache hit: ${cached}`);
+                    console.log(`[Detail ISBN] Cache hit (v2): ${cached}`);
                     const isbnEl = document.getElementById('book-isbn-container');
                     isbnEl.innerHTML = `<button class="isbn-pill" title="${cached}" onclick="event.stopPropagation(); copyIsbn('${cached}', this)">ISBN</button>`;
                     isbnEl.style.display = 'flex';
@@ -907,13 +1003,35 @@
 
                 console.log(`[Detail ISBN] Searching: ${book.title} | ${author}`);
 
-                // Helper to find ISBN from items
+                // Helper to find ISBN from items with strict verification
                 const findIsbnFromItems = (items) => {
                     if (!items) return null;
+                    const searchTitle = book.title.toLowerCase();
+                    const searchAuthorLow = extractAuthor(book).toLowerCase();
+
                     for (const item of items) {
-                        const ids = item.volumeInfo.industryIdentifiers || [];
-                        const isbn = ids.find(i => i.type === "ISBN_13" || i.type === "ISBN_10");
-                        if (isbn) return isbn.identifier;
+                        const info = item.volumeInfo;
+                        if (!info) continue;
+
+                        const foundTitle = (info.title || "").toLowerCase();
+                        const titleMatch = foundTitle.includes(searchTitle.split(':')[0].trim()) || searchTitle.includes(foundTitle.split(':')[0].trim());
+
+                        const lastName = searchAuthorLow.split(',')[0].trim();
+                        const authorMatch = info.authors && info.authors.some(a => a.toLowerCase().includes(lastName));
+
+                        if (titleMatch && authorMatch) {
+                            const ids = info.industryIdentifiers || [];
+                            const isbnObj = ids.find(i => i.type === "ISBN_13" || i.type === "ISBN_10");
+                            const isbn = isbnObj ? isbnObj.identifier : null;
+
+                            if (isbn === '9789523765061' && !searchAuthorLow.includes('penny')) {
+                                console.warn(`[Detail ISBN] Blacklisting Penny ISBN for ${searchAuthorLow}`);
+                                continue;
+                            }
+                            if (isbn) return isbn;
+                        } else {
+                            console.log(`[Detail ISBN] Skipping mismatch: "${info.title}" by ${info.authors?.join(', ')}`);
+                        }
                     }
                     return null;
                 };
@@ -950,7 +1068,7 @@
                 }
 
                 if (found) {
-                    localStorage.setItem(cacheKey, found);
+                    localStorage.setItem(newCacheKey, found);
                     const isbnEl = document.getElementById('book-isbn-container');
                     isbnEl.innerHTML = `<button class="isbn-pill" title="${found}" onclick="event.stopPropagation(); copyIsbn('${found}', this)">ISBN</button>`;
                     isbnEl.style.display = 'flex';

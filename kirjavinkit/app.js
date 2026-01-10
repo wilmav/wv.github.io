@@ -57,6 +57,19 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // --- Initialization ---
     async function init() {
+        // --- Aggressive Cache Cleanup ---
+        Object.keys(localStorage).forEach(key => {
+            if (key.startsWith('isbn_') || key.startsWith('cover_')) {
+                const val = localStorage.getItem(key);
+                if (val === '9789523765061') {
+                    localStorage.removeItem(key);
+                }
+                if (key.includes('undefined') || val === 'undefined' || val === null) {
+                    localStorage.removeItem(key);
+                }
+            }
+        });
+
         // Load Static Data for caching/bootstrapping
         let staticDefaults = [];
         if (typeof AUTHORS_DATA !== 'undefined') {
@@ -965,10 +978,19 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (book.triedIsbnFetch) return;
         book.triedIsbnFetch = true;
 
-        const cacheKey = `isbn_${book.id}`;
-        const cached = localStorage.getItem(cacheKey);
+        const oldCacheKey = `isbn_${book.id}`;
+        const newCacheKey = `isbn_v2_${book.id}`;
+
+        // Cleanup: If the old cache has the known BAD ISBN that doesn't belong to current author, purge it
+        const oldVal = localStorage.getItem(oldCacheKey);
+        if (oldVal === '9789523765061' && !book.author.toLowerCase().includes('penny')) {
+            console.log(`[ISBN] Purging suspicious cached ISBN 9789523765061 for ${book.author}`);
+            localStorage.removeItem(oldCacheKey);
+        }
+
+        const cached = localStorage.getItem(newCacheKey);
         if (cached) {
-            console.log(`[ISBN] Cache hit for ${book.title}: ${cached}`);
+            console.log(`[ISBN] Cache hit (v2) for ${book.title}: ${cached}`);
             book.isbn = [cached];
             const container = cardEl.querySelector('.isbn-container');
             if (container) {
@@ -986,7 +1008,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         const updateUI = (isbn) => {
             console.log(`[ISBN] Updating UI for ${book.title}. ISBN: ${isbn}`);
-            localStorage.setItem(cacheKey, isbn); // Store in cache
+            localStorage.setItem(newCacheKey, isbn); // Store in new cache
             book.isbn = [isbn];
             const container = cardEl.querySelector('.isbn-container');
             if (container) {
@@ -1010,13 +1032,37 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
         }
 
-        // Helper to find ISBN from items
+        // Helper to find ISBN from items with strict verification
         const findIsbnFromItems = (items) => {
             if (!items) return null;
+            const searchTitle = (book.cleanTitle || book.title).toLowerCase();
+            const searchAuthorLow = book.author.toLowerCase();
+
             for (const item of items) {
-                const ids = item.volumeInfo.industryIdentifiers || [];
-                const isbn = ids.find(i => i.type === "ISBN_13" || i.type === "ISBN_10");
-                if (isbn) return isbn.identifier;
+                const info = item.volumeInfo;
+                if (!info) continue;
+
+                // Strict Title Check: Start with same words or include the core title
+                const foundTitle = (info.title || "").toLowerCase();
+                const titleMatch = foundTitle.includes(searchTitle.split(':')[0].trim()) || searchTitle.includes(foundTitle.split(':')[0].trim());
+
+                // Strict Author Check: search last name in found authors
+                const lastName = searchAuthorLow.split(',')[0].trim();
+                const authorMatch = info.authors && info.authors.some(a => a.toLowerCase().includes(lastName));
+
+                if (titleMatch && authorMatch) {
+                    const ids = info.industryIdentifiers || [];
+                    const isbnObj = ids.find(i => i.type === "ISBN_13" || i.type === "ISBN_10");
+                    const isbn = isbnObj ? isbnObj.identifier : null;
+
+                    if (isbn === '9789523765061' && !searchAuthorLow.includes('penny')) {
+                        console.warn(`[ISBN] Blacklisting Penny ISBN for ${searchAuthorLow}`);
+                        continue;
+                    }
+                    if (isbn) return isbn;
+                } else {
+                    console.log(`[ISBN] Skipping mismatch: "${foundTitle}" by ${info.authors?.join(', ')} (Target: "${searchTitle}")`);
+                }
             }
             return null;
         };
