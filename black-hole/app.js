@@ -28,15 +28,23 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // Swirl particle generation
+    // Swirl particle generation
     function createSwirlParticles() {
         const vortexContainer = document.querySelector('.vortex-container');
-        for (let i = 0; i < 40; i++) {
+        // Clear existing to avoid dupes if called again
+        const oldParticles = vortexContainer.querySelectorAll('.swirl-particle');
+        oldParticles.forEach(p => p.remove());
+
+        for (let i = 0; i < 60; i++) { // More particles
             const p = document.createElement('div');
             p.className = 'swirl-particle';
+
+            // Randomness
             const size = Math.random() * 3 + 1;
-            const orbit = Math.random() * 80 + 140; // Relative to center
-            const duration = Math.random() * 3 + 2;
-            const delay = Math.random() * -5;
+            const orbit = Math.random() * 100 + 130; // Wider valid range
+            const duration = Math.random() * 5 + 3; // Slower individual periods
+            const delay = Math.random() * -10;
+            const opacity = Math.random() * 0.4 + 0.1;
 
             p.style.width = `${size}px`;
             p.style.height = `${size}px`;
@@ -44,12 +52,12 @@ document.addEventListener('DOMContentLoaded', () => {
             p.style.position = 'absolute';
             p.style.borderRadius = '50%';
             p.style.boxShadow = '0 0 5px var(--accent)';
-            p.style.opacity = Math.random() * 0.5 + 0.3;
+            p.style.opacity = opacity;
 
             // CSS Animation via JS
             p.animate([
                 { transform: `rotate(0deg) translateX(${orbit}px) rotate(0deg)` },
-                { transform: `rotate(360deg) translateX(${orbit * 0.8}px) rotate(-360deg)` }
+                { transform: `rotate(360deg) translateX(${orbit * (0.8 + Math.random() * 0.2)}px) rotate(-360deg)` } // Varied end radius
             ], {
                 duration: duration * 1000,
                 iterations: Infinity,
@@ -128,44 +136,82 @@ document.addEventListener('DOMContentLoaded', () => {
             const flyingItem = document.createElement('div');
             flyingItem.className = 'flying-item';
             flyingItem.textContent = text;
+            flyingItem.style.opacity = '0';
 
-            // Start from the position of the input container area
-            // Randomize slightly so they don't all look identical
-            const startX = window.innerWidth / 2 + (Math.random() - 0.5) * 50;
-            const startY = window.innerHeight - 200;
+            // 1. Calculate Vortex Center Dynamically
+            // Use the inner .vortex or container to find the true black hole center
+            const vortexContainer = document.getElementById('vortex-container');
+            const vortexRect = vortexContainer.getBoundingClientRect();
+            const vortexCenterX = vortexRect.left + vortexRect.width / 2;
+            const vortexCenterY = vortexRect.top + vortexRect.height / 2;
+
+            // 2. Random Start Position
+            const side = Math.floor(Math.random() * 3); // 0: Left, 1: Right, 2: Bottom
+            let startX, startY;
+
+            if (side === 0) { // Left
+                startX = Math.random() * (window.innerWidth * 0.2); // Left 20%
+                startY = window.innerHeight * 0.5 + Math.random() * (window.innerHeight * 0.5); // Bottom half
+            } else if (side === 1) { // Right
+                startX = window.innerWidth * 0.8 + Math.random() * (window.innerWidth * 0.2); // Right 20%
+                startY = window.innerHeight * 0.5 + Math.random() * (window.innerHeight * 0.5); // Bottom half
+            } else { // Bottom
+                startX = Math.random() * window.innerWidth;
+                startY = window.innerHeight - Math.random() * 150; // Bottom 150px
+            }
 
             flyingItem.style.left = `${startX}px`;
             flyingItem.style.top = `${startY}px`;
-            flyingItem.style.transform = 'translate(-50%, -50%) scale(0.9) rotate(-2deg)';
-            flyingItem.style.opacity = '0';
-            flyingItem.style.transition = 'all 2.5s ease-in-out'; // Controls the flight to center
+
+            // Randomize rotation
+            const startRotation = (Math.random() - 0.5) * 40; // +/- 20deg
+            flyingItem.style.transform = `translate(-50%, -50%) scale(0.9) rotate(${startRotation}deg)`;
+
+            // Set transitions initially to handle the "appear" phase
+            flyingItem.style.transition = 'opacity 0.6s ease-out';
 
             document.body.appendChild(flyingItem);
 
-            // Phase 1: Appear and Float to Center
+            // Phase 1: Appear
             requestAnimationFrame(() => {
-                // Trigger reflow
-                flyingItem.getBoundingClientRect();
-
+                flyingItem.getBoundingClientRect(); // reflow
                 flyingItem.style.opacity = '1';
-                flyingItem.style.left = `${window.innerWidth / 2}px`;
-                flyingItem.style.top = `${window.innerHeight / 2}px`;
-                flyingItem.style.transform = 'translate(-50%, -50%) scale(1) rotate(5deg)';
 
-                // Phase 2: Suck into Void
+                // Phase 2: The Vacuum Flight
                 setTimeout(() => {
-                    // Change transition for the suck phase to be faster/different if needed, 
-                    // or keep it smooth. Let's make the suck-in separate.
-                    flyingItem.style.transition = 'all 1.5s cubic-bezier(0.55, 0.085, 0.68, 0.53)';
+                    // Define the "Suction" transition curve
+                    const flightDuration = 4000;
+                    const suctionPhaseDuration = 1500;
+                    const delaySuction = flightDuration - suctionPhaseDuration;
 
+                    // Complex transition string
+                    flyingItem.style.transition = `
+                        top ${flightDuration}ms cubic-bezier(0.55, 0.055, 0.675, 0.19),
+                        left ${flightDuration}ms cubic-bezier(0.55, 0.055, 0.675, 0.19),
+                        transform ${suctionPhaseDuration}ms cubic-bezier(0.55, 0.085, 0.68, 0.53) ${delaySuction}ms,
+                        background-color ${suctionPhaseDuration}ms ease ${delaySuction}ms,
+                        color ${suctionPhaseDuration}ms ease ${delaySuction}ms,
+                        opacity ${suctionPhaseDuration / 2}ms ease ${flightDuration - 500}ms
+                    `;
+
+                    // Target: The Calculated Center
+                    flyingItem.style.left = `${vortexCenterX}px`;
+                    flyingItem.style.top = `${vortexCenterY}px`;
+
+                    // Target: Shrink and Spin
                     flyingItem.style.transform = 'translate(-50%, -50%) scale(0.0) rotate(720deg)';
+
+                    // Target: Darken
+                    flyingItem.style.backgroundColor = '#000';
+                    flyingItem.style.color = '#000';
                     flyingItem.style.opacity = '0';
 
+                    // Cleanup
                     setTimeout(() => {
                         flyingItem.remove();
                         resolve();
-                    }, 1600);
-                }, 2600); // 2.5s flight + small buffer
+                    }, flightDuration + 100);
+                }, 200); // 200ms delay to ensure user sees it appear
             });
         });
     }

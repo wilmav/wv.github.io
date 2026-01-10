@@ -159,7 +159,7 @@ nav ul li a:hover {
             rgba(77, 238, 234, 0.1) 65%,
             transparent 75%);
     filter: blur(12px);
-    animation: rotate-disk 80s linear infinite;
+    animation: rotate-disk 120s linear infinite;
 }
 
 /* Swirling Layers */
@@ -174,14 +174,14 @@ nav ul li a:hover {
 .vortex-ring-1 {
     width: 200px;
     height: 200px;
-    animation: rotate-ring 60s linear infinite reverse;
+    animation: rotate-ring 100s linear infinite reverse;
 }
 
 .vortex-ring-2 {
     width: 260px;
     height: 260px;
     border-style: dotted;
-    animation: rotate-ring 90s linear infinite;
+    animation: rotate-ring 150s linear infinite;
 }
 
 @keyframes rotate-disk {
@@ -344,21 +344,33 @@ nav ul li a:hover {
 .flying-item {
     position: absolute;
     background: #fff;
-    padding: 0.8rem 1.5rem;
-    border-radius: 4px;
-    /* Sharper corners for "paper" feel */
-    color: #333;
-    /* Darker text on white paper */
-    border: 1px solid #ddd;
-    pointer-events: none;
+    padding: 1rem 1.5rem 1.5rem 1.5rem;
+    color: #222;
     z-index: 100;
-    transition: all 5s cubic-bezier(0.42, 0, 0.58, 1);
-    /* Even slower, more natural */
-    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
-    font-weight: 500;
-    /* Paper-like texture */
-    background-image: linear-gradient(rgba(0, 0, 0, 0.02) 1px, transparent 1px);
+    pointer-events: none;
+
+    /* Torn Paper Effect */
+    clip-path: polygon(0% 0%, 100% 0%, 100% 95%,
+            95% 100%, 90% 95%, 85% 100%, 80% 95%,
+            75% 100%, 70% 95%, 65% 100%, 60% 95%,
+            55% 100%, 50% 95%, 45% 100%, 40% 95%,
+            35% 100%, 30% 95%, 25% 100%, 20% 95%,
+            15% 100%, 10% 95%, 5% 100%, 0% 95%);
+
+    /* Notebook lines */
+    background-image:
+        linear-gradient(rgba(0, 0, 0, 0.05) 1px, transparent 1px);
     background-size: 100% 1.2rem;
+
+    font-family: "Courier New", Courier, monospace;
+    font-weight: 600;
+    font-size: 0.95rem;
+
+    /* Shadow for torn paper (box-shadow doesn't work with clip-path) */
+    filter: drop-shadow(0 5px 8px rgba(0, 0, 0, 0.3));
+
+    /* Ensure transitions work for properties we want to animate */
+    transition: all 2.5s ease-in-out;
 }
 
 /* -----------------------------------------
