@@ -53,6 +53,12 @@ header .app-title .app-title-com,
 
 header nav {
     padding-top: 1rem;
+    border-left: none !important;
+}
+
+header nav ul,
+header nav ul li {
+    border-left: none !important;
 }
 
 header nav ul li a {
@@ -62,6 +68,14 @@ header nav ul li a {
 header nav ul li strong {
     color: white !important;
     border-left-color: white !important;
+}
+
+/* Fix for book.html where strong is inside a (avoids double border) */
+header nav ul li a strong {
+    border-left: none !important;
+    padding-left: 0 !important;
+    display: inline !important;
+    /* Keep it inline within the link */
 }
 
 header nav ul li a:hover {
@@ -929,10 +943,21 @@ body.dark-mode header .app-title {
     border-left: none !important;
 }
 
+body.dark-mode .app-logo-link {
+    border-left: none !important;
+}
+
 body.dark-mode header nav ul li strong {
     color: #f1f5f9 !important;
-    border-left-color: #38bdf8 !important;
-    /* Accent color for strong border */
+    border-left: 3px solid #38bdf8 !important;
+    background: rgba(56, 189, 248, 0.1) !important;
+    border-radius: 0 4px 4px 0 !important;
+}
+
+body.dark-mode header nav ul li a strong {
+    border-left: none !important;
+    background: none !important;
+    padding-left: 0 !important;
 }
 
 body.dark-mode header nav ul li a {
