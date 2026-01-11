@@ -151,6 +151,72 @@ export const parseInBodyData = (text: string) => {
         }
     }
 
-    console.log('Parsed InBody Data:', data);
+    // 5. DIRTY FALLBACK (The "At least try something" strategy)
+    if (!data.weight || !data.muscleMass || !data.bodyFatMass) {
+        console.log('Using Dirty Fallback Strategy');
+
+        // Find ALL numbers that look like decimals, allowing for spaces (e.g. "25, 5")
+        // Match 1-3 digits, then a separator, then optional space, then 1-2 digits
+        const anyNumberRegex = /\b\d{1,3}[.,][\s]*\d{1,2}\b/g;
+
+        const allNumbers = Array.from(text.matchAll(anyNumberRegex))
+            .map(m => parseFloat(m[0].replace(',', '.').replace(/\s/g, '')));
+
+        // Also just look for integers if we are desperate? 
+        // No, weight/muscle usually have decimals.
+        // But maybe "25" is found as integer.
+
+        console.log('Dirty Fallback found numbers:', allNumbers);
+
+        // Filter for unique values to avoid duplicates
+        const uniqueNumbers = [...new Set(allNumbers)];
+
+        // Simple Heuristics based on typical human ranges:
+
+        // Weight: 40 - 150 kg
+        if (!data.weight) {
+            const weights = uniqueNumbers.filter(n => n > 40 && n < 150);
+            // Pick the largest one? Or the one that appears first?
+            // Usually Weight is a prominent number. Let's pick the one distinct from others.
+            // If we have "Target Weight" it might be there too. 
+            // Let's just pick the first reasonable one found.
+            if (weights.length > 0) data.weight = weights[0];
+        }
+
+        // Muscle Mass: 20 - 60 kg (usually roughly 40-70% of weight)
+        if (!data.muscleMass) {
+            const muscles = uniqueNumbers.filter(n => n > 20 && n < 60);
+            // Filter out the weight we just found
+            const candidates = muscles.filter(n => Math.abs(n - (data.weight || 0)) > 2);
+            if (candidates.length > 0) data.muscleMass = candidates[0];
+        }
+
+        // Fat Mass: 4 - 60 kg
+        if (!data.bodyFatMass) {
+            const fats = uniqueNumbers.filter(n => n > 4 && n < 60);
+            // Filter out weight and muscle
+            const candidates = fats.filter(n =>
+                Math.abs(n - (data.weight || 0)) > 2 &&
+                Math.abs(n - (data.muscleMass || 0)) > 1
+            );
+            if (candidates.length > 0) data.bodyFatMass = candidates[0];
+        }
+
+        // Fat Percent: 5 - 50 %
+        if (!data.bodyFatPercent) {
+            const percents = uniqueNumbers.filter(n => n > 5 && n < 55);
+            // Verify it matches Weight/FatMass calculation if possible?
+            // Or just pick one that looks like a percentage (often has % sign nearby in text, but here we just have numbers)
+            // If we found Fat Mass and Weight, calculate it instead.
+            if (data.weight && data.bodyFatMass) {
+                data.bodyFatPercent = Math.round((data.bodyFatMass / data.weight) * 1000) / 10;
+            } else if (percents.length > 0) {
+                // Risky, but better than nothing?
+                // data.bodyFatPercent = percents[0];
+            }
+        }
+    }
+
+    console.log('Final Parsed Data:', data);
     return data;
 };

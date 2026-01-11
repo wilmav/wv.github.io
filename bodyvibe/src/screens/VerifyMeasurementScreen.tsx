@@ -121,18 +121,33 @@ export const VerifyMeasurementScreen = () => {
                                     </Text>
                                 </TouchableOpacity>
                                 <TouchableOpacity onPress={() => setShowRawText(!showRawText)} style={styles.debugBtn}>
-                                    <Text style={styles.toggleImageText}>
+                                    <Text style={styles.debugBtnText}>
                                         {showRawText ? 'Piilota raaka-data' : 'Näytä raaka-data'}
                                     </Text>
                                 </TouchableOpacity>
                             </View>
+
+                            {/* Debug: Show what we actually parsed */}
+                            {Object.keys(form).length === 0 && (
+                                <View style={[styles.card, { borderColor: 'red', borderWidth: 1 }]}>
+                                    <Text style={{ color: 'red' }}>Varoitus: Yhtään tietoa ei tunnistettu automaattisesti.</Text>
+                                    <Text style={styles.textDim}>Tarkista "Näytä raaka-data" nähdäksesi mitä kamera näki.</Text>
+                                </View>
+                            )}
 
                             {showImage && (
                                 <Image source={{ uri: imageUri }} style={styles.previewImage} resizeMode="contain" />
                             )}
                             {showRawText && (
                                 <GlassCard style={styles.rawTextCard}>
-                                    <Text style={styles.rawText}>{rawText}</Text>
+                                    <Text style={styles.sectionHeader}>Tunnistetut arvot:</Text>
+                                    <Text style={styles.textDim}>
+                                        {JSON.stringify(form, null, 2)}
+                                    </Text>
+                                    <Text style={[styles.sectionHeader, { marginTop: 10 }]}>Kameran tekstidata:</Text>
+                                    <ScrollView style={{ maxHeight: 300 }}>
+                                        <Text style={styles.rawText}>{rawText}</Text>
+                                    </ScrollView>
                                 </GlassCard>
                             )}
                         </View>
@@ -224,6 +239,22 @@ const styles = StyleSheet.create({
         borderRadius: Theme.roundness,
         backgroundColor: '#000',
         marginBottom: Theme.spacing.m,
+    },
+    debugBtnText: {
+        color: Theme.colors.primary,
+        fontSize: 14,
+        fontWeight: 'bold',
+    },
+    card: {
+        backgroundColor: 'rgba(255, 255, 255, 0.05)',
+        borderRadius: 16,
+        padding: 16,
+        marginBottom: 16,
+    },
+    textDim: {
+        color: Theme.colors.textDim,
+        fontSize: 14,
+        marginTop: 4,
     },
     rawTextCard: {
         padding: Theme.spacing.m,
