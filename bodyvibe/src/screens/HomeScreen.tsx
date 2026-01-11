@@ -1,21 +1,80 @@
-import React from 'react';
-import { View, Text, StyleSheet, ScrollView, Image, TouchableOpacity } from 'react-native';
+import React, { useState, useMemo, useCallback } from 'react';
+import { View, Text, StyleSheet, ScrollView, Image, TouchableOpacity, Dimensions } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Theme } from '../theme/theme';
 import { GlassCard } from '../components/GlassCard';
-import { Activity, Weight, Zap, Plus } from 'lucide-react-native';
+import { Activity, Weight, Zap, Plus, TrendingUp } from 'lucide-react-native';
 import { useStore } from '../store/useStore';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
+import { LineChart } from 'react-native-chart-kit';
+
+const screenWidth = Dimensions.get('window').width;
 
 export const HomeScreen = () => {
     const navigation = useNavigation<any>();
-    const { measurements, weightEntries, isLoading } = useStore();
+    const { measurements, weightEntries, isLoading, loadData } = useStore();
     const latest = measurements[0];
     const latestWeight = weightEntries[0];
 
+    useFocusEffect(
+        useCallback(() => {
+            loadData();
+        }, [loadData])
+    );
+
+    // Determine the most recent weight regardless of source
+    const currentWeight = latest && latestWeight
+        ? (new Date(latest.date) > new Date(latestWeight.date) ? latest.weight : latestWeight.weight)
+        : (latest?.weight || latestWeight?.weight);
+
+    const [chartMetric, setChartMetric] = useState<'weight' | 'muscle' | 'fat'>('weight');
+
+    const chartData = useMemo(() => {
+        let title = 'Paino (kg)';
+        let data: { date: string, value: number }[] = [];
+
+        if (chartMetric === 'weight') {
+            title = 'Painon kehitys';
+            // Combine both sources
+            const mixedPoints = [
+                ...measurements.map(m => ({ date: m.date, value: m.weight })),
+                ...weightEntries.map(w => ({ date: w.date, value: w.weight }))
+            ];
+            // Sort and take last 6
+            data = mixedPoints
+                .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+                .slice(-6);
+        } else if (chartMetric === 'muscle') {
+            title = 'Lihasmassa (kg)';
+            data = measurements
+                .map(m => ({ date: m.date, value: m.muscleMass }))
+                .filter(p => p.value > 0)
+                .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+                .slice(-6);
+        } else {
+            title = 'Rasvaprosentti (%)';
+            data = measurements
+                .map(m => ({ date: m.date, value: m.bodyFatPercent }))
+                .filter(p => p.value > 0)
+                .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+                .slice(-6);
+        }
+
+        if (data.length === 0) return null;
+
+        return {
+            labels: data.map(d => {
+                const date = new Date(d.date);
+                return `${date.getDate()}.${date.getMonth() + 1}.`;
+            }),
+            datasets: [{ data: data.map(d => d.value) }],
+            title
+        };
+    }, [measurements, weightEntries, chartMetric]);
+
     return (
         <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
-            <ScrollView contentContainerStyle={styles.scrollContent}>
+            <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
                 <View style={styles.header}>
                     <Image
                         source={require('../../assets/logo.png')}
@@ -25,17 +84,27 @@ export const HomeScreen = () => {
                     <Text style={styles.title}>BodyVibe</Text>
                 </View>
 
-                <GlassCard style={styles.mainCard}>
-                    <View style={styles.row}>
-                        <Weight color={Theme.colors.primary} size={32} />
-                        <View style={styles.textStack}>
-                            <Text style={styles.label}>Viimeisin paino</Text>
-                            <Text style={styles.value}>
-                                {latest?.weight || latestWeight?.weight || '--'} kg
-                            </Text>
+                <TouchableOpacity
+                    activeOpacity={0.9}
+                    onPress={() => latest && navigation.navigate('MeasurementDetails', { measurement: latest })}
+                >
+                    <GlassCard style={styles.mainCard}>
+                        <View style={styles.row}>
+                            <Weight color={Theme.colors.primary} size={32} />
+                            <View style={styles.textStack}>
+                                <Text style={styles.label}>Viimeisin paino</Text>
+                                <Text style={styles.value}>
+                                    {currentWeight ? `${currentWeight} kg` : '--'}
+                                </Text>
+                            </View>
+                            {latest && (
+                                <View style={{ marginLeft: 'auto' }}>
+                                    <Text style={{ color: Theme.colors.primary, fontWeight: 'bold' }}>Avaa tiedot {'>'}</Text>
+                                </View>
+                            )}
                         </View>
-                    </View>
-                </GlassCard>
+                    </GlassCard>
+                </TouchableOpacity>
 
                 <View style={styles.grid}>
                     <GlassCard style={styles.smallCard}>
@@ -55,12 +124,75 @@ export const HomeScreen = () => {
                     </GlassCard>
                 </View>
 
-                {measurements.length === 0 && weightEntries.length === 0 ? (
-                    <Text style={styles.dimText}>Ei vielä historiatietoja...</Text>
+                {chartData && chartData.datasets[0].data.length > 0 ? (
+                    <View style={styles.chartSection}>
+                        <Text style={styles.sectionTitle}>{chartData.title}</Text>
+                        <View style={styles.chartTabs}>
+                            <TouchableOpacity
+                                style={[styles.tab, chartMetric === 'weight' && styles.activeTab]}
+                                onPress={() => setChartMetric('weight')}
+                            >
+                                <Text style={[styles.tabText, chartMetric === 'weight' && styles.activeTabText]}>Paino</Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity
+                                style={[styles.tab, chartMetric === 'muscle' && styles.activeTab]}
+                                onPress={() => setChartMetric('muscle')}
+                            >
+                                <Text style={[styles.tabText, chartMetric === 'muscle' && styles.activeTabText]}>Lihas</Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity
+                                style={[styles.tab, chartMetric === 'fat' && styles.activeTab]}
+                                onPress={() => setChartMetric('fat')}
+                            >
+                                <Text style={[styles.tabText, chartMetric === 'fat' && styles.activeTabText]}>Rasva%</Text>
+                            </TouchableOpacity>
+                        </View>
+
+                        <LineChart
+                            data={{
+                                labels: chartData.labels,
+                                datasets: chartData.datasets
+                            }}
+                            width={screenWidth - 48} // padding
+                            height={220}
+                            yAxisSuffix={chartMetric === 'fat' ? '%' : ''}
+                            chartConfig={{
+                                backgroundColor: Theme.colors.background,
+                                backgroundGradientFrom: '#1A1A1A',
+                                backgroundGradientTo: '#000000',
+                                decimalPlaces: 1,
+                                color: (opacity = 1) => `rgba(0, 240, 255, ${opacity})`,
+                                labelColor: (opacity = 1) => `rgba(255, 255, 255, ${opacity})`,
+                                style: {
+                                    borderRadius: 16
+                                },
+                                propsForDots: {
+                                    r: "6",
+                                    strokeWidth: "2",
+                                    stroke: Theme.colors.primary
+                                }
+                            }}
+                            bezier
+                            style={{
+                                marginVertical: 8,
+                                borderRadius: 16
+                            }}
+                        />
+                    </View>
                 ) : (
-                    <Text style={styles.dimText}>Historiadataa löytyy!</Text>
+                    <View style={styles.emptyState}>
+                        <TrendingUp color={Theme.colors.textDim} size={48} />
+                        <Text style={styles.dimText}>
+                            {measurements.length === 0 && weightEntries.length === 0
+                                ? 'Ei vielä historiatietoja. Lisää ensimmäinen mittaus!'
+                                : 'Lisää vähintään kaksi mittausta nähdäksesi kehityssuunnan.'}
+                        </Text>
+                    </View>
                 )}
+
+                <View style={{ height: 100 }} />
             </ScrollView>
+
             <TouchableOpacity
                 style={styles.fab}
                 onPress={() => navigation.navigate('AddMeasurement')}
@@ -138,13 +270,48 @@ const styles = StyleSheet.create({
     },
     sectionTitle: {
         color: Theme.colors.text,
-        fontSize: 18,
+        fontSize: 20,
         fontWeight: 'bold',
         marginBottom: Theme.spacing.m,
     },
+    chartSection: {
+        marginTop: Theme.spacing.m,
+        marginBottom: Theme.spacing.xl,
+    },
+    chartTabs: {
+        flexDirection: 'row',
+        marginBottom: Theme.spacing.m,
+        backgroundColor: 'rgba(255,255,255,0.05)',
+        borderRadius: 12,
+        padding: 4,
+    },
+    tab: {
+        flex: 1,
+        paddingVertical: 8,
+        alignItems: 'center',
+        borderRadius: 8,
+    },
+    activeTab: {
+        backgroundColor: Theme.colors.primary,
+    },
+    tabText: {
+        color: Theme.colors.textDim,
+        fontWeight: '600',
+    },
+    activeTabText: {
+        color: Theme.colors.background,
+    },
     dimText: {
         color: Theme.colors.textDim,
-        fontSize: 14,
+        fontSize: 16,
+        textAlign: 'center',
+        marginTop: Theme.spacing.m,
+        maxWidth: '80%',
+    },
+    emptyState: {
+        alignItems: 'center',
+        paddingVertical: Theme.spacing.xl,
+        opacity: 0.5,
     },
     fab: {
         position: 'absolute',

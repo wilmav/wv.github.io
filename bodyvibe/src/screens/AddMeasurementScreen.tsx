@@ -31,45 +31,64 @@ export const AddMeasurementScreen = () => {
             processImage(result.assets[0].uri, mode);
         }
     };
-
     const processImage = async (uri: string, mode: 'inbody' | 'weight') => {
         setIsProcessing(true);
         try {
             const text = await recognizeText(uri);
             console.log('Recognized Text:', text);
-            Alert.alert('Debug: Tunnistettu teksti', text.substring(0, 500)); // Show first 500 chars
 
+            if (text.length < 50) {
+                Alert.alert(
+                    'Huomio',
+                    'Kuvasta tunnistettiin hyvin vähän tekstiä. Tämä johtuu usein huonosta valaistuksesta tai epätarkkuudesta.\n\nHaluatko yrittää uudelleen?',
+                    [
+                        { text: 'Yritä uudelleen', onPress: () => setIsProcessing(false), style: 'cancel' },
+                        {
+                            text: 'Jatka silti',
+                            onPress: () => processParsedData(text, uri, mode)
+                        }
+                    ]
+                );
+                return;
+            }
+
+            processParsedData(text, uri, mode);
+        } catch (error) {
+            Alert.alert('Huomio', 'Automaattinen luku ei onnistu tällä laitteella. Syötä tiedot käsin.');
+            setIsProcessing(false);
+        }
+    };
+
+    const processParsedData = (text: string, uri: string, mode: 'inbody' | 'weight') => {
+        try {
             if (mode === 'inbody') {
                 const data = parseInBodyData(text);
-                if (data.weight) {
-                    addMeasurement({
-                        id: Date.now().toString(),
-                        date: new Date().toISOString(),
-                        ...data
-                    });
-                    Alert.alert('Valmis!', 'InBody-tiedot tallennettu.');
-                    navigation.navigate('Home');
-                } else {
-                    Alert.alert('Virhe', 'Tietoja ei voitu lukea kuvasta. Syötä tiedot käsin tai yritä uudelleen.');
-                }
+                // Navigate to verification even if some data is missing
+                navigation.navigate('VerifyMeasurement', {
+                    scannedData: data,
+                    imageUri: uri,
+                    rawText: text
+                });
             } else {
                 const weightMatch = text.match(/(\d+[.,]\d+)/);
                 if (weightMatch) {
                     const weight = parseFloat(weightMatch[1].replace(',', '.'));
-                    addWeightEntry({
-                        id: Date.now().toString(),
-                        date: new Date().toISOString(),
-                        weight
+                    navigation.navigate('VerifyMeasurement', {
+                        scannedData: { weight },
+                        imageUri: uri
                     });
-                    Alert.alert('Valmis!', `Paino ${weight}kg tallennettu.`);
-                    navigation.navigate('Home');
                 } else {
-                    Alert.alert('Virhe', 'Painoa ei löytynyt kuvasta.');
+                    Alert.alert('Virhe', 'Painoa ei löytynyt kuvasta. Voit siirtyä syöttämään tiedot käsin.', [
+                        { text: 'Peruuta', style: 'cancel' },
+                        {
+                            text: 'Syötä käsin',
+                            onPress: () => navigation.navigate('VerifyMeasurement', { scannedData: {}, imageUri: uri })
+                        }
+                    ]);
                 }
             }
         } catch (error) {
-            // Suppress console.error to avoid RedBox
-            Alert.alert('Huomio', 'Automaattinen luku ei onnistu tällä laitteella. Syötä tiedot käsin.');
+            console.error('Error parsing data:', error);
         } finally {
             setIsProcessing(false);
         }
