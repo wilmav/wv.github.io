@@ -23,7 +23,7 @@ export const AddMeasurementScreen = () => {
 
         const result = await ImagePicker.launchCameraAsync({
             quality: 0.8,
-            allowsEditing: false,
+            allowsEditing: true, // Changed to true to allow rotation/cropping
             base64: true,
         });
 
@@ -37,6 +37,7 @@ export const AddMeasurementScreen = () => {
         try {
             const text = await recognizeText(uri);
             console.log('Recognized Text:', text);
+            Alert.alert('Debug: Tunnistettu teksti', text.substring(0, 500)); // Show first 500 chars
 
             if (mode === 'inbody') {
                 const data = parseInBodyData(text);
