@@ -1,26 +1,12 @@
-import Tesseract from 'tesseract.js';
+import TextRecognition from '@react-native-ml-kit/text-recognition';
 
 export const recognizeText = async (imageUri: string) => {
     try {
-        // Safe check for Worker
-        let hasWorker = false;
-        try {
-            hasWorker = typeof Worker !== 'undefined' && !!Worker;
-        } catch (e) {
-            // Ignore access errors
-        }
-
-        if (!hasWorker) {
-            throw new Error('Tekstintunnistus ei onnistu (Worker puuttuu). Syötä tiedot käsin.');
-        }
-
-        const result = await Tesseract.recognize(imageUri, 'fin+eng', {
-            // Disable logger to avoid console spam
-        });
-        return result.data.text;
-    } catch (error: any) {
-        // Do NOT log with console.error to avoid RedBox in Expo Go
-        throw new Error(error.message || 'Kuvan luku epäonnistui');
+        const result = await TextRecognition.recognize(imageUri);
+        return result.text;
+    } catch (error) {
+        console.error('OCR Error:', error);
+        throw new Error('Tekstintunnistus epäonnistui. Tarkista kuva ja yritä uudelleen.');
     }
 };
 
