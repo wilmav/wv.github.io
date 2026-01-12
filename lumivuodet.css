@@ -343,3 +343,85 @@
 .bar-ground {
     background-color: #3f3f46;
 }
+
+/* Info Section */
+.info-section {
+    margin-top: 4rem;
+    padding: 2.5rem;
+    background: #ffffff;
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+}
+
+.info-section h2 {
+    font-size: 1.5rem;
+    margin-bottom: 2rem;
+    color: var(--text);
+    border-bottom: 2px solid var(--accent);
+    display: inline-block;
+    padding-bottom: 0.5rem;
+}
+
+.info-block {
+    margin-bottom: 2.5rem;
+}
+
+.info-block:last-child {
+    margin-bottom: 0;
+}
+
+.info-block h3 {
+    font-size: 1.15rem;
+    font-weight: 700;
+    margin-bottom: 0.8rem;
+    color: #1a1304;
+}
+
+.info-block p,
+.info-block ul li {
+    font-size: 1rem;
+    color: var(--text-soft);
+    line-height: 1.7;
+}
+
+.info-block ul {
+    list-style-type: none;
+    padding-left: 0;
+    margin-top: 0.5rem;
+}
+
+.info-block ul li {
+    position: relative;
+    padding-left: 1.5rem;
+    margin-bottom: 0.6rem;
+}
+
+.info-block ul li::before {
+    content: "•";
+    color: var(--accent);
+    font-weight: bold;
+    font-size: 1.2rem;
+    position: absolute;
+    left: 0;
+    top: -2px;
+}
+
+.external-link {
+    display: inline-block;
+    margin-left: 0.5rem;
+    color: #3b82f6;
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.external-link:hover {
+    text-decoration: underline;
+}
+
+@media (max-width: 600px) {
+    .info-section {
+        padding: 1.5rem;
+        margin-top: 2rem;
+    }
+}

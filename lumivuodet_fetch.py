@@ -10,9 +10,16 @@ import xml.etree.ElementTree as ET
 # Jyväskylä lentoasema: 101339
 # Sodankylä Tähtelä: 101932
 STATIONS = {
-    "helsinki": 100971,
-    "jyvaskyla": 101339,
-    "sodankyla": 101932
+    "helsinki": 100971,     # Kaisaniemi
+    "jyvaskyla": 101339,    # Lentoasema
+    "sodankyla": 101932,    # Tähtelä
+    "utsjoki": 102035,      # Kevo
+    "inari": 102033,        # Ivalo
+    "saariselka": 102005,   # Inari Saariselkä (Tunturi)
+    "rovaniemi": 101920,    # Lentoasema
+    "oulu": 101786,         # Lentoasema
+    "joensuu": 101608,      # Lentoasema
+    "tampere": 101124       # Härmälä
 }
 
 # Fetch data from 2000 to current year
