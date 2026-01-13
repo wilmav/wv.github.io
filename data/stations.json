@@ -10,5 +10,33 @@
   {
     "id": "sodankyla",
     "fmisid": 101932
+  },
+  {
+    "id": "utsjoki",
+    "fmisid": 102035
+  },
+  {
+    "id": "inari",
+    "fmisid": 102033
+  },
+  {
+    "id": "saariselka",
+    "fmisid": 102005
+  },
+  {
+    "id": "rovaniemi",
+    "fmisid": 101920
+  },
+  {
+    "id": "oulu",
+    "fmisid": 101786
+  },
+  {
+    "id": "joensuu",
+    "fmisid": 101608
+  },
+  {
+    "id": "tampere",
+    "fmisid": 101124
   }
 ]
