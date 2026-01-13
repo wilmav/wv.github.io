@@ -6,12 +6,46 @@
 const SPOT_API_CURRENT = "https://api.spot-hinta.fi/JustNow";
 const SPOT_API_TODAY = "https://api.spot-hinta.fi/Today";
 
+const CITIES = {
+    "Helsinki": { lat: 60.17, lon: 24.94 },
+    "Espoo": { lat: 60.21, lon: 24.66 },
+    "Tampere": { lat: 61.50, lon: 23.79 },
+    "Vantaa": { lat: 60.29, lon: 25.04 },
+    "Oulu": { lat: 65.01, lon: 25.47 },
+    "Turku": { lat: 60.45, lon: 22.27 },
+    "Jyväskylä": { lat: 62.24, lon: 25.75 },
+    "Kuopio": { lat: 62.89, lon: 27.68 },
+    "Lahti": { lat: 60.98, lon: 25.66 },
+    "Pori": { lat: 61.48, lon: 21.80 },
+    "Kouvola": { lat: 60.87, lon: 26.70 },
+    "Joensuu": { lat: 62.60, lon: 29.76 },
+    "Lappeenranta": { lat: 61.06, lon: 28.19 },
+    "Hämeenlinna": { lat: 61.00, lon: 24.46 },
+    "Vaasa": { lat: 63.10, lon: 21.62 },
+    "Seinäjoki": { lat: 62.79, lon: 22.84 },
+    "Rovaniemi": { lat: 66.50, lon: 25.73 },
+    "Mikkeli": { lat: 61.69, lon: 27.27 },
+    "Kotka": { lat: 60.47, lon: 26.94 },
+    "Salo": { lat: 60.38, lon: 23.13 },
+    "Porvoo": { lat: 60.39, lon: 25.66 },
+    "Kokkola": { lat: 63.84, lon: 23.13 },
+    "Hyvinkää": { lat: 60.63, lon: 24.86 },
+    "Lohja": { lat: 60.25, lon: 24.07 },
+    "Järvenpää": { lat: 60.47, lon: 25.09 },
+    "Nurmijärvi": { lat: 60.46, lon: 24.81 },
+    "Rauma": { lat: 61.13, lon: 21.50 },
+    "Kirkkonummi": { lat: 60.12, lon: 24.44 },
+    "Tuusula": { lat: 60.40, lon: 25.03 },
+    "Kajaani": { lat: 64.23, lon: 27.73 }
+};
+
 // UI Elements
 const spotMarginInput = document.getElementById("spotMargin");
 const spotBasicFeeInput = document.getElementById("spotBasicFee");
 const fixedPriceInput = document.getElementById("fixedPrice");
 const fixedBasicFeeInput = document.getElementById("fixedBasicFee");
 const monthlyConsumptionInput = document.getElementById("monthlyConsumption");
+const citySelect = document.getElementById("citySelect");
 
 // UI Elements - Dual estimates
 const spotCurrentCostEl = document.getElementById("spotCurrentCost");
@@ -43,6 +77,7 @@ let historyChart = null;
 // Initialization
 async function init() {
     setDefaultDates();
+    initCitySelector();
     loadSettings();
     await fetchSpotPrices();
     await fetchHistoricalAverage(); // Fetch previous calendar month
@@ -73,6 +108,32 @@ async function init() {
     });
 
     updateHistoryBtn.addEventListener("click", updateHistory);
+    citySelect.addEventListener("change", () => {
+        saveSettings();
+        // If chart exists, updating just the legend text immediately would be nice,
+        // but to change data we need to fetch new weather.
+        // Let's trigger updateHistory() if checking history is active?
+        // Or just let user click "Päivitä historia".
+        // The prompt implies "lisää... ja sen pohjalta lisää legendaan". 
+        // Best UX: trigger updateHistory() automatically or just waiting?
+        // Let's wait for button click to avoid heavy traffic on every change, 
+        // BUT for a smooth experience, maybe we should auto-update if the user just changed the city.
+        // Let's stick to updateHistoryBtn for the heavy fetch, but maybe update the chart title if possible?
+        // Actually weather needs to be re-fetched. So manual update is safer.
+        // However, I'll allow the user to click the button.
+    });
+}
+
+function initCitySelector() {
+    const sortedCities = Object.keys(CITIES).sort();
+    sortedCities.forEach(city => {
+        const option = document.createElement("option");
+        option.value = city;
+        option.textContent = city;
+        citySelect.appendChild(option);
+    });
+    // Default to Helsinki
+    citySelect.value = "Helsinki";
 }
 
 // Set default dates to the previous calendar month
@@ -266,10 +327,9 @@ function updateVerdict(spotCurrent, spotHistorical, fixedCost) {
 function saveSettings() {
     const settings = {
         spotMargin: spotMarginInput.value,
-        spotBasicFee: spotBasicFeeInput.value,
-        fixedPrice: fixedPriceInput.value,
         fixedBasicFee: fixedBasicFeeInput.value,
-        monthlyConsumption: monthlyConsumptionInput.value
+        monthlyConsumption: monthlyConsumptionInput.value,
+        selectedCity: citySelect.value
     };
     localStorage.setItem("spotVaiFixSettings", JSON.stringify(settings));
 }
@@ -285,6 +345,9 @@ function loadSettings() {
             fixedPriceInput.value = settings.fixedPrice || "8.50";
             fixedBasicFeeInput.value = settings.fixedBasicFee || "3.90";
             monthlyConsumptionInput.value = settings.monthlyConsumption || "300";
+            if (settings.selectedCity && CITIES[settings.selectedCity]) {
+                citySelect.value = settings.selectedCity;
+            }
         }
     } catch (e) {
         console.error("Error loading settings:", e);
@@ -341,8 +404,11 @@ async function fetchHistoricalPrices(start, end) {
 }
 
 async function fetchHistoricalWeather(start, end) {
-    // Open-Meteo Historical API (Helsinki coordinates 60.17, 24.94)
-    const url = `https://archive-api.open-meteo.com/v1/archive?latitude=60.17&longitude=24.94&start_date=${start}&end_date=${end}&hourly=temperature_2m`;
+    const city = citySelect.value || "Helsinki";
+    const coords = CITIES[city] || CITIES["Helsinki"];
+
+    // Open-Meteo Historical API
+    const url = `https://archive-api.open-meteo.com/v1/archive?latitude=${coords.lat}&longitude=${coords.lon}&start_date=${start}&end_date=${end}&hourly=temperature_2m`;
     const res = await fetch(url);
     if (!res.ok) throw new Error("Weather history fetch failed");
     const data = await res.json();
@@ -379,7 +445,7 @@ function renderHistoryChart(prices, weather) {
             pointRadius: 0
         },
         {
-            label: 'Lämpötila (°C)',
+            label: `Lämpötila, ${citySelect.value || 'Helsinki'} (°C)`,
             data: weather.map(w => ({ x: w.t, y: w.v })),
             borderColor: '#14b8a6', // Turquoise
             yAxisID: 'yTemp',

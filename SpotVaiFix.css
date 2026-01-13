@@ -463,9 +463,9 @@ input[type="date"] {
 .chart-controls {
     display: flex;
     align-items: center;
-    gap: 0.5rem;
+    gap: 0.3rem;
     background: #f8fafc;
-    padding: 0.3rem 0.5rem;
+    padding: 0.2rem 0.4rem;
     border-radius: 8px;
     border: 1px solid #e2e8f0;
 }
@@ -473,13 +473,14 @@ input[type="date"] {
 .chart-date-input {
     border: 1px solid transparent;
     background: transparent;
-    font-size: 0.9rem;
+    font-size: 0.85rem;
     color: var(--k-text);
-    padding: 0.2rem 0.1rem;
-    width: 125px;
-    /* Hieman leveämpi jotta pvm mahtuu */
+    padding: 0.2rem 0;
+    width: 90px;
+    /* Compact width */
     font-family: inherit;
     cursor: pointer;
+    text-align: center;
 }
 
 .chart-date-input:focus {
@@ -562,4 +563,45 @@ input[type="date"] {
     /* Dark violet text */
     border: 1px solid #c4b5fd;
     /* Violet border */
+}
+
+/* Custom Select Styling */
+.chart-select {
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+
+    background-color: transparent;
+    border: 1px solid transparent;
+    border-radius: 6px;
+
+    padding: 0.2rem 1.8rem 0.2rem 0.6rem;
+
+    font-size: 0.9rem;
+    font-weight: 600;
+    font-family: inherit;
+    color: var(--k-text);
+
+    cursor: pointer;
+
+    /* Custom SVG Arrow (Gray) */
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 0.4rem center;
+    background-size: 1rem;
+
+    transition: all 0.2s;
+    margin-right: 0.5rem;
+}
+
+.chart-select:hover {
+    background-color: #ffffff;
+    border-color: #e2e8f0;
+}
+
+.chart-select:focus {
+    outline: none;
+    background-color: #ffffff;
+    border-color: var(--k-accent);
+    box-shadow: 0 0 0 2px rgba(223, 175, 43, 0.1);
 }
