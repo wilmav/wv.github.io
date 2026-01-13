@@ -95,8 +95,19 @@ async function init() {
         maxDate: new Date() // Restrict to today max
     };
 
-    flatpickr("#startDate", fpConfig);
-    flatpickr("#endDate", fpConfig);
+    const startPicker = flatpickr("#startDate", {
+        ...fpConfig,
+        onChange: function (selectedDates, dateStr, instance) {
+            endPicker.set('minDate', dateStr);
+        }
+    });
+
+    const endPicker = flatpickr("#endDate", {
+        ...fpConfig,
+        onChange: function (selectedDates, dateStr, instance) {
+            startPicker.set('maxDate', dateStr);
+        }
+    });
 
     // Event Listeners
     [spotMarginInput, spotBasicFeeInput, fixedPriceInput, fixedBasicFeeInput, monthlyConsumptionInput].forEach(input => {
