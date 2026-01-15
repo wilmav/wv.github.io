@@ -61,6 +61,7 @@ const I18N = {
     empty_list_hint: "Et ole vielä lisännyt yhtään ruokaa. Hae jokin ruoka ja lisää se listalle.",
     eaten_label: "syöty",
     fiber_word: "kuitua",
+    calories_label: "Kalorit",
     remove_button: "Poista",
     confirm_clear: "Tyhjennetäänkö kaikki päivän ruoat?",
     lead: "Laske päivän kuitu- ja kalorimäärät helposti.",
@@ -103,6 +104,7 @@ const I18N = {
     empty_list_hint: "Du har ännu inte lagt till något livsmedel. Sök efter ett livsmedel och lägg till det i listan.",
     eaten_label: "ätit",
     fiber_word: "fiber",
+    calories_label: "Kalorier",
     remove_button: "Ta bort",
     confirm_clear: "Rensa alla dagens livsmedel?",
     lead: "Räkna enkelt dagens fiber- och kaloriintag.",
@@ -145,6 +147,7 @@ const I18N = {
     empty_list_hint: "You have not added any foods yet. Search for a food and add it to the list.",
     eaten_label: "eaten",
     fiber_word: "fiber",
+    calories_label: "Calories",
     remove_button: "Remove",
     confirm_clear: "Clear all foods for the day?",
     lead: "Calculate daily fiber and calorie totals easily.",
@@ -709,8 +712,8 @@ function showSelectedFood(food) {
         <div class="selected-left">
           <div class="selected-title">${name}, ${group} <span style="color: var(--k-accent); font-weight: 600;">${fiberText}</span></div>
           <div class="selected-meta">
-            <div>Laskettu kuitu määrälle: <strong id="calculatedFiber" style="color: var(--k-accent);">${canAdd ? `${formatNumber((fiberPer100g * defaultAmount) / 100)} g` : "-"}</strong></div>
-            <div>Kalorit: <strong id="calculatedEnergy">${energyPer100g != null ? `${formatNumber((energyPer100g * defaultAmount) / 100)} kcal` : "–"}</strong></div>
+            <div>${t("calc_for_amount")}: <strong id="calculatedFiber" style="color: var(--k-accent);">${canAdd ? `${formatNumber((fiberPer100g * defaultAmount) / 100)} g` : "-"}</strong></div>
+            <div>${t("calories_label")}: <strong id="calculatedEnergy">${energyPer100g != null ? `${formatNumber((energyPer100g * defaultAmount) / 100)} kcal` : "–"}</strong></div>
           </div>
         </div>
         <div class="selected-right">
@@ -892,7 +895,7 @@ function renderFavorites() {
           <span>g</span>
         </div>
         <div class="favorite-fiber">
-          <strong class="fiber-value">${formatNumber(item.fiber)}</strong> g kuitua
+          <strong class="fiber-value">${formatNumber(item.fiber)}</strong> g ${t("fiber_word")}
         </div>
         <div class="favorite-cal">
           ${item.energy != null
