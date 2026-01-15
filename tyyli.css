@@ -446,8 +446,74 @@ textarea {
 input[type="text"]:focus,
 input[type="email"]:focus,
 input[type="number"]:focus,
-textarea:focus {
-  outline: none;
-  border-color: var(--accent) !important;
-  box-shadow: 0 0 0 3px rgba(223, 175, 43, 0.15) !important;
+
+/* -----------------------------------------
+   Light Mode Overrides (Global)
+------------------------------------------ */
+body.light-mode {
+  --bg: #ffffff;
+  --text: #0f172a;
+  /* Slate 900 */
+  --text-soft: #475569;
+  /* Slate 600 */
+  --border: #e2e8f0;
+  /* Slate 200 */
+  --accent-soft: #f8fafc;
+  /* Very light cool grey */
+
+  /* Kuitulaskuri / SpotVaiFix Specific Overrides */
+  --k-bg: #ffffff;
+  --k-card: #ffffff;
+  --k-card-alt: #f8fafc;
+  --k-text: #111111;
+  --k-text-soft: #555555;
+  --k-border: #e2e8f0;
+  --fixed-blue: #3b82f6;
+}
+
+body.light-mode header {
+  background: #f8fafc;
+  border-right-color: #e2e8f0;
+}
+
+body.light-mode .content-wrapper {
+  background: #ffffff;
+}
+
+/* Ensure inputs stand out in light mode */
+body.light-mode input,
+body.light-mode select,
+body.light-mode textarea {
+  background: #ffffff;
+  border-color: #cbd5e1;
+  color: var(--text);
+}
+
+/* Kuitulaskuri / SpotVaiFix specials (if mapped to global vars) */
+body.light-mode .fiber-app-shell {
+  background: linear-gradient(180deg, #ffffff 0%, #f1f5f9 14%);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+}
+
+body.light-mode .card,
+body.light-mode .sample-card,
+body.light-mode .chart-card {
+  background: #ffffff;
+  border-color: #e2e8f0;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+}
+
+body.light-mode .result-box,
+body.light-mode .favorite-row,
+body.light-mode .selected-simple {
+  background: #f8fafc;
+  /* Alternate light bg */
+}
+
+/* Ensure dark mode-like contrast for header is reset */
+body.light-mode .app-title,
+body.light-mode h1,
+body.light-mode h2,
+body.light-mode h3 {
+  color: #0f172a;
 }
