@@ -212,6 +212,7 @@
             const apiParams = new URLSearchParams();
             apiParams.append('lookfor', id);
             apiParams.append('type', 'id');
+            apiParams.append('field[]', 'id');
             apiParams.append('field[]', 'title');
             apiParams.append('field[]', 'authors');
             apiParams.append('field[]', 'year');
@@ -257,12 +258,13 @@
 
                     // --- FIX: Inject Manual ISBN immediately ---
                     if (globalDates && book.title) {
-                        const key = book.title.toLowerCase()
-                            .split(':')[0]
-                            .split('/')[0]
-                            .replace(/[.,]/g, '')
-                            .trim();
-                        const entry = globalDates[key];
+                        // Use consistent title cleaning for key matching
+                        let cleanKey = book.title.toLowerCase();
+                        if (cleanKey.includes(':')) cleanKey = cleanKey.split(':')[0];
+                        if (cleanKey.includes('/')) cleanKey = cleanKey.split('/')[0];
+                        cleanKey = cleanKey.replace(/[.,]/g, '').trim();
+
+                        const entry = globalDates[cleanKey];
                         if (entry && entry.isbn) {
                             // Force manual ISBN as the primary one
                             book.isbn = [entry.isbn];
@@ -455,9 +457,25 @@
                 // INCREASED LIMIT TO 5
                 let resLoose = await fetch(`https://www.googleapis.com/books/v1/volumes?q=${qLoose}&maxResults=5`);
                 let dataLoose = await resLoose.json();
-                applyData(dataLoose.items);
+                if (applyData(dataLoose.items)) return;
 
             } catch (e) { }
+
+            // Final check: If we are here, we failed to find an image.
+            // If this is the main book and it's still showing the loader, show "No Image".
+            const coverDiv = document.getElementById('book-cover');
+            const urlParams = new URLSearchParams(window.location.search);
+            const pageId = urlParams.get('id');
+            // Check if we are enriching the main book
+            const isMainBook = (book.id && pageId && pageId.includes(book.id)) || (pageId === book.id) || (!book.id && pageId); // Fallback logic match
+
+            if (isMainBook && coverDiv) {
+                const loader = coverDiv.querySelector('.detail-loader');
+                if (loader) {
+                    console.warn(`[Detail Cover] All fallbacks failed. Showing 'Ei kuvaa'.`);
+                    coverDiv.innerHTML = `<div class="no-cover-text" style="width:100%; height:100%; display:flex; align-items:center; justify-content:center; text-align:center; color:#9fa6b2; font-size:0.85rem; padding:10px; background:#f6f8fa;">Ei kuvaa</div>`;
+                }
+            }
         }
 
         async function enrichWithFinnaCopies(title, author) {
@@ -847,6 +865,36 @@
             return Object.keys(primary)[0] || "";
         }
 
+        // Helper: Clean Title Logic (Same as App.js)
+        function getCleanTitle(rawTitle, authorName) {
+            let cleanTitle = rawTitle || "";
+
+            // 1. Strip Author prefix if present
+            if (cleanTitle.includes(':')) {
+                const parts = cleanTitle.split(':');
+                const prefix = parts[0].toLowerCase();
+                const authLow = (authorName || "").toLowerCase();
+                // FIX: Add lastName check to match app.js exactly
+                const lastName = authLow.split(',')[0].trim();
+
+                if (authLow.includes(prefix.trim()) || prefix.includes(lastName) || prefix.includes(authLow.split(' ')[0])) {
+                    cleanTitle = parts.slice(1).join(':').trim();
+                } else {
+                    cleanTitle = parts[0].trim();
+                }
+            }
+
+            // 2. Strip standard clutter
+            cleanTitle = cleanTitle.split(/[\/\(;]/)[0]
+                .replace(/\s+suomentanut.*$/i, '')
+                .replace(/\s+toimittanut.*$/i, '')
+                .replace(/[.,]$/, '')
+                .trim();
+
+            if (!cleanTitle) cleanTitle = rawTitle;
+            return cleanTitle;
+        }
+
         function renderBook(book) {
             document.getElementById('book-title').textContent = book.title;
 
@@ -967,31 +1015,59 @@
             coverDiv.dataset.id = book.id; // Store ID for propagation
             let imgSrc = (book.images && book.images.length > 0) ? `https://api.finna.fi${book.images[0]}` : null;
 
+            // --- 0. TRANSITION IMAGE (From Index Page) ---
+            if (!imgSrc && book.id) {
+                const transImg = sessionStorage.getItem('transition_image_' + book.id);
+                if (transImg) {
+                    console.log(`[Detail Render] Using transition image for ${book.id}`);
+                    imgSrc = transImg;
+                }
+            }
+
             // --- CACHE PRIORITY ---
             if (!imgSrc && book.id) {
                 imgSrc = localStorage.getItem(`cover_fix_${book.id}`);
             }
             if (!imgSrc) {
+                // Use consistent cleaning for cache lookup
                 const author = extractAuthor(book) || "";
                 const cleanAuthor = author.includes(',') ? `${author.split(',')[1].trim()} ${author.split(',')[0].trim()}` : author;
-                const cacheKey = `cover_v5_${(book.title || 'no-title')}_${cleanAuthor}`;
+                const cleanTitle = getCleanTitle(book.title, author);
+                const cacheKey = `cover_v5_${cleanTitle}_${cleanAuthor}`;
+
+                console.log(`[Detail Render] Checking cache with key: "${cacheKey}"`);
+                console.log(`[Detail Render] Clean Title: "${cleanTitle}", Clean Author: "${cleanAuthor}"`);
+
+                // DEBUG: List close matches in cache
+                const allKeys = Object.keys(localStorage).filter(k => k.startsWith('cover_v5_'));
+                const closeMatches = allKeys.filter(k => k.toLowerCase().includes(cleanTitle.toLowerCase()));
+                if (closeMatches.length > 0) {
+                    console.log(`[Detail Render] Found similar keys in cache:`, closeMatches);
+                } else {
+                    console.log(`[Detail Render] No similar keys found in cache.`);
+                }
+
+                console.log(`[Detail Render] Cache hit for ${cacheKey}: ${imgSrc}`);
+
+
                 imgSrc = localStorage.getItem(cacheKey);
             }
 
             if (imgSrc) {
                 coverDiv.innerHTML = `<img src="${imgSrc}" class="book-cover-img" alt="${book.title}" style="width:100%; height:100%; object-fit:cover;" onerror="handleDetailCoverError(this, '${book.id}')">`;
-            } else if (book.isbn) {
-                const isbn = Array.isArray(book.isbn) ? book.isbn[0] : book.isbn;
+            } else if (finalIsbn) {
+                // Use finalIsbn (which includes manual overrides)
+                const isbn = Array.isArray(finalIsbn) ? finalIsbn[0] : finalIsbn;
                 const authorLow = authorName.toLowerCase();
 
                 // Blacklist Penny ISBN from ever showing up for other authors
                 if (isbn === '9789523765061' && !authorLow.includes('penny')) {
                     console.warn(`[Detail Cover] Blacklisting bad ISBN ${isbn} for cover.`);
                     coverDiv.innerHTML = `<div class="detail-loader" style="width:100%; height:100%; display:flex; align-items:center; justify-content:center; color:#888;">Haetaan kuvaa...</div>`;
-                    enrichWithGoogleBooks(book, ot);
+                    enrichWithGoogleBooks(book, ot); // DOM update happens here
                 } else {
                     imgSrc = `https://covers.openlibrary.org/b/isbn/${isbn}-L.jpg`;
-                    coverDiv.innerHTML = `<img src="${imgSrc}" alt="${book.title}" style="width:100%; height:100%; object-fit:cover;" onerror="handleDetailCoverError(this, '${book.id}')">`;
+                    coverDiv.innerHTML = `<img src="${imgSrc}" class="book-cover-img" alt="${book.title}" style="width:100%; height:100%; object-fit:cover;" onerror="handleDetailCoverError(this, '${book.id}')">`;
                 }
             } else {
                 // No ISBN and no Image? Start with loading placeholder then try Google Name search
@@ -1007,14 +1083,43 @@
             if (img.classList.contains('book-cover-img')) {
                 console.log(`[Detail Cover] Primary source failed. Clearing cache.`);
                 if (id) localStorage.removeItem(`cover_fix_${id}`);
-                // Note: we don't have the clean title/author here easily without more logic, 
-                // but ID cache is the primary one for detail view anyway.
+                // NOTE: We don't remove the name-based cache here as it's hard to reconstruct the exact key.
+                // But generally ID cache is what fails here if Finna failed.
             }
 
-            // OpenLibrary failed or primary failed. Try Google.
+            // --- NEW: Try Medium size if Large failed (OpenLibrary) ---
+            if (img.src.includes('-L.jpg') && !img.dataset.triedMedium) {
+                console.log("[Detail Cover] Large image failed, trying Medium size...");
+                img.dataset.triedMedium = "true";
+                img.src = img.src.replace('-L.jpg', '-M.jpg');
+                return;
+            }
+
+            // Prevent infinite loop if we already tried this exact fallback
+            if (img.dataset.detailFallback) {
+                console.warn("[Detail Cover] Aborting infinite retry loop.");
+                img.style.display = 'none';
+
+                // Show "Ei kuvaa"
+                const coverDiv = img.parentElement;
+                if (coverDiv) {
+                    let noCover = coverDiv.querySelector('.no-cover-text');
+                    if (!noCover) {
+                        noCover = document.createElement('div');
+                        noCover.className = 'no-cover-text';
+                        noCover.style.cssText = "width:100%; height:100%; display:flex; align-items:center; justify-content:center; text-align:center; color:#9fa6b2; font-size:0.85rem; padding:10px; background:#f6f8fa;";
+                        noCover.textContent = "Ei kuvaa";
+                        coverDiv.appendChild(noCover);
+                    }
+                    noCover.style.display = 'flex';
+                }
+                return;
+            }
+
+            img.dataset.detailFallback = "true";
             img.style.display = 'none';
 
-            // Show "Ei kuvaa" text if not present
+            // Show "Ei kuvaa" text if not present (as immediate temporary state)
             const coverDiv = img.parentElement;
             if (coverDiv) {
                 let noCover = coverDiv.querySelector('.no-cover-text');
@@ -1022,7 +1127,7 @@
                     noCover = document.createElement('div');
                     noCover.className = 'no-cover-text';
                     noCover.style.cssText = "width:100%; height:100%; display:flex; align-items:center; justify-content:center; text-align:center; color:#9fa6b2; font-size:0.85rem; padding:10px; background:#f6f8fa;";
-                    noCover.textContent = "Ei kuvaa";
+                    noCover.textContent = "Haetaan..."; // Short temp text
                     coverDiv.appendChild(noCover);
                 }
                 noCover.style.display = 'flex';
@@ -1031,10 +1136,6 @@
             // Trigger name search fallback with the CORRECT ID or just inferred info
             const bookTitle = document.getElementById('book-title').textContent;
             const bookAuthor = document.getElementById('book-author').textContent;
-
-            // Prevent infinite loop if we already tried this exact fallback
-            if (img.dataset.detailFallback) return;
-            img.dataset.detailFallback = "true";
 
             console.log(`[Detail Cover] Fallback triggered for ${bookTitle}`);
             // Use ID if passed, otherwise fall back to name-only cache

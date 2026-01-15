@@ -771,6 +771,11 @@ document.addEventListener('DOMContentLoaded', async () => {
             card.className = 'book-card';
             card.style.cursor = 'pointer';
             card.onclick = () => {
+                //CAPTURE TRANSITION IMAGE
+                const img = card.querySelector('.book-cover-img, .cover-placeholder');
+                if (img && img.src && !img.src.includes('pixel') && img.style.display !== 'none') {
+                    sessionStorage.setItem('transition_image_' + book.id, img.src);
+                }
                 window.location.href = `book.html?id=${book.id}`;
             };
 
@@ -886,6 +891,12 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         // --- PREVENT INFINITE LOOPS ---
         if (img.dataset.triedGoogle) {
+            // Check for strict "panic button"
+            if (img.dataset.finalFailure) {
+                img.style.display = 'none';
+                return;
+            }
+
             // New logic: If we have an ISBN now but haven't tried with it, allow ONE more go.
             if (isbn && !img.dataset.triedWithIsbn) {
                 img.dataset.triedWithIsbn = "true";
@@ -893,6 +904,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                 delete img.dataset.triedGoogle;
             } else {
                 img.style.display = 'none';
+                // Stop future attempts for this specific element
+                img.dataset.finalFailure = "true";
                 if (img.parentElement.querySelector('.no-cover-text')) {
                     img.parentElement.querySelector('.no-cover-text').style.display = 'flex';
                 }
