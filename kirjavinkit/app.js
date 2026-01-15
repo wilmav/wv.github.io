@@ -213,7 +213,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         params.append("lookfor", authorName);
         params.append("type", "Author");
         params.append("sort", "main_date_str desc");
-        params.append("limit", "100");
+        params.append("type", "Author");
+        params.append("sort", "main_date_str desc");
+        params.append("limit", "300"); // Increased from 100 to catch older real editions (e.g. King's 2018 vs 2099)
 
         const fields = ["id", "title", "authors", "year", "images", "summary", "languages", "series", "uniformTitles", "formats", "isbn"];
         fields.forEach(f => params.append("field[]", f));
@@ -339,6 +341,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         let manualIsbn = null;
 
         // Manual overrides (ISBN only, Dates disabled per "poistetaan nyt kaikki päivämäärähaut")
+        // NOTE: We also use this simple key to match manual ISBNs for deduplication later if needed
         if (state.dates && book.title) {
             const key = cleanTitle.toLowerCase();
             const entry = state.dates[key];
