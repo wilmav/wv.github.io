@@ -14,11 +14,11 @@
 /* --- Teema kuitulaskurille (vaalea + saffron) --- */
 
 :root {
-  --k-bg: #ffffff;
-  --k-card: #ffffff;
-  --k-card-alt: #f8f9fb;
-  --k-text: #111111;
-  --k-text-soft: #555555;
+  --k-bg: var(--bg);
+  --k-card: var(--accent-soft);
+  --k-card-alt: var(--bg);
+  --k-text: var(--text);
+  --k-text-soft: var(--text-soft);
 
   /* Saffron-teema */
   --k-accent: #DFAF2B;
@@ -29,10 +29,10 @@
   --k-sample-bg-hover: #E9C45F;
   --k-sample-text: #5A4508;
 
-  --k-border: #e5e5e5;
+  --k-border: var(--border);
   --k-danger: #b91c1c;
   --k-radius: 12px;
-  --k-shadow: 0 10px 30px rgba(0, 0, 0, 0.06);
+  --k-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
 }
 
 body {
@@ -42,7 +42,7 @@ body {
 
 /* Kuori sovelluksen ympärille */
 .fiber-app-shell {
-  background: linear-gradient(180deg, #ffffff 0%, #f8f9fb 14%);
+  background: linear-gradient(180deg, var(--k-card) 0%, var(--k-bg) 14%);
   border-radius: 16px;
   padding: 24px 28px 28px;
   box-shadow: 0 18px 45px rgba(15, 23, 42, 0.06);
@@ -82,7 +82,7 @@ body {
   font-size: 0.9rem;
   border-radius: 999px;
   border: 1px solid var(--k-border);
-  background: #ffffff;
+  background: var(--k-bg);
 }
 
 /* Kaksi saraketta */
@@ -99,7 +99,7 @@ body {
   border-radius: var(--k-radius);
   padding: 1.1rem 1rem;
   box-shadow: var(--k-shadow);
-  border: 1px solid rgba(229, 231, 235, 0.8);
+  border: 1px solid var(--k-border);
   max-width: 100%;
 }
 
@@ -137,7 +137,7 @@ select {
   padding: 0.65rem 0.9rem;
   border-radius: 12px;
   border: 1px solid #d1d5db;
-  background: #ffffff;
+  background: var(--k-bg);
   color: var(--k-text);
   font-size: 0.95rem;
   max-width: 100%;
@@ -149,7 +149,7 @@ input[type="number"]:focus,
 select:focus {
   border-color: var(--k-accent);
   box-shadow: 0 0 0 2px rgba(223, 175, 43, 0.25);
-  background: #ffffff;
+  background: var(--k-bg);
   outline: none;
 }
 
@@ -236,7 +236,7 @@ button:active {
 }
 
 .result-item:hover {
-  background: #ffffff;
+  background: var(--k-card);
 }
 
 .food-name {
@@ -294,7 +294,7 @@ button:active {
 }
 
 .amount-btn {
-  background: #ffffff;
+  background: var(--k-bg);
   border: 1px solid var(--k-border);
   padding: 0.35rem 0.55rem;
   min-width: 32px;
@@ -413,7 +413,7 @@ button:active {
   gap: 0.4rem;
   padding: 0.6rem 0.5rem;
   border-bottom: 1px solid rgba(229, 231, 235, 0.6);
-  background: #ffffff;
+  background: var(--k-card);
 }
 
 /* SAMPLE-NIMI: tummempi saffron */

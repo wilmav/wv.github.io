@@ -4,6 +4,16 @@
 /* --accent: #DFAF2B; */
 /* --radius: 12px; */
 
+:root {
+    --bg: #ffffff;
+    --text: #111111;
+    --text-soft: #555555;
+    --border: #e5e5e5;
+    --accent-soft: #FFF4D8;
+}
+
+
+
 
 body {
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;

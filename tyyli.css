@@ -3,12 +3,17 @@
 ------------------------------------------ */
 
 :root {
-  --bg: #ffffff;
-  --text: #111111;
-  --text-soft: #555555;
-  --border: #e5e5e5;
+  --bg: #0f172a;
+  /* Slate 900 */
+  --text: #f1f5f9;
+  /* Slate 100 */
+  --text-soft: #cbd5e1;
+  /* Slate 300 - Improved contrast */
+  --border: #334155;
+  /* Slate 700 */
   --accent: #DFAF2B;
-  --accent-soft: #FFF4D8;
+  --accent-soft: #1e293b;
+  /* Slate 800 - replacing yellow tint with card bg color */
   --radius: 12px;
   --sidebar-width: 260px;
   --font: system-ui, -apple-system, BlinkMacSystemFont, "Inter", sans-serif;
@@ -46,7 +51,7 @@ header {
   position: fixed;
   top: 0;
   left: 0;
-  background: #ffffff;
+  background: var(--bg);
   color: var(--text);
   box-sizing: border-box;
   display: flex;
@@ -124,7 +129,7 @@ nav ul li strong {
   margin-left: var(--sidebar-width);
   flex-grow: 1;
   min-height: 100vh;
-  background-color: #ffffff;
+  background-color: var(--bg);
   display: block;
   padding: 3rem 4rem 3rem 4rem;
 }
@@ -315,7 +320,7 @@ p {
 
 .styled-select {
   appearance: none;
-  background-color: #fff;
+  background-color: var(--bg);
   border: 1px solid var(--border);
   border-radius: 8px;
   padding: 0.5rem 2rem 0.5rem 0.8rem;
@@ -433,7 +438,9 @@ input[type="email"],
 input[type="number"],
 textarea {
   font-family: var(--font);
-  background: #ffffff;
+  background: var(--bg);
+  color: var(--text);
+  border: 1px solid var(--border);
 }
 
 input[type="text"]:focus,
