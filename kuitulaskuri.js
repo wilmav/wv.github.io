@@ -664,7 +664,7 @@ function renderSearchResults(foods) {
         <div class="result-item" data-id="${food.id}">
           <div class="result-main">
             <div class="food-name">${name}</div>
-            <div class="food-meta">${group} · ${fiberText}</div>
+            <div class="food-meta">${group} · <span style="color: var(--k-accent); font-weight: 600;">${fiberText}</span></div>
           </div>
         </div>
       `;
@@ -707,9 +707,9 @@ function showSelectedFood(food) {
     <div class="selected-simple">
       <div class="selected-row">
         <div class="selected-left">
-          <div class="selected-title">${name}, ${group} ${fiberText}</div>
+          <div class="selected-title">${name}, ${group} <span style="color: var(--k-accent); font-weight: 600;">${fiberText}</span></div>
           <div class="selected-meta">
-            <div>Laskettu kuitu määrälle: <strong id="calculatedFiber">${canAdd ? `${formatNumber((fiberPer100g * defaultAmount) / 100)} g` : "-"}</strong></div>
+            <div>Laskettu kuitu määrälle: <strong id="calculatedFiber" style="color: var(--k-accent);">${canAdd ? `${formatNumber((fiberPer100g * defaultAmount) / 100)} g` : "-"}</strong></div>
             <div>Kalorit: <strong id="calculatedEnergy">${energyPer100g != null ? `${formatNumber((energyPer100g * defaultAmount) / 100)} kcal` : "–"}</strong></div>
           </div>
         </div>
@@ -892,7 +892,7 @@ function renderFavorites() {
           <span>g</span>
         </div>
         <div class="favorite-fiber">
-          <strong class="fiber-value">${formatNumber(item.fiber)}</strong> ${t("fiber_word") || (currentLang === "sv" || currentLang === "en" ? "g fiber" : "g kuitua")}
+          <strong class="fiber-value">${formatNumber(item.fiber)}</strong> g kuitua
         </div>
         <div class="favorite-cal">
           ${item.energy != null

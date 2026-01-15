@@ -156,6 +156,7 @@
                 const val = localStorage.getItem(key);
                 if (val === '9789523765061') localStorage.removeItem(key);
                 if (key.includes('undefined') || val === 'undefined') localStorage.removeItem(key);
+                if (key.toLowerCase().includes('sokeiden')) localStorage.removeItem(key);
             }
         });
 
@@ -227,6 +228,22 @@
                             if (dateRes.ok) globalDates = await dateRes.json();
                         } catch (e) { }
                     }
+
+                    // --- FIX: Inject Manual ISBN immediately ---
+                    if (globalDates && book.title) {
+                        const key = book.title.toLowerCase()
+                            .split(':')[0]
+                            .split('/')[0]
+                            .replace(/[.,]/g, '')
+                            .trim();
+                        const entry = globalDates[key];
+                        if (entry && entry.isbn) {
+                            // Force manual ISBN as the primary one
+                            book.isbn = [entry.isbn];
+                            console.log(`[Fix] Injected manual ISBN for ${book.title}: ${entry.isbn}`);
+                        }
+                    }
+                    // -------------------------------------------
 
                     renderBook(book); // Render initial state
 
@@ -782,22 +799,7 @@
                     .trim();
                 const entry = globalDates[key];
                 if (entry) {
-                    if (entry.dates) {
-                        // Logic matching app.js
-                        let isAudio = false, isEbook = false;
-                        if (book.formats) {
-                            book.formats.forEach(f => {
-                                const val = (typeof f === 'string' ? f : f.value) || "";
-                                if (val.includes("AudioBook") || val.includes("Sound")) isAudio = true;
-                                if (val.includes("eBook") || val.includes("EBook")) isEbook = true;
-                            });
-                        }
-
-                        if (isAudio && entry.dates.audiobook) manualDate = entry.dates.audiobook;
-                        else if (isEbook && entry.dates.ebook) manualDate = entry.dates.ebook;
-                        else if (entry.dates.print) manualDate = entry.dates.print;
-                        if (!manualDate) manualDate = entry.dates.audiobook || entry.dates.ebook || entry.dates.print;
-                    }
+                    // Dates removed
                     if (entry.isbn) {
                         manualIsbn = entry.isbn;
                     }
@@ -840,12 +842,12 @@
             document.getElementById('book-formats').innerHTML = formatBadgeHtml;
 
 
-            if (manualDate) {
-                // User request: Visible: Year. Hover: "Julkaisu: [date]"
-                dateDisplay = `<span style="background:#fff9c4; padding:2px 8px; border-radius:12px; font-weight:bold; border:1px solid #fdd835; cursor:help;" title="Julkaisu: ${manualDate}">${book.year}</span>`;
-            }
+            // Date specific display removed
+            // if (manualDate) { ... }
 
             yearEl.innerHTML = dateDisplay || "";
+            yearEl.title = "Julkaisuvuosi";
+            yearEl.className = "year-tag"; // Ensure consistent styling
 
             // Redundant ISBN logic removed (handled above)
 

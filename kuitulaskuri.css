@@ -406,6 +406,11 @@ body.light-mode .favorite-fiber {
   margin-top: 0.3rem;
 }
 
+/* Calorie custom override */
+.calorie-container .summary-value {
+  color: var(--k-text-soft) !important;
+}
+
 /* Sample-lista — KORJATUT MUUTOKSET */
 .sample-card {
   background: var(--k-card);

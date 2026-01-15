@@ -41,6 +41,9 @@ document.addEventListener('DOMContentLoaded', async () => {
                 if (key.includes('undefined') || val === 'undefined' || val === null) {
                     localStorage.removeItem(key);
                 }
+                if (key.startsWith('cover_') && key.toLowerCase().includes('sokeiden')) {
+                    localStorage.removeItem(key);
+                }
             }
         });
 
@@ -333,16 +336,19 @@ document.addEventListener('DOMContentLoaded', async () => {
         let manualDate = null;
         let manualIsbn = null;
 
+        // Manual overrides (ISBN only, Dates disabled per "poistetaan nyt kaikki päivämäärähaut")
         if (state.dates && book.title) {
             const key = cleanTitle.toLowerCase();
             const entry = state.dates[key];
             if (entry) {
+                /* Dates removed
                 if (entry.dates) {
-                    if (isAudio && entry.dates.audiobook) manualDate = entry.dates.audiobook;
-                    else if (isEbook && entry.dates.ebook) manualDate = entry.dates.ebook;
-                    else if (entry.dates.print) manualDate = entry.dates.print;
-                    if (!manualDate) manualDate = entry.dates.audiobook || entry.dates.ebook || entry.dates.print;
-                }
+                     if (isAudio && entry.dates.audiobook) manualDate = entry.dates.audiobook;
+                     else if (isEbook && entry.dates.ebook) manualDate = entry.dates.ebook;
+                     else if (entry.dates.print) manualDate = entry.dates.print;
+                     if (!manualDate) manualDate = entry.dates.audiobook || entry.dates.ebook || entry.dates.print;
+                 }
+                 */
                 if (entry.isbn) manualIsbn = [entry.isbn];
             }
         }
@@ -675,12 +681,8 @@ document.addEventListener('DOMContentLoaded', async () => {
             let dateStyle = parseInt(book.year) === currentYear ? ' current-year' : '';
             let dateTitle = 'Julkaisuvuosi';
 
-            // If we have a precise date, use it for tooltip only
-            if (book.manualDate) {
-                // dateDisplay remains book.year (User request: "näkyy edelleen vain vuosi")
-                dateStyle = ' current-year';
-                dateTitle = `Julkaisu: ${book.manualDate}`;
-            }
+            // Specific date logic removed as requested ("Julkaisuvuosi kaikkialla")
+            // if (book.manualDate) { ... }
 
             let formatBadgeHtml = `
                 <span class="year-tag${dateStyle}" title="${dateTitle}">${dateDisplay}</span>
