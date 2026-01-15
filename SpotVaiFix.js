@@ -73,6 +73,8 @@ let historicalAvgPrice = null; // This will become the dynamic range average
 let previousMonthAvgPrice = null; // This stays fixed as previous calendar month
 let historicalDateRange = { start: null, end: null };
 let historyChart = null;
+let cachedPrices = [];
+let cachedWeather = [];
 
 // Initialization
 async function init() {
@@ -133,6 +135,20 @@ async function init() {
         // Actually weather needs to be re-fetched. So manual update is safer.
         // However, I'll allow the user to click the button.
     });
+
+    // Theme Change Observer
+    const observer = new MutationObserver((mutations) => {
+        mutations.forEach((mutation) => {
+            if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
+                // If chart exists and we have cached data, re-render
+                if (historyChart && cachedPrices.length > 0) {
+                    renderHistoryChart(cachedPrices, cachedWeather);
+                }
+            }
+        });
+    });
+
+    observer.observe(document.body, { attributes: true });
 }
 
 function initCitySelector() {
@@ -385,6 +401,10 @@ async function updateHistory() {
             historicalAvgPrice = total / prices.length;
         }
 
+        // Cache data for theme switching
+        cachedPrices = prices;
+        cachedWeather = weather;
+
         renderHistoryChart(prices, weather);
         calculateComparison(); // Update verdict and bars based on new selected range
     } catch (e) {
@@ -438,6 +458,12 @@ function renderHistoryChart(prices, weather) {
     const ctx = historyChartCanvas.getContext('2d');
     const fixedPrice = parseFloat(fixedPriceInput.value) || 0;
 
+    // Determine Theme Colors
+    const isLight = document.body.classList.contains('light-mode');
+    const textColor = isLight ? '#334155' : '#e2e8f0'; // Slate-700 vs Slate-200
+    const gridColor = isLight ? 'rgba(0, 0, 0, 0.06)' : 'rgba(255, 255, 255, 0.06)';
+    const headingsColor = isLight ? '#0f172a' : '#f8fafc'; // Darker/Lighter for titles
+
     // Update date range display
     updateDateRangeDisplay(prices);
 
@@ -458,7 +484,7 @@ function renderHistoryChart(prices, weather) {
         {
             label: `Lämpötila, ${citySelect.value || 'Helsinki'} (°C)`,
             data: weather.map(w => ({ x: w.t, y: w.v })),
-            borderColor: '#14b8a6', // Turquoise
+            borderColor: '#2dd4bf', // Brighter Turquoise for dark mode
             yAxisID: 'yTemp',
             tension: 0.3,
             borderWidth: 2,
@@ -471,7 +497,7 @@ function renderHistoryChart(prices, weather) {
         datasets.splice(1, 0, {
             label: 'Kiinteä hinta (snt/kWh)',
             data: fixedPriceData,
-            borderColor: '#8b5cf6', // Violet
+            borderColor: '#a78bfa', // Lighter Violet for visibility
             backgroundColor: 'rgba(139, 92, 246, 0.05)',
             yAxisID: 'yPrice',
             tension: 0,
@@ -484,10 +510,8 @@ function renderHistoryChart(prices, weather) {
     // Parse dates for strict axis limits
     const startParts = document.getElementById("startDate").value.split('-');
     const endParts = document.getElementById("endDate").value.split('-');
-    // Create local midnight dates
     const startObj = new Date(startParts[0], startParts[1] - 1, startParts[2]);
     const endObj = new Date(endParts[0], endParts[1] - 1, endParts[2]);
-    // Set End Date to end of day for the axis
     endObj.setHours(23, 59, 59);
 
     historyChart = new Chart(ctx, {
@@ -499,28 +523,30 @@ function renderHistoryChart(prices, weather) {
             scales: {
                 x: {
                     type: 'time',
-                    min: startObj.getTime(), // Force start tick
-                    max: endObj.getTime(),   // Force end tick
+                    min: startObj.getTime(),
+                    max: endObj.getTime(),
                     time: {
                         unit: 'day',
-                        displayFormats: {
-                            day: 'd.M.'
-                        },
+                        displayFormats: { day: 'd.M.' },
                         tooltipFormat: 'd.M.yyyy HH:mm'
                     },
-                    title: { display: true, text: 'Aika' }
+                    title: { display: true, text: 'Aika', color: headingsColor },
+                    ticks: { color: textColor },
+                    grid: { color: gridColor }
                 },
                 yPrice: {
                     type: 'linear',
                     position: 'left',
-                    title: { display: true, text: 'snt/kWh' },
-                    grid: { drawOnChartArea: true }
+                    title: { display: true, text: 'snt/kWh', color: headingsColor },
+                    grid: { drawOnChartArea: true, color: gridColor },
+                    ticks: { color: textColor }
                 },
                 yTemp: {
                     type: 'linear',
                     position: 'right',
-                    title: { display: true, text: '°C' },
-                    grid: { drawOnChartArea: false }
+                    title: { display: true, text: '°C', color: headingsColor },
+                    grid: { drawOnChartArea: false },
+                    ticks: { color: textColor }
                 }
             },
             plugins: {
@@ -528,9 +554,11 @@ function renderHistoryChart(prices, weather) {
                     display: true,
                     position: 'top',
                     labels: {
-                        usePointStyle: false, // Käytetään laatikkoa jotta leveyttä voi säätää
-                        boxWidth: 80,         // Pitkä viiva
-                        boxHeight: 2          // Matala (kuin viiva)
+                        color: textColor,
+                        usePointStyle: false,
+                        boxWidth: 40,
+                        boxHeight: 2,
+                        padding: 20
                     }
                 }
             }
