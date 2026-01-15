@@ -674,19 +674,29 @@ document.addEventListener('DOMContentLoaded', async () => {
         // --- DUPLICATE REMOVAL (Advanced: Prefer Real Year) ---
         const uniqueBooksMap = new Map();
         booksToShow.forEach(b => {
-            // Use cleanTitle if available to catch "Title" vs "Title : subtitle"
-            const t = (b.cleanTitle || b.title).toLowerCase().trim();
+            // Robust Title Cleaning:
+            // 1. Lowercase & trim
+            // 2. Remove subtitle after colon/slash
+            // 3. Remove trailing dots/punctuation
+            let t = (b.title || "").toLowerCase().trim();
+            if (t.includes(':')) t = t.split(':')[0].trim();
+            if (t.includes('/')) t = t.split('/')[0].trim();
+            t = t.replace(/[.,;]+$/, "");
 
             // Normalize author for dedup: "King, Stephen Edwin" -> "king, stephen"
-            // Take first two parts of comma name if > 2 parts? Or just use first 2 words?
-            // Simple robust approach: use first 2 words if it looks like "Name, Name".
             let a = b.author.toLowerCase().trim();
+            // Remove year suffix if present in author name (rare but possible in dirty data)
+            a = a.replace(/\d{4}-?(\d{4})?/, "").trim();
+
             const parts = a.split(',').map(p => p.trim());
             if (parts.length >= 2) {
                 // "Last, First Middle" -> "last, first"
-                const firstPart = parts[1].split(' ')[0]; // Take only the first name of the first name part
+                // Split first part by space to strip middle names
+                const firstPart = parts[1].split(' ')[0];
                 a = `${parts[0]}, ${firstPart}`;
             }
+            // Also handle "First Last" format (though less common in this app's data flow)
+            // But strict matching "last, first" is safer for now.
 
             const key = `${t}|${a}`;
 
