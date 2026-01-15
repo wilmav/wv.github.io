@@ -52,8 +52,11 @@ document.addEventListener('DOMContentLoaded', async () => {
         let staticDefaults = [];
         if (typeof AUTHORS_DATA !== 'undefined') {
             state.staticAuthors = AUTHORS_DATA;
-            // Index static books
+            // Index static books and ensure cleanTitle exists
             state.books = { ...BOOKS_DATA };
+            Object.values(state.books).forEach(b => {
+                if (!b.cleanTitle) b.cleanTitle = b.title;
+            });
             staticDefaults = AUTHORS_DATA;
         }
 
