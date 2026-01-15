@@ -138,7 +138,8 @@ select {
   border-radius: 12px;
   border: 1px solid #d1d5db;
   background: var(--k-bg);
-  color: var(--k-text);
+  color: var(--k-text) !important;
+  /* Force text color for visibility */
   font-size: 0.95rem;
   max-width: 100%;
   box-sizing: border-box;
@@ -293,11 +294,31 @@ button:active {
   margin-bottom: 0.4rem;
 }
 
+/* Amount-button (näkyvyys tummassa teemassa) */
 .amount-btn {
-  background: var(--k-bg);
+  background: rgba(255, 255, 255, 0.05);
+  /* Kevyt tausta erottuvuuteen */
   border: 1px solid var(--k-border);
+  color: var(--k-text);
   padding: 0.35rem 0.55rem;
   min-width: 32px;
+}
+
+.amount-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: var(--k-text-soft);
+}
+
+/* Light mode overrides for buttons */
+body.light-mode .amount-btn {
+  background: #f8fafc;
+  border-color: #cbd5e1;
+  color: #334155;
+}
+
+body.light-mode .amount-btn:hover {
+  background: #e2e8f0;
+  border-color: #94a3b8;
 }
 
 /* Päivän lista */
@@ -335,7 +356,15 @@ button:active {
 
 .favorite-fiber {
   font-size: 0.82rem;
+  color: var(--k-accent);
+  /* Vaalea keltainen tummalle pohjalle */
+  font-weight: 500;
+}
+
+/* Light mode override for fiber text */
+body.light-mode .favorite-fiber {
   color: #7a5a10;
+  /* Tumma ruskea vaalealle pohjalle */
 }
 
 .favorite-cal {

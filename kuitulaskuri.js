@@ -725,6 +725,7 @@ function showSelectedFood(food) {
               step="1"
               value="${defaultAmount}"
             />
+            <span style="font-size: 0.9rem; margin: 0 0.3rem;">g</span>
             <button class="amount-btn" type="button" data-step="1">+</button>
             <button class="amount-btn" type="button" data-step="10">+10</button>
           </div>
