@@ -451,20 +451,43 @@ document.addEventListener('DOMContentLoaded', async () => {
                                     const blocklist = ["(yhtye)", "esittäjä", "esitt.", "elokuva", "ohjaaja", "näyttelijä", "säveltäjä", "tuottaja", "musiikki", "orkesteri", "kuoro", "yhtye", "band"];
 
                                     if (!blocklist.some(term => lowerN.includes(term))) {
-                                        // Deduplication Logic
-                                        if (!foundAuthorsMap.has(lowerN)) {
-                                            // New entry: if ALL CAPS, try to prettify it, but keep original if it looks okay
-                                            let displayName = cleanedName;
-                                            if (isAllCaps(cleanedName)) {
-                                                displayName = toTitleCase(cleanedName);
+                                        // Deduplication Logic (Enhanced for "King, Stephen" vs "King, Stephen Edwin")
+                                        let matchedKey = null;
+
+                                        // Check against existing keys for prefix/suffix match (word boundary aware)
+                                        for (const existingKey of foundAuthorsMap.keys()) {
+                                            // Check if existing is prefix of new (e.g. existing="king, stephen", new="king, stephen edwin")
+                                            if (lowerN.startsWith(existingKey + ' ')) {
+                                                matchedKey = existingKey; // Keep existing (shorter)
+                                                break;
                                             }
-                                            foundAuthorsMap.set(lowerN, { display: displayName, isOriginalMixed: !isAllCaps(cleanedName) });
-                                        } else {
-                                            // Existing entry: Check if this one is better quality (Mixed case is better than auto-fixed or all caps)
-                                            const existing = foundAuthorsMap.get(lowerN);
-                                            // If current is original mixed case and existing was not (or existing was all caps), upgrade
+                                            // Check if new is prefix of existing (e.g. new="king, stephen", existing="king, stephen edwin")
+                                            if (existingKey.startsWith(lowerN + ' ')) {
+                                                // We want to replace the longer existing key with the new shorter one
+                                                // Remove old, set match to new (will be added below)
+                                                foundAuthorsMap.delete(existingKey);
+                                                matchedKey = null; // Treat as new insertion
+                                                break;
+                                            }
+                                        }
+
+                                        if (matchedKey) {
+                                            // Already exists (or covered by a shorter prefix).
+                                            // Update only if we want to improve the display name (e.g. casing),
+                                            // but generally we keep the shorter/simpler one we decided on.
+                                            const existing = foundAuthorsMap.get(matchedKey);
+                                            // If current is Mixed Case and existing was ALL CAPS, update display even if key is same
                                             if (!isAllCaps(cleanedName) && !existing.isOriginalMixed) {
-                                                foundAuthorsMap.set(lowerN, { display: cleanedName, isOriginalMixed: true });
+                                                foundAuthorsMap.set(matchedKey, { display: cleanedName, isOriginalMixed: true });
+                                            }
+                                        } else {
+                                            // New (or replaced longer key). Insert/Add.
+                                            if (!foundAuthorsMap.has(lowerN)) {
+                                                let displayName = cleanedName;
+                                                if (isAllCaps(cleanedName)) {
+                                                    displayName = toTitleCase(cleanedName);
+                                                }
+                                                foundAuthorsMap.set(lowerN, { display: displayName, isOriginalMixed: !isAllCaps(cleanedName) });
                                             }
                                         }
                                     }
@@ -651,7 +674,21 @@ document.addEventListener('DOMContentLoaded', async () => {
         // --- DUPLICATE REMOVAL (Advanced: Prefer Real Year) ---
         const uniqueBooksMap = new Map();
         booksToShow.forEach(b => {
-            const key = `${b.title.toLowerCase().trim()}|${b.author.toLowerCase().trim()}`;
+            // Use cleanTitle if available to catch "Title" vs "Title : subtitle"
+            const t = (b.cleanTitle || b.title).toLowerCase().trim();
+
+            // Normalize author for dedup: "King, Stephen Edwin" -> "king, stephen"
+            // Take first two parts of comma name if > 2 parts? Or just use first 2 words?
+            // Simple robust approach: use first 2 words if it looks like "Name, Name".
+            let a = b.author.toLowerCase().trim();
+            const parts = a.split(',').map(p => p.trim());
+            if (parts.length >= 2) {
+                // "Last, First Middle" -> "last, first"
+                const firstPart = parts[1].split(' ')[0]; // Take only the first name of the first name part
+                a = `${parts[0]}, ${firstPart}`;
+            }
+
+            const key = `${t}|${a}`;
 
             if (!uniqueBooksMap.has(key)) {
                 uniqueBooksMap.set(key, b);
