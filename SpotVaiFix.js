@@ -203,7 +203,7 @@ async function fetchSpotPrices() {
         const startStr = start.toISOString();
         const endStr = end.toISOString();
 
-        const response = await fetch(`https://sahkotin.fi/prices?vat&start=${startStr}&end=${endStr}`);
+        const response = await fetch(`https://sahkotin.fi/prices?vat&quarter&start=${startStr}&end=${endStr}`);
         if (!response.ok) throw new Error("Price fetch failed");
         const data = await response.json();
 
@@ -252,7 +252,7 @@ async function fetchHistoricalAverage() {
         const formatDate = (d) => `${d.getDate()}.${d.getMonth() + 1}.${d.getFullYear()}`;
         document.getElementById("fixedPeriodDates").textContent = `(${formatDate(startDayDate)} - ${formatDate(endDayDate)})`;
 
-        const url = `https://sahkotin.fi/prices?fix&vat&start=${startStr}T00:00:00.000Z&end=${endStr}T23:59:59.999Z`;
+        const url = `https://sahkotin.fi/prices?fix&vat&quarter&start=${startStr}T00:00:00.000Z&end=${endStr}T23:59:59.999Z`;
         const res = await fetch(url);
         if (!res.ok) throw new Error("Historical price fetch failed");
         const data = await res.json();
@@ -416,8 +416,8 @@ async function updateHistory() {
 }
 
 async function fetchHistoricalPrices(start, end) {
-    // Correct Sahkotin URL format with fix (snt/kWh) and vat included
-    const url = `https://sahkotin.fi/prices?fix&vat&start=${start}T00:00:00.000Z&end=${end}T23:59:59.999Z`;
+    // Correct Sahkotin URL format with fix (snt/kWh) and vat included. Add quarter for 15-min resolution.
+    const url = `https://sahkotin.fi/prices?fix&vat&quarter&start=${start}T00:00:00.000Z&end=${end}T23:59:59.999Z`;
     const res = await fetch(url);
     if (!res.ok) throw new Error("Price history fetch failed");
     const data = await res.json();
