@@ -597,6 +597,8 @@ input[type="date"] {
 .chart-select:hover {
     background-color: #ffffff;
     border-color: #e2e8f0;
+    color: #1e293b !important;
+    /* Force dark text on white hover */
 }
 
 .chart-select:focus {
@@ -604,4 +606,6 @@ input[type="date"] {
     background-color: #ffffff;
     border-color: var(--k-accent);
     box-shadow: 0 0 0 2px rgba(223, 175, 43, 0.1);
+    color: #1e293b !important;
+    /* Force dark text on white focus */
 }

@@ -218,9 +218,10 @@ async function fetchSpotPrices() {
             const latest = validPoints[validPoints.length - 1];
             // Value is EUR/MWh (with tax if ?vat used). 
             // 1 EUR/MWh = 0.1 snt/kWh.
-            // Wait: 100 EUR/MWh = 10 snt/kWh.
-            // So divide by 10.
-            currentSpotPrice = latest.value / 10;
+            // Match standard display: Round EUR/MWh to 2 decimals first, then convert.
+            // 102.646 -> 102.65 -> 10.265 -> 10.27
+            const valueMwh = Math.round(latest.value * 100) / 100;
+            currentSpotPrice = valueMwh / 10;
         } else {
             throw new Error("No current price found");
         }
