@@ -339,6 +339,15 @@ select:focus {
     border-color: rgba(0, 0, 0, 0.04);
 }
 
+/* Detail Container (Moved from inline styles) */
+#detail-container {
+    background: white;
+    padding: 2rem;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    margin-top: 2rem;
+}
+
 .cover-wrapper,
 .book-cover-container {
     position: relative;
