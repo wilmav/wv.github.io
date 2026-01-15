@@ -16,14 +16,6 @@ const AUTHORS_DATA = [
       "rutakko.68586b9e-5457-4c9b-b1bf-a792886e9313"
     ],
     "sample_cover": null
-  },
-  {
-    "name": "Sofi Oksanen",
-    "latest_books": [
-      "anders.1979269",
-      "hurma.86398",
-      "hurma.85784"
-    ],
-    "sample_cover": null
   }
+
 ];
