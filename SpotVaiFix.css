@@ -609,3 +609,62 @@ input[type="date"] {
     color: #1e293b !important;
     /* Force dark text on white focus */
 }
+
+/* 
+   FLATPICKR FIX (Comprehensive): 
+   Force dark colors on all specific elements to handle inheritance issues.
+*/
+.flatpickr-calendar .flatpickr-header,
+.flatpickr-calendar .flatpickr-header * {
+    color: #0f172a !important;
+    fill: #0f172a !important;
+}
+
+/* Explicit Month selector */
+.flatpickr-calendar .flatpickr-current-month .cur-month {
+    color: #0f172a !important;
+    font-weight: 700 !important;
+}
+
+/* Explicit Year Input */
+.flatpickr-calendar .flatpickr-current-month input.cur-year {
+    color: #0f172a !important;
+    font-weight: 700 !important;
+}
+
+/* Navigation Arrows (Prev/Next Month) */
+.flatpickr-calendar .flatpickr-prev-month,
+.flatpickr-calendar .flatpickr-next-month {
+    color: #0f172a !important;
+    fill: #0f172a !important;
+}
+
+.flatpickr-calendar .flatpickr-prev-month svg,
+.flatpickr-calendar .flatpickr-next-month svg {
+    fill: #0f172a !important;
+    stroke: #0f172a !important;
+}
+
+/* Year Spinner Arrows (Triangles) - The border trick & Persistent Visibility */
+.flatpickr-calendar .flatpickr-current-month .numInputWrapper span.arrowUp,
+.flatpickr-calendar .flatpickr-current-month .numInputWrapper span.arrowDown {
+    opacity: 1 !important;
+    display: block !important;
+}
+
+.flatpickr-calendar .flatpickr-current-month .numInputWrapper span.arrowUp:after {
+    border-bottom-color: #0f172a !important;
+}
+
+.flatpickr-calendar .flatpickr-current-month .numInputWrapper span.arrowDown:after {
+    border-top-color: #0f172a !important;
+}
+
+/* Hover states for spinner arrows to ensure they stay visible */
+.flatpickr-calendar .flatpickr-current-month .numInputWrapper span.arrowUp:hover:after {
+    border-bottom-color: #000000 !important;
+}
+
+.flatpickr-calendar .flatpickr-current-month .numInputWrapper span.arrowDown:hover:after {
+    border-top-color: #000000 !important;
+}

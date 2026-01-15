@@ -6,7 +6,7 @@
     <title>SpotVaiFix - Sähkön hintavertailu</title>
     <link rel="stylesheet" href="tyyli.css">
     <link rel="stylesheet" href="kuitulaskuri.css">
-    <link rel="stylesheet" href="SpotVaiFix.css">
+
     <link rel="icon" type="image/svg+xml" href="favicon.svg">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
@@ -15,6 +15,83 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
     <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
     <script src="https://npmcdn.com/flatpickr/dist/l10n/fi.js"></script>
+    <link rel="stylesheet" href="SpotVaiFix.css">
+
+    <!-- Critical CSS Fix for Date Picker Visibility -->
+    <style>
+        /* Force dark text on all Flatpickr header elements (Month, Year, Arrows) */
+        .flatpickr-calendar .flatpickr-header,
+        .flatpickr-calendar .flatpickr-current-month,
+        .flatpickr-calendar .flatpickr-current-month .cur-month,
+        .flatpickr-calendar .flatpickr-month,
+        .flatpickr-calendar .flatpickr-monthDropdown-months {
+            color: #0f172a !important;
+            fill: #0f172a !important;
+            font-weight: 700 !important;
+        }
+
+        /* Specific fix for the Month Dropdown (Select) */
+        .flatpickr-calendar .flatpickr-monthDropdown-months {
+            background-color: transparent !important;
+            /* Ensure no dark bg */
+            -webkit-appearance: menulist;
+            /* Restore default select arrow if needed or let flatpickr handle */
+            cursor: pointer !important;
+        }
+
+        /* Year Input */
+        .flatpickr-calendar .flatpickr-current-month input.cur-year {
+            color: #0f172a !important;
+            font-weight: 700 !important;
+        }
+
+        /* Arrows (SVG & Pseudo-elements) */
+        .flatpickr-calendar .flatpickr-prev-month,
+        .flatpickr-calendar .flatpickr-next-month,
+        .flatpickr-calendar .flatpickr-prev-month svg,
+        .flatpickr-calendar .flatpickr-next-month svg {
+            color: #0f172a !important;
+            fill: #0f172a !important;
+        }
+
+        /* Year Spinner Arrows (Triangles) - Make always visible */
+        .flatpickr-calendar .flatpickr-current-month .numInputWrapper span.arrowUp,
+        .flatpickr-calendar .flatpickr-current-month .numInputWrapper span.arrowDown {
+            opacity: 1 !important;
+            /* Force visible always, not just on hover */
+            display: block !important;
+            visibility: visible !important;
+        }
+
+        /* Today Button Styling */
+        .flatpickr-today-button {
+            display: block;
+            width: 100%;
+            padding: 10px;
+            background: #f1f5f9;
+            color: #0f172a;
+            border: none;
+            border-top: 1px solid #e2e8f0;
+            font-weight: 600;
+            cursor: pointer;
+            text-align: center;
+            font-size: 0.9rem;
+            transition: background 0.2s;
+        }
+
+        .flatpickr-today-button:hover {
+            background: #e2e8f0;
+            color: #0f172a;
+        }
+
+        .flatpickr-calendar .flatpickr-current-month .numInputWrapper span.arrowUp:after {
+            border-bottom-color: #0f172a !important;
+        }
+
+        .flatpickr-calendar .flatpickr-current-month .numInputWrapper span.arrowDown:after {
+            border-top-color: #0f172a !important;
+        }
+    </style>
 </head>
 
 <body>

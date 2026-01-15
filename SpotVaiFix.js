@@ -78,62 +78,127 @@ let cachedWeather = [];
 
 // Initialization
 async function init() {
-    setDefaultDates();
     initCitySelector();
     loadSettings();
-    await fetchSpotPrices();
-    await fetchHistoricalAverage(); // Fetch previous calendar month
-    historicalAvgPrice = previousMonthAvgPrice; // Default comparison to previous month
-    calculateComparison();
-    await updateHistory();
 
-    // Initialize Flatpickr with Finnish locale
-    const fpConfig = {
+    // Calculate Defaults (Yesterday and One Month Ago)
+    const now = new Date();
+    const todayForMax = new Date(); // Strict reference for maxDate
+    todayForMax.setHours(23, 59, 59, 999); // Allow the whole current day including current time
+
+    // Eilinen (Yesterday)
+    const yesterday = new Date(now);
+    yesterday.setDate(yesterday.getDate() - 1);
+
+    // Eilinen - 1 kk (Month ago from yesterday)
+    const monthAgo = new Date(yesterday);
+    monthAgo.setMonth(monthAgo.getMonth() - 1);
+
+    // Initial fetch and calc: We init flatpickr first.
+
+    // Flatpickr Common Config
+    const fpConfigCommon = {
         locale: "fi",
-        dateFormat: "Y-m-d",
-        altInput: true,
+        dateFormat: "Y-m-d", // Model format
+        altInput: true,      // Display format (hides original)
         altFormat: "d.m.Y",
         allowInput: true,
-        maxDate: new Date() // Restrict to today max
+        maxDate: todayForMax // Strict global max
     };
 
-    const startPicker = flatpickr("#startDate", {
-        ...fpConfig,
+    // Initialize Start Picker
+    flatpickr("#startDate", {
+        ...fpConfigCommon,
+        defaultDate: monthAgo,
         onChange: function (selectedDates, dateStr, instance) {
-            endPicker.set('minDate', dateStr);
+            const endElem = document.getElementById("endDate");
+            // Update minDate for End Picker
+            if (endElem && endElem._flatpickr) {
+                const endPicker = endElem._flatpickr;
+                endPicker.set('minDate', dateStr ? dateStr : null);
+
+                // If End Date is now BEFORE Start Date (invalid), update it
+                if (endPicker.selectedDates.length > 0 && selectedDates.length > 0) {
+                    if (endPicker.selectedDates[0] < selectedDates[0]) {
+                        // Option: Clear or push forward? Pushing forward to Start Date is logical.
+                        endPicker.setDate(selectedDates[0], true);
+                    }
+                }
+            }
         }
     });
 
-    const endPicker = flatpickr("#endDate", {
-        ...fpConfig,
+    // Initialize End Picker (WITH Today Button)
+    flatpickr("#endDate", {
+        ...fpConfigCommon,
+        defaultDate: yesterday,
+        onReady: function (selectedDates, dateStr, instance) {
+            // Create "Tänään" button
+            const todayBtn = document.createElement("button");
+            todayBtn.className = "flatpickr-today-button";
+            todayBtn.textContent = "Tänään";
+            todayBtn.type = "button";
+
+            todayBtn.addEventListener("click", (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+
+                const today = new Date();
+
+                // Set date to Today
+                instance.setDate(today, true);
+                instance.close();
+            });
+
+            instance.calendarContainer.appendChild(todayBtn);
+        },
         onChange: function (selectedDates, dateStr, instance) {
-            startPicker.set('maxDate', dateStr);
+            const startElem = document.getElementById("startDate");
+            // Update maxDate for Start Picker
+            if (startElem && startElem._flatpickr) {
+                const startPicker = startElem._flatpickr;
+                // If end date is cleared, max remains Today
+                const newMax = dateStr ? dateStr : todayForMax;
+                startPicker.set('maxDate', newMax);
+
+                // If Start Date is now AFTER End Date (invalid), update it
+                if (startPicker.selectedDates.length > 0 && selectedDates.length > 0) {
+                    if (startPicker.selectedDates[0] > selectedDates[0]) {
+                        // Correct Start Date to match End Date (or clear?)
+                        startPicker.setDate(selectedDates[0], true);
+                    }
+                }
+
+                // UX Improvement: Jump calendar to the new Max Date
+                // This ensures if user picks a past date for End, Start picker shows that month.
+                // Only jump if there isn't already a selected date that dictates the view.
+                if (dateStr) {
+                    startPicker.jumpToDate(dateStr);
+                }
+            }
         }
     });
+
+    // Now inputs have values from flatpickr, proceed with data fetch
+    await fetchSpotPrices();
+    await fetchHistoricalAverage();
+    historicalAvgPrice = previousMonthAvgPrice;
+
+    calculateComparison();
+    await updateHistory();
 
     // Event Listeners
     [spotMarginInput, spotBasicFeeInput, fixedPriceInput, fixedBasicFeeInput, monthlyConsumptionInput].forEach(input => {
         input.addEventListener("input", () => {
             saveSettings();
             calculateComparison();
-            if (historyChart) historyChart.update(); // Update baseline if chart exists
+            if (historyChart) historyChart.update();
         });
     });
 
     updateHistoryBtn.addEventListener("click", updateHistory);
     citySelect.addEventListener("change", () => {
         saveSettings();
-        // If chart exists, updating just the legend text immediately would be nice,
-        // but to change data we need to fetch new weather.
-        // Let's trigger updateHistory() if checking history is active?
-        // Or just let user click "Päivitä historia".
-        // The prompt implies "lisää... ja sen pohjalta lisää legendaan". 
-        // Best UX: trigger updateHistory() automatically or just waiting?
-        // Let's wait for button click to avoid heavy traffic on every change, 
-        // BUT for a smooth experience, maybe we should auto-update if the user just changed the city.
-        // Let's stick to updateHistoryBtn for the heavy fetch, but maybe update the chart title if possible?
-        // Actually weather needs to be re-fetched. So manual update is safer.
-        // However, I'll allow the user to click the button.
     });
 
     // Theme Change Observer
@@ -163,33 +228,7 @@ function initCitySelector() {
     citySelect.value = "Helsinki";
 }
 
-// Set default dates to the previous calendar month
-// Set default dates to: Yesterday AND one month back from yesterday
-function setDefaultDates() {
-    const now = new Date();
-    // Eilinen
-    now.setDate(now.getDate() - 1);
-
-    // Loppupäivä = Eilinen
-    const endYear = now.getFullYear();
-    const endMonth = String(now.getMonth() + 1).padStart(2, '0');
-    const endDay = String(now.getDate()).padStart(2, '0');
-    const endStr = `${endYear}-${endMonth}-${endDay}`;
-
-    // Alkupäivä = Eilinen - 1 kk
-    const startObj = new Date(now);
-    startObj.setMonth(startObj.getMonth() - 1);
-
-    const startYear = startObj.getFullYear();
-    const startMonth = String(startObj.getMonth() + 1).padStart(2, '0');
-    const startDay = String(startObj.getDate()).padStart(2, '0');
-    const startStr = `${startYear}-${startMonth}-${startDay}`;
-
-    startDateInput.value = startStr;
-    endDateInput.value = endStr;
-
-    // Max date handled by Flatpickr config in init()
-}
+// setDefaultDates function removed as it contributed to flash and is now handled by Flatpickr defaultDate
 
 // Fetch current spot price for display
 async function fetchSpotPrices() {
