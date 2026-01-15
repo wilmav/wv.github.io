@@ -167,12 +167,22 @@
         document.body.appendChild(toggleBtn);
 
         // --- Aggressive Cache Cleanup ---
+        // --- Aggressive Cache Cleanup & HTTPS Upgrade ---
         Object.keys(localStorage).forEach(key => {
             if (key.startsWith('isbn_') || key.startsWith('cover_')) {
-                const val = localStorage.getItem(key);
-                if (val === '9789523765061') localStorage.removeItem(key);
-                if (key.includes('undefined') || val === 'undefined') localStorage.removeItem(key);
-                if (key.toLowerCase().includes('sokeiden')) localStorage.removeItem(key);
+                let val = localStorage.getItem(key);
+
+                // Bad Data Removal
+                if (val === '9789523765061') { localStorage.removeItem(key); return; }
+                if (key.includes('undefined') || val === 'undefined') { localStorage.removeItem(key); return; }
+                if (key.toLowerCase().includes('sokeiden')) { localStorage.removeItem(key); return; }
+
+                // HTTPS Upgrade
+                if (key.startsWith('cover_') && val && val.includes('http://')) {
+                    val = val.replace('http://', 'https://');
+                    localStorage.setItem(key, val);
+                    console.log(`[Cache Fix] Upgraded ${key} to HTTPS`);
+                }
             }
         });
 
@@ -305,8 +315,23 @@
                 // 1. Update Main Cover if it matches
                 const detailCover = document.getElementById('book-cover');
                 const urlParams = new URLSearchParams(window.location.search);
-                if (urlParams.get('id') === book.id || detailCover.dataset.id === book.id) {
-                    detailCover.innerHTML = `<img src="${url}" alt="${book.title}" style="width:100%; height:100%; object-fit:cover;" onerror="handleDetailCoverError(this, '${book.id}')">`;
+                const pageId = urlParams.get('id');
+
+                // Log the check to debug why it might fail
+                const targetId = detailCover.dataset.id;
+                console.log(`[Detail Cover DEBUG] PageID: "${pageId}", BookID: "${book.id}", TargetID: "${targetId}". Updating URL: ${url}`);
+
+                // update if IDs match OR if it's the main fallback (book.id might be null in some fallbacks, but pageId is constant)
+                // Relaxed logic: If we are on the detail page and this enrichment is for the displayed book (ID match or fallback), update it.
+                // We also check if 'book.id' is present in the URL (loose match for cleanliness)
+                const isMainBook = (book.id && pageId && pageId.includes(book.id)) || (pageId === book.id);
+                const isFallback = (!book.id && pageId); // Fallback usually has null ID
+
+                if (isMainBook || isFallback || (targetId && targetId === book.id)) {
+                    console.log(`[Detail Cover DEBUG] Updating Main ID via innerHTML...`);
+                    detailCover.innerHTML = `<img src="${url}" class="book-cover-img" alt="${book.title}" style="width:100%; height:100%; object-fit:cover;" onerror="handleDetailCoverError(this, '${book.id || pageId}')">`;
+                } else {
+                    console.warn(`[Detail Cover DEBUG] Skipped Main ID update. Conditions: IsMain=${isMainBook}, IsFallback=${isFallback}`);
                 }
 
                 // 2. Update Similar Books
@@ -321,34 +346,72 @@
             };
 
             if (cachedUrl) {
+                console.log(`[Detail Cover] Cache hit for ${book.id}: ${cachedUrl}`);
                 updateImages(cachedUrl);
             }
 
             const applyData = (items) => {
                 if (items && items.length > 0) {
-                    const info = items[0].volumeInfo;
+                    // Filter and Find Best Candidate
+                    const bestItem = items.find(item => {
+                        const info = item.volumeInfo;
+                        const title = info.title || "";
+                        const isCancelled = title.toUpperCase().includes("PERUTTU") || title.toUpperCase().includes("CANCELLED");
+                        const hasImage = info.imageLinks && (info.imageLinks.thumbnail || info.imageLinks.smallThumbnail);
 
-                    // 1. Description (if missing and is main book)
-                    const urlParams = new URLSearchParams(window.location.search);
-                    if (urlParams.get('id') === book.id) {
-                        const descEl = document.getElementById('book-desc');
-                        if ((!descEl.innerText || descEl.innerText.length < 10) && info.description) {
-                            descEl.innerText = info.description;
-                            descEl.parentElement.style.display = 'block';
-                            descEl.parentElement.insertAdjacentHTML('beforeend', '<div style="font-size:0.8rem; color:#888; margin-top:8px;">Kuvaus: Google Books</div>');
+                        // Strict Title Match Check
+                        // We must ensure the found title contains at least one significant word from the search title
+                        // "Hannu ja Kerttu" vs "Uinu, uinu, lemmikkini" -> distinct mismatch
+                        const searchTitle = (book.title || "").toLowerCase();
+                        const foundTitle = title.toLowerCase();
+
+                        // Create tokens (words > 2 chars)
+                        const searchTokens = searchTitle.split(/[ :.,;]+/).filter(w => w.length > 3);
+                        const foundTokens = foundTitle.split(/[ :.,;]+/).filter(w => w.length > 3);
+
+                        // Determine overlap (at least one significant word match required) by default?
+                        // Or strict: found title must contain MOST of the search title?
+                        // Let's require at least one token match if tokens exist
+                        let titleMatch = true;
+                        if (searchTokens.length > 0) {
+                            titleMatch = searchTokens.some(token => foundTitle.includes(token));
                         }
-                    }
 
-                    // 2. Cover
-                    if (info.imageLinks) {
+                        if (isCancelled) console.warn(`[Detail Cover] Skipping cancelled item: "${title}"`);
+                        if (!hasImage && !isCancelled) console.log(`[Detail Cover] Skipping item without image: "${title}"`);
+                        if (!titleMatch && !isCancelled && hasImage) console.warn(`[Detail Cover] Skipping title mismatch: Search="${book.title}" Found="${title}"`);
+
+                        return !isCancelled && hasImage && titleMatch;
+                    });
+
+                    if (bestItem) {
+                        const info = bestItem.volumeInfo;
+                        console.log(`[Detail Cover] Selected item: "${info.title}" by ${info.authors ? info.authors.join(', ') : 'Unknown'}`);
+
+                        // 1. Description (if missing and is main book)
+                        const urlParams = new URLSearchParams(window.location.search);
+                        if (urlParams.get('id') === book.id) {
+                            const descEl = document.getElementById('book-desc');
+                            if ((!descEl.innerText || descEl.innerText.length < 10) && info.description) {
+                                descEl.innerText = info.description;
+                                descEl.parentElement.style.display = 'block';
+                                descEl.parentElement.insertAdjacentHTML('beforeend', '<div style="font-size:0.8rem; color:#888; margin-top:8px;">Kuvaus: Google Books</div>');
+                            }
+                        }
+
+                        // 2. Cover (Guaranteed to exist by filter)
                         const link = info.imageLinks.thumbnail || info.imageLinks.smallThumbnail;
-                        if (link) {
-                            const safeLink = link.replace('&edge=curl', '');
-                            localStorage.setItem(cacheKey, safeLink);
-                            updateImages(safeLink);
-                            return true;
-                        }
+                        console.log(`[Detail Cover] Found valid image link: ${link}`);
+                        const safeLink = link.replace(/^http:\/\//i, 'https://').replace('&edge=curl', '');
+                        localStorage.setItem(cacheKey, safeLink);
+                        updateImages(safeLink);
+                        return true;
+
+                    } else {
+                        console.warn(`[Detail Cover] No valid candidate found in ${items.length} results (all cancelled or missing images).`);
                     }
+                } else {
+                    console.warn(`[Detail Cover] applyData called with empty/null items.`);
                 }
                 return false;
             };
@@ -381,14 +444,16 @@
                 const searchTitle = book.title || "Unknown";
                 let q = `intitle:${encodeURIComponent(searchTitle)}+inauthor:${encodeURIComponent(author)}`;
                 console.log(`[Detail Cover] Strategy A: ${q}`);
-                let res = await fetch(`https://www.googleapis.com/books/v1/volumes?q=${q}&maxResults=1`);
+                // INCREASED LIMIT TO 5
+                let res = await fetch(`https://www.googleapis.com/books/v1/volumes?q=${q}&maxResults=5`);
                 let data = await res.json();
                 if (applyData(data.items)) return;
 
                 // Strategy B: Loose
                 console.log(`[Detail Cover] Retrying Strategy B (Loose)...`);
                 let qLoose = `${encodeURIComponent(searchTitle)}+${encodeURIComponent(author)}`;
-                let resLoose = await fetch(`https://www.googleapis.com/books/v1/volumes?q=${qLoose}&maxResults=1`);
+                // INCREASED LIMIT TO 5
+                let resLoose = await fetch(`https://www.googleapis.com/books/v1/volumes?q=${qLoose}&maxResults=5`);
                 let dataLoose = await resLoose.json();
                 applyData(dataLoose.items);
 
@@ -966,6 +1031,12 @@
             // Trigger name search fallback with the CORRECT ID or just inferred info
             const bookTitle = document.getElementById('book-title').textContent;
             const bookAuthor = document.getElementById('book-author').textContent;
+
+            // Prevent infinite loop if we already tried this exact fallback
+            if (img.dataset.detailFallback) return;
+            img.dataset.detailFallback = "true";
+
+            console.log(`[Detail Cover] Fallback triggered for ${bookTitle}`);
             // Use ID if passed, otherwise fall back to name-only cache
             enrichWithGoogleBooks({ id: id || null, title: bookTitle, authors: { primary: { [bookAuthor]: [] } } }, "");
         };
@@ -991,7 +1062,10 @@
 
             if (!img.dataset.triedGoogle) {
                 img.dataset.triedGoogle = "true";
-                enrichWithGoogleBooks({ id: id, title: title, authors: { primary: { [author]: [] } } }, "");
+                // Add title check to avoid infinite loops if data is bad
+                if (title && title.length > 2) {
+                    enrichWithGoogleBooks({ id: id, title: title, authors: { primary: { [author]: [] } } }, "");
+                }
             }
         };
 
