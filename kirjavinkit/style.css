@@ -767,6 +767,14 @@ select:focus {
     font-weight: 700;
 }
 
+/* Future/Unknown Year (2099 etc) - Yellow as requested */
+.future-year {
+    background-color: #fff3cd !important;
+    border: 1px solid #ffeeba !important;
+    color: #856404 !important;
+    font-weight: 600;
+}
+
 /* ISBN Pill */
 .isbn-pill {
     font-size: 0.75rem;

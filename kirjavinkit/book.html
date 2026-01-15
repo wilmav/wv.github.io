@@ -12,6 +12,16 @@
 </head>
 
 <body>
+    <script>
+        (function () {
+            try {
+                const savedTheme = localStorage.getItem('theme') || 'dark';
+                if (savedTheme === 'light') {
+                    document.body.classList.add('light-mode');
+                }
+            } catch (e) { }
+        })();
+    </script>
     <header>
         <a href="../index.html" class="app-logo-link" style="text-decoration:none;">
             <div class="app-title">Sovellukset<span class="app-title-com">.com</span></div>

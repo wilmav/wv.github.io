@@ -308,6 +308,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 .replace(/^Alkuperäisteos:\s*/i, "")
                 .replace(/[\s./,]*suom(i|ennus).*$/i, "") // Strip ". Suomi", " suomennos", etc.
                 .replace(/[\s./,]*engl(anti|ish).*$/i, "")
+                .replace(/[\s./,]*svensk(a|t)?.*$/i, "")
                 .trim();
         }
 
@@ -354,13 +355,17 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
         }
 
+        // Year Sanity Check
+        // REVERTED: We keep the year for sorting (putting "Tulossa" items first).
+        let finalYear = book.year;
+
         return {
             id: book.id,
             title: book.title,
             cleanTitle: cleanTitle,
             originalTitle: ot,
             author: author,
-            year: book.year,
+            year: finalYear,
             manualDate: manualDate,
             description: book.summary,
             image: book.images && book.images.length ? (book.images[0].startsWith('http') ? book.images[0] : `https://api.finna.fi${book.images[0]}`) : null,
@@ -422,18 +427,46 @@ document.addEventListener('DOMContentLoaded', async () => {
                 return;
             }
 
-            const foundAuthors = new Set();
+            const foundAuthorsMap = new Map(); // key: lowercase, value: best display name
+
+            // Helper to title case ALL CAPS
+            const toTitleCase = (str) => {
+                return str.toLowerCase().replace(/(^|[ ,-])(\w)/g, (c) => c.toUpperCase());
+            };
+
+            const isAllCaps = (str) => str === str.toUpperCase() && str !== str.toLowerCase();
+
             data.records.forEach(r => {
                 if (r.authors) {
                     Object.values(r.authors).forEach(roleObj => {
                         if (roleObj) {
                             Object.keys(roleObj).forEach(name => {
                                 const normalized = name.replace(/\s+/g, ' ').trim();
-                                if (normalized) {
-                                    const lowerN = normalized.toLowerCase();
+                                // FIX: specific fix for "LastName, FirstName Middle, 1900-" format
+                                // We strip the year suffix to improve deduplication
+                                const cleanedName = normalized.replace(/,\s*\d{4}.*$/, "").trim();
+
+                                if (cleanedName) {
+                                    const lowerN = cleanedName.toLowerCase();
                                     const blocklist = ["(yhtye)", "esittäjä", "esitt.", "elokuva", "ohjaaja", "näyttelijä", "säveltäjä", "tuottaja", "musiikki", "orkesteri", "kuoro", "yhtye", "band"];
+
                                     if (!blocklist.some(term => lowerN.includes(term))) {
-                                        foundAuthors.add(normalized);
+                                        // Deduplication Logic
+                                        if (!foundAuthorsMap.has(lowerN)) {
+                                            // New entry: if ALL CAPS, try to prettify it, but keep original if it looks okay
+                                            let displayName = cleanedName;
+                                            if (isAllCaps(cleanedName)) {
+                                                displayName = toTitleCase(cleanedName);
+                                            }
+                                            foundAuthorsMap.set(lowerN, { display: displayName, isOriginalMixed: !isAllCaps(cleanedName) });
+                                        } else {
+                                            // Existing entry: Check if this one is better quality (Mixed case is better than auto-fixed or all caps)
+                                            const existing = foundAuthorsMap.get(lowerN);
+                                            // If current is original mixed case and existing was not (or existing was all caps), upgrade
+                                            if (!isAllCaps(cleanedName) && !existing.isOriginalMixed) {
+                                                foundAuthorsMap.set(lowerN, { display: cleanedName, isOriginalMixed: true });
+                                            }
+                                        }
                                     }
                                 }
                             });
@@ -441,6 +474,9 @@ document.addEventListener('DOMContentLoaded', async () => {
                     });
                 }
             });
+
+            // Flatten back to array
+            const foundAuthors = new Set(Array.from(foundAuthorsMap.values()).map(v => v.display));
 
             const queryTokens = query.toLowerCase().trim().split(/\s+/);
             const filteredAuthors = Array.from(foundAuthors).filter(name => {
@@ -612,12 +648,51 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
 
         // --- DUPLICATE REMOVAL (Extra layer to be sure) ---
-        const seen = new Set();
-        booksToShow = booksToShow.filter(b => {
-            const key = `${b.title}|${b.author}|${b.year}`;
-            if (seen.has(key)) return false;
-            seen.add(key);
-            return true;
+        // --- DUPLICATE REMOVAL (Advanced: Prefer Real Year) ---
+        const uniqueBooksMap = new Map();
+        booksToShow.forEach(b => {
+            const key = `${b.title.toLowerCase().trim()}|${b.author.toLowerCase().trim()}`;
+
+            if (!uniqueBooksMap.has(key)) {
+                uniqueBooksMap.set(key, b);
+            } else {
+                // Duplicate found: Decide which one to keep
+                const existing = uniqueBooksMap.get(key);
+
+                const yNow = new Date().getFullYear();
+                const isPlaceholder = (y) => {
+                    const val = parseInt(y);
+                    return !isNaN(val) && val > yNow + 2;
+                };
+
+                const existingIsPlaceholder = isPlaceholder(existing.year);
+                const currentIsPlaceholder = isPlaceholder(b.year);
+
+                // If existing is placeholder (2099) and current is NOT (e.g. 2024), replace with current
+                if (existingIsPlaceholder && !currentIsPlaceholder) {
+                    uniqueBooksMap.set(key, b);
+                }
+                // If existing is real and current is placeholder, keep existing (do nothing)
+                // If both are same category, keep first found (which is sorted by sort logic above)
+            }
+        });
+
+        booksToShow = Array.from(uniqueBooksMap.values());
+
+        // Re-sort to be safe (though map insertion order usually preserves it, 
+        // replacing might affect order in some JS engines, so sort again is safer)
+        booksToShow.sort((a, b) => {
+            const yearA = parseInt(a.year) || 0;
+            const yearB = parseInt(b.year) || 0;
+            const isFutureA = yearA > currentYear;
+            const isFutureB = yearB > currentYear;
+
+            if (isFutureA && !isFutureB) return -1;
+            if (!isFutureA && isFutureB) return 1;
+
+            const diff = yearB - yearA;
+            if (diff !== 0) return diff;
+            return a.title.localeCompare(b.title);
         });
 
         if (booksToShow.length === 0) {
@@ -633,10 +708,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 window.location.href = `book.html?id=${book.id}`;
             };
 
-            let displayOriginalTitle = book.originalTitle || "";
-            if (displayOriginalTitle) {
-                displayOriginalTitle = displayOriginalTitle.replace(/^Alkuteos:\s*/i, "").replace(/^Alkuperäisteos:\s*/i, "").replace(/\.\s*Suomi$/i, "").trim();
-            }
+
 
             let imgSrc = book.image || ''; // Already normalized in normalizeBookData or updated via Google
 
@@ -682,11 +754,19 @@ document.addEventListener('DOMContentLoaded', async () => {
             let dateStyle = parseInt(book.year) === currentYear ? ' current-year' : '';
             let dateTitle = 'Julkaisuvuosi';
 
+            // Future/Placeholder Year Handling
+            const yInt = parseInt(book.year);
+            if (!isNaN(yInt) && yInt > currentYear + 2) {
+                dateDisplay = "Ei tietoa";
+                dateStyle = ' future-year'; // You can style this class in CSS if needed, e.g. blue/green
+                dateTitle = "Julkaisuvuosi ei tiedossa (Finna: 2099)";
+            }
+
             // Specific date logic removed as requested ("Julkaisuvuosi kaikkialla")
             // if (book.manualDate) { ... }
 
             let formatBadgeHtml = `
-                <span class="year-tag${dateStyle}" title="${dateTitle}">${dateDisplay}</span>
+                ${dateDisplay ? `<span class="year-tag${dateStyle}" title="${dateTitle}">${dateDisplay}</span>` : ''}
                 ${book.formats.isEbook ? '<span class="year-tag" style="background:#eef; color:#44a;">E-kirja</span>' : ''}
                 ${book.formats.isAudio ? '<span class="year-tag" style="background:#efe; color:#064;">Äänikirja</span>' : ''}
                 ${!book.formats.isEbook && !book.formats.isAudio ? '<span class="year-tag" style="background:#f0f0f0; color:#444;">Kirja</span>' : ''}
