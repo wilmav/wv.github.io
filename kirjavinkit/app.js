@@ -208,14 +208,16 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     async function searchFinnaBooks(authorName, minYear) {
-        // limit: 100 to get a good coverage of "all" books as requested.
+        // limit: 100 is the max allowed. We want 300, so we fetch 3 pages.
+        const BATCH_SIZE = 100;
+        const TOTAL_WANTED = 300;
+        const PAGES = Math.ceil(TOTAL_WANTED / BATCH_SIZE);
+
         const params = new URLSearchParams();
         params.append("lookfor", authorName);
         params.append("type", "Author");
         params.append("sort", "main_date_str desc");
-        params.append("type", "Author");
-        params.append("sort", "main_date_str desc");
-        params.append("limit", "300"); // Increased from 100 to catch older real editions (e.g. King's 2018 vs 2099)
+        params.append("limit", BATCH_SIZE.toString());
 
         const fields = ["id", "title", "authors", "year", "images", "summary", "languages", "series", "uniformTitles", "formats", "isbn"];
         fields.forEach(f => params.append("field[]", f));
@@ -223,17 +225,31 @@ document.addEventListener('DOMContentLoaded', async () => {
         // Ensure only books/docs, excluding videos
         params.append("filter[]", 'format:"0/Book/"');
 
-        // Finna API handling
-        const url = `${API_SEARCH}?${params.toString()}`;
-        console.log("Fetching books with URL:", url);
+        // Parallel Fetching for speed
+        const fetchPromises = [];
+        for (let page = 1; page <= PAGES; page++) {
+            const pageParams = new URLSearchParams(params);
+            pageParams.append("page", page.toString());
+            const url = `${API_SEARCH}?${pageParams.toString()}`;
+            // console.log("Fetching page " + page + ":", url);
+            fetchPromises.push(
+                fetch(url)
+                    .then(res => res.json())
+                    .then(data => data.records || [])
+                    .catch(e => {
+                        console.error(`Page ${page} failed for ${authorName}`, e);
+                        return [];
+                    })
+            );
+        }
 
         try {
-            const res = await fetch(url);
-            const data = await res.json();
-            const records = data.records || [];
-            console.log(`Found ${records.length} books for ${authorName}`);
+            const results = await Promise.all(fetchPromises);
+            const allRecords = results.flat();
 
-            return records
+            console.log(`Found ${allRecords.length} books for ${authorName} (batches: ${results.length})`);
+
+            return allRecords
                 .filter(book => {
                     const y = parseInt(book.year);
                     const yearOk = !isNaN(y) && y >= minYear;

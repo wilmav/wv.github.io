@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html>
+
+<body>
+    <!-- The SVG Content -->
+    <svg id="source-svg" xmlns="http://www.w3.org/2000/svg" width="300" height="300" viewBox="0 0 32 32"
+        style="display:none;">
+        <defs>
+            <pattern id="stripes" patternUnits="userSpaceOnUse" width="4" height="4" patternTransform="rotate(45)">
+                <rect width="2" height="4" fill="#f59e0b" />
+                <rect x="2" width="2" height="4" fill="#b45309" />
+            </pattern>
+        </defs>
+        <text x="50%" y="62%" dominant-baseline="middle" text-anchor="middle" font-family="Arial Black, sans-serif"
+            font-weight="900" font-size="42" fill="url(#stripes)" style="pointer-events: none;">S</text>
+    </svg>
+
+    <canvas id="canvas" width="300" height="300"></canvas>
+    <textarea id="output"></textarea>
+
+    <script>
+        const svg = document.getElementById('source-svg');
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        const output = document.getElementById('output');
+
+        // Create an image from the SVG
+        const svgData = new XMLSerializer().serializeToString(svg);
+        const img = new Image();
+        const svgBlob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
+        const url = URL.createObjectURL(svgBlob);
+
+        img.onload = function () {
+            ctx.clearRect(0, 0, 300, 300); // Ensure transparency
+            ctx.drawImage(img, 0, 0, 300, 300);
+
+            // Get base64 (removes the header data:image/png;base64,)
+            const dataURL = canvas.toDataURL('image/png');
+            output.value = dataURL.split(',')[1];
+        };
+        img.src = url;
+    </script>
+</body>
+
+</html>
