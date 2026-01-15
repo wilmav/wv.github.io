@@ -56,8 +56,8 @@ header {
 }
 
 .app-title {
-    font-weight: normal;
-    font-size: 1.9rem;
+    font-weight: 600;
+    font-size: 1.85rem;
     letter-spacing: -0.05em;
     color: var(--text);
     margin-top: 1rem;

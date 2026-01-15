@@ -41,7 +41,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                 if (key.includes('undefined') || val === 'undefined' || val === null) {
                     localStorage.removeItem(key);
                 }
-                if (key.startsWith('cover_') && key.toLowerCase().includes('sokeiden')) {
+                // Force clear specific persisted keys for Sokeiden valtakunta to ensure new logic runs
+                if (key.toLowerCase().includes('sokeiden')) {
                     localStorage.removeItem(key);
                 }
             }
@@ -884,6 +885,15 @@ document.addEventListener('DOMContentLoaded', async () => {
             } catch (e) { console.warn("[Cover] Strategy A failed", e); }
         }
 
+        // --- SPECIFIC GUARD: Prevent fuzzy fallback for "Sokeiden valtakunta" ---
+        // The user strictly forbids using the English cover if the Finnish one isn't found.
+        if (title.toLowerCase().includes('sokeiden valtakunta')) {
+            console.log(`[Cover] Skipping fuzzy search for "${title}" to prevent wrong language cover.`);
+            handleCoverError(imgEl); // Ensure fallback text shows
+            return;
+        }
+        // -----------------------------------------------------------------------
+
         try {
             // Enhanced fallback: Fetch 5 results and find one with an image
             let q = `intitle:${encodeURIComponent(title)}+inauthor:${encodeURIComponent(cleanAuthor)}`;
@@ -924,6 +934,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         } catch (e) { console.warn("[Cover] Strategy C failed", e); }
 
         // Strategy D: Original Title Search
+        // Strategy D: Original Title Search -- DISABLED to prevent foreign covers
+        /*
         if (originalTitle && originalTitle !== title) {
             try {
                 let q = `intitle:${encodeURIComponent(originalTitle)}+inauthor:${encodeURIComponent(cleanAuthor)}`;
@@ -939,6 +951,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 if (applyImage(dataLoose.items)) return;
             } catch (e) { }
         }
+        */
 
         if (imgEl.parentElement && imgEl.parentElement.querySelector('.no-cover-text')) {
             imgEl.parentElement.querySelector('.no-cover-text').style.display = 'flex';
@@ -1074,6 +1087,8 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
 
             // Strategy C: Original Title + Clean Author (if available)
+            // Strategy C: Original Title + Clean Author (if available) -- DISABLED
+            /*
             if (book.originalTitle) {
                 console.log(`[ISBN] Retrying Strategy C (Original Title): ${book.originalTitle}...`);
                 q = `intitle:${encodeURIComponent(book.originalTitle)}+inauthor:${encodeURIComponent(cleanAuthor)}`;
@@ -1087,6 +1102,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     return;
                 }
             }
+            */
 
         } catch (e) { console.warn("[ISBN] Google fetch failed", e); }
 
