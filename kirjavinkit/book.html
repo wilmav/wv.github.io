@@ -314,37 +314,43 @@
             const cachedUrl = localStorage.getItem(cacheKey);
 
             const updateImages = (url) => {
-                // 1. Update Main Cover if it matches
-                const detailCover = document.getElementById('book-cover');
-                const urlParams = new URLSearchParams(window.location.search);
-                const pageId = urlParams.get('id');
+                // Preload image to avoid flickering
+                const tempImg = new Image();
+                tempImg.onload = () => {
+                    // 1. Update Main Cover
+                    const detailCover = document.getElementById('book-cover');
+                    const urlParams = new URLSearchParams(window.location.search);
+                    const pageId = urlParams.get('id');
 
-                // Log the check to debug why it might fail
-                const targetId = detailCover.dataset.id;
-                console.log(`[Detail Cover DEBUG] PageID: "${pageId}", BookID: "${book.id}", TargetID: "${targetId}". Updating URL: ${url}`);
+                    // Check if this update is relevant for the main book
+                    const isMainBook = (book.id && pageId && pageId.includes(book.id)) || (pageId === book.id);
+                    const isFallback = (!book.id && pageId);
 
-                // update if IDs match OR if it's the main fallback (book.id might be null in some fallbacks, but pageId is constant)
-                // Relaxed logic: If we are on the detail page and this enrichment is for the displayed book (ID match or fallback), update it.
-                // We also check if 'book.id' is present in the URL (loose match for cleanliness)
-                const isMainBook = (book.id && pageId && pageId.includes(book.id)) || (pageId === book.id);
-                const isFallback = (!book.id && pageId); // Fallback usually has null ID
-
-                if (isMainBook || isFallback || (targetId && targetId === book.id)) {
-                    console.log(`[Detail Cover DEBUG] Updating Main ID via innerHTML...`);
-                    detailCover.innerHTML = `<img src="${url}" class="book-cover-img" alt="${book.title}" style="width:100%; height:100%; object-fit:cover;" onerror="handleDetailCoverError(this, '${book.id || pageId}')">`;
-                } else {
-                    console.warn(`[Detail Cover DEBUG] Skipped Main ID update. Conditions: IsMain=${isMainBook}, IsFallback=${isFallback}`);
-                }
-
-                // 2. Update Similar Books
-                const similarImgs = document.querySelectorAll(`.similar-book-img[data-id="${book.id}"]`);
-                similarImgs.forEach(img => {
-                    img.src = url;
-                    img.style.display = 'block';
-                    if (img.parentElement.querySelector('div')) {
-                        img.parentElement.querySelector('div').style.display = 'none';
+                    if (isMainBook || isFallback || (detailCover.dataset.id && detailCover.dataset.id === book.id)) {
+                        const currentImg = detailCover.querySelector('img');
+                        // Only update if URL is different to avoid unnecessary repaints
+                        if (currentImg && currentImg.src !== url) {
+                            console.log(`[Detail Cover] Swapping main image to high-res: ${url}`);
+                            currentImg.src = url; // Smooth swap
+                        } else if (!currentImg) {
+                            console.log(`[Detail Cover] Inserting initial main image: ${url}`);
+                            detailCover.innerHTML = `<img src="${url}" class="book-cover-img" alt="${book.title}" style="width:100%; height:100%; object-fit:cover;" onerror="handleDetailCoverError(this, '${book.id || pageId}')">`;
+                        }
                     }
-                });
+
+                    // 2. Update Similar Books (smoothly)
+                    const similarImgs = document.querySelectorAll(`.similar-book-img[data-id="${book.id}"]`);
+                    similarImgs.forEach(img => {
+                        if (img.src !== url) {
+                            img.src = url;
+                            img.style.display = 'block';
+                            if (img.parentElement.querySelector('div')) {
+                                img.parentElement.querySelector('div').style.display = 'none';
+                            }
+                        }
+                    });
+                };
+                tempImg.src = url; // Start loading
             };
 
             if (cachedUrl) {
