@@ -36,21 +36,22 @@ main {
 /* Sidebar Styling (overrides tyyli.css header) */
 /* Header */
 /* Sidebar Styling (overrides tyyli.css header) */
-header {
+/* Sidebar Styling (overrides tyyli.css header) - Scoped to avoid flash on default dark */
+body.light-mode header {
     background: linear-gradient(180deg, #FF9900 0%, #FFCC00 100%) !important;
     color: white !important;
     border-right: none !important;
     box-shadow: 4px 0 12px rgba(255, 153, 0, 0.1);
 }
 
-header .app-title {
+body.light-mode header .app-title {
     color: white !important;
     text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 /* HIGH SPECIFICITY to override tyyli.css */
-header .app-title .app-title-com,
-.app-title-com {
+body.light-mode header .app-title .app-title-com,
+body.light-mode .app-title-com {
     color: #000000 !important;
     opacity: 0.8 !important;
     /* Slight transparency for style, remove if unwanted */
@@ -61,34 +62,34 @@ header .app-title .app-title-com,
     display: block;
 }
 
-header nav {
+body.light-mode header nav {
     padding-top: 1rem;
     border-left: none !important;
 }
 
-header nav ul,
-header nav ul li {
+body.light-mode header nav ul,
+body.light-mode header nav ul li {
     border-left: none !important;
 }
 
-header nav ul li a {
+body.light-mode header nav ul li a {
     color: rgba(255, 255, 255, 0.9) !important;
 }
 
-header nav ul li strong {
+body.light-mode header nav ul li strong {
     color: white !important;
     border-left-color: white !important;
 }
 
 /* Fix for book.html where strong is inside a (avoids double border) */
-header nav ul li a strong {
+body.light-mode header nav ul li a strong {
     border-left: none !important;
     padding-left: 0 !important;
     display: inline !important;
     /* Keep it inline within the link */
 }
 
-header nav ul li a:hover {
+body.light-mode header nav ul li a:hover {
     color: white !important;
     background: rgba(255, 255, 255, 0.15);
     border-left-color: white !important;

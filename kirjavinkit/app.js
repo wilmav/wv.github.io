@@ -833,9 +833,9 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             let formatBadgeHtml = `
                 ${dateDisplay ? `<span class="year-tag${dateStyle}" title="${dateTitle}">${dateDisplay}</span>` : ''}
-                ${book.formats.isEbook ? '<span class="year-tag" style="background:#eef; color:#44a;">E-kirja</span>' : ''}
-                ${book.formats.isAudio ? '<span class="year-tag" style="background:#efe; color:#064;">Äänikirja</span>' : ''}
-                ${!book.formats.isEbook && !book.formats.isAudio ? '<span class="year-tag" style="background:#f0f0f0; color:#444;">Kirja</span>' : ''}
+                ${(book.formats && book.formats.isEbook) ? '<span class="year-tag" style="background:#eef; color:#44a;">E-kirja</span>' : ''}
+                ${(book.formats && book.formats.isAudio) ? '<span class="year-tag" style="background:#efe; color:#064;">Äänikirja</span>' : ''}
+                ${(!book.formats || (!book.formats.isEbook && !book.formats.isAudio)) ? '<span class="year-tag" style="background:#f0f0f0; color:#444;">Kirja</span>' : ''}
             `;
 
             card.innerHTML = `
