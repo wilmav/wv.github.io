@@ -210,7 +210,24 @@ function updateCellStyle(cell, cipherInfo) {
     const isHardMode = STATE.settings.hardMode;
     const isUnlocked = !isHardMode || STATE.unlockedIds.includes(cipherInfo.id);
     const mode = STATE.settings.displayMode;
-    const isSolved = STATE.userProgress[cipherInfo.id];
+
+    // DECISION: What to show?
+    // If AutoFill is ON: Show Global State (userProgress)
+    // If AutoFill is OFF: Show Local Manual State (gridValues)
+    let isSolved = null;
+    if (STATE.settings.autoFill) {
+        isSolved = STATE.userProgress[cipherInfo.id];
+    } else {
+        // Read manual value from coordinate
+        const r = cell.dataset.row;
+        const c = cell.dataset.col;
+        if (r !== undefined && c !== undefined) {
+            isSolved = STATE.gridValues[`${r}_${c}`];
+        } else {
+            // Fallback for non-grid cells (if any?)
+            isSolved = STATE.userProgress[cipherInfo.id];
+        }
+    }
 
     // Theme Lookups
     const themeColors = COLOR_THEMES[STATE.settings.colorTheme] || COLOR_THEMES['cute'];
@@ -598,14 +615,14 @@ function handleInput(char) {
     STATE.gridValues[key] = char;
 
     // 2. Update Logical State (for Helpers/Solving) with UNIQUENESS CHECK
+    let oldIdToUpdate = null;
     if (char) {
         // "S leaves 3 and comes to 5" logic
         // Find if this char is already assigned to another ID and remove it
         Object.keys(STATE.userProgress).forEach(existingId => {
             if (STATE.userProgress[existingId] === char && existingId !== cipherId) {
                 delete STATE.userProgress[existingId];
-                // If we were auto-filling, we should strictly update those cells too?
-                // For now, just update the helper state mapping.
+                oldIdToUpdate = existingId;
             }
         });
         STATE.userProgress[cipherId] = char;
@@ -634,6 +651,10 @@ function handleInput(char) {
     // 4. Helper Update (If enabled)
     if (STATE.settings.autoFill) {
         updateHelpers(STATE.currentPuzzle);
+        updateAllCells(cipherId); // Propagate new value
+        if (oldIdToUpdate) {
+            updateAllCells(oldIdToUpdate); // Propagate removal from old cells
+        }
     }
 }
 
