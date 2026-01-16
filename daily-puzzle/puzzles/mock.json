@@ -1,0 +1,92 @@
+{
+    "date": "2024-01-20",
+    "id": "mock-001",
+    "image_url": "https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?q=80&w=400&auto=format&fit=crop",
+    "image_clue": "Sveitsi",
+    "grid": [
+        [
+            "S",
+            "U",
+            "O",
+            "M",
+            "I"
+        ],
+        [
+            ".",
+            "K",
+            ".",
+            ".",
+            "L"
+        ],
+        [
+            "J",
+            "K",
+            "L",
+            ".",
+            "M"
+        ],
+        [
+            ".",
+            "A",
+            ".",
+            ".",
+            "A"
+        ],
+        [
+            ".",
+            ".",
+            ".",
+            ".",
+            "."
+        ]
+    ],
+    "cipher": {
+        "S": {
+            "color": "#E63946",
+            "symbol": "●",
+            "id": 1
+        },
+        "U": {
+            "color": "#F1FAEE",
+            "symbol": "■",
+            "id": 2
+        },
+        "O": {
+            "color": "#A8DADC",
+            "symbol": "▲",
+            "id": 3
+        },
+        "M": {
+            "color": "#457B9D",
+            "symbol": "◆",
+            "id": 4
+        },
+        "I": {
+            "color": "#1D3557",
+            "symbol": "★",
+            "id": 5
+        },
+        "K": {
+            "color": "#E9C46A",
+            "symbol": "✚",
+            "id": 6
+        },
+        "L": {
+            "color": "#2A9D8F",
+            "symbol": "▼",
+            "id": 7
+        },
+        "J": {
+            "color": "#264653",
+            "symbol": "⬟",
+            "id": 8
+        },
+        "A": {
+            "color": "#F4A261",
+            "symbol": "✖",
+            "id": 9
+        }
+    },
+    "width": 5,
+    "height": 5
+}
