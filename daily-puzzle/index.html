@@ -61,6 +61,11 @@
                         d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" />
                 </svg>
             </button>
+            <button id="theme-toggle" class="icon-btn" aria-label="Tumma tila" title="Vaihda teemaa">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                </svg>
+            </button>
         </div>
     </header>
 
@@ -89,6 +94,7 @@
             <div class="action-buttons">
                 <button id="undo-btn">Kumoa</button>
                 <button id="check-btn" class="secondary">Tarkista</button>
+                <button id="reveal-btn" class="outline" style="font-size: 0.8rem; opacity: 0.7;">Näytä ratkaisu</button>
                 <button id="reset-btn" class="danger">Alusta</button>
             </div>
         </section>
@@ -114,7 +120,7 @@
                 </select>
             </div>
 
-            <div class="setting-item">
+            <div id="container-color-theme" class="setting-item">
                 <label>Väriteema:</label>
                 <select id="color-theme">
                     <option value="cute">Söpö (Cute)</option>
@@ -123,7 +129,7 @@
                 </select>
             </div>
 
-            <div class="setting-item">
+            <div id="container-symbol-theme" class="setting-item">
                 <label>Kuvioteema:</label>
                 <select id="symbol-theme">
                     <option value="solid">Täytetyt (Solid)</option>
@@ -132,10 +138,12 @@
                 </select>
             </div>
 
+
+
             <div class="setting-item">
                 <label class="toggle-label">
-                    <span>Tumma tila</span>
-                    <input type="checkbox" id="dark-mode-toggle">
+                    <span>Täytä samat kirjaimet (Auto-fill)</span>
+                    <input type="checkbox" id="auto-fill-toggle" checked>
                 </label>
             </div>
 
@@ -175,7 +183,10 @@
                 </label>
             </div>
 
-            <button id="close-settings" class="primary-btn">Tallenna & Sulje</button>
+            <div class="action-buttons" style="margin-top: 1rem; text-align: center;">
+                <button id="close-settings" style="background: var(--secondary-color); color: #004d40;">Tallenna &
+                    Sulje</button>
+            </div>
         </div>
     </div>
 
