@@ -458,8 +458,22 @@ h1 {
 }
 
 /* Modern Button Styles */
+/* Action Buttons Logic */
+.action-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 20px;
+    justify-content: flex-start;
+    /* Or center */
+}
+
 .action-buttons button {
-    padding: 8px 16px;
+    flex: 1 1 auto;
+    min-width: 100px;
+    padding: 10px 15px;
+    font-size: 0.95rem;
+    white-space: nowrap;
     border: none;
     border-radius: 8px;
     font-family: var(--font-main);
@@ -470,7 +484,8 @@ h1 {
 }
 
 .action-buttons button:hover {
-    transform: translateY(-1px);
+    transform: translateY(-2px);
+    filter: brightness(1.1);
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
     opacity: 0.9;
 }
