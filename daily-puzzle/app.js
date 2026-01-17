@@ -15,6 +15,53 @@ const SYMBOL_THEMES = {
     'nature': ["✿", "❀", "❁", "❂", "❃", "❄", "❅", "d", "❦", "❧", "☘", "⚘", "⚝", "⚕", "⚖", "⚗", "⚘", "⚙", "⚚", "⚛", "⚜", "⚝", "⚹", "✴", "✳", "✲"]
 };
 
+const MOCK_DATA = {
+    "date": "2026-01-16",
+    "id": "daily-2026-01-16",
+    "image_url": "https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1",
+    "image_clue": "SOUTUVENE",
+    "start_coords": [[4, 4], [4, 5], [4, 6], [4, 7], [4, 8], [4, 9], [4, 10], [4, 11], [4, 12]],
+    "cipher": {
+        "A": { "id": 1, "color": "#e54444", "symbol": "●" },
+        "E": { "id": 2, "color": "#e57a44", "symbol": "■" },
+        "H": { "id": 3, "color": "#e5af44", "symbol": "▲" },
+        "I": { "id": 4, "color": "#e5e544", "symbol": "▼" },
+        "J": { "id": 5, "color": "#afe544", "symbol": "◆" },
+        "K": { "id": 6, "color": "#7ae544", "symbol": "★" },
+        "L": { "id": 7, "color": "#44e544", "symbol": "✚" },
+        "M": { "id": 8, "color": "#44e57a", "symbol": "✖" },
+        "N": { "id": 9, "color": "#44e5af", "symbol": "⬟" },
+        "O": { "id": 10, "color": "#44e5e5", "symbol": "♥" },
+        "P": { "id": 11, "color": "#44afe5", "symbol": "♦" },
+        "R": { "id": 12, "color": "#447ae5", "symbol": "♠" },
+        "S": { "id": 13, "color": "#4444e5", "symbol": "♣" },
+        "T": { "id": 14, "color": "#7a44e5", "symbol": "☀" },
+        "U": { "id": 15, "color": "#af44e5", "symbol": "☾" },
+        "V": { "id": 16, "color": "#e544e5", "symbol": "☁" },
+        "Y": { "id": 17, "color": "#e544af", "symbol": "☂" },
+        "Ä": { "id": 18, "color": "#e5447a", "symbol": "☃" },
+        "Ö": { "id": 19, "color": "#e57a7a", "symbol": "☄" },
+        "D": { "id": 20, "color": "#afe5af", "symbol": "⚛" }
+    },
+    "width": 13,
+    "height": 13,
+    "grid": [
+        ["J", "O", "U", "T", "S", "E", "N", ".", "H", "A", "L", "L", "A"],
+        ["A", ".", "S", ".", "I", ".", "O", ".", "E", ".", "E", ".", "A"],
+        ["K", "A", "V", "A", "L", "A", ".", "K", "I", "U", "A", "S", "."],
+        ["O", ".", "A", ".", "M", ".", "R", ".", "M", ".", "L", ".", "K"],
+        ["IMG", "IMG", "IMG", "IMG", "S", "O", "U", "T", "U", "V", "E", "N", "E"],
+        ["IMG", "IMG", "IMG", "IMG", "I", ".", "N", ".", "L", ".", "H", ".", "R"],
+        ["IMG", "IMG", "IMG", "IMG", "L", "A", "K", "I", ".", "A", "R", "K", "I"],
+        ["IMG", "IMG", "IMG", "IMG", "M", ".", "O", ".", "I", ".", "O", ".", "."],
+        ["R", "A", "K", "K", "A", "U", "S", ".", "S", "I", "E", "L", "U"],
+        ["U", ".", "A", ".", ".", ".", "V", ".", "K", ".", ".", ".", "N"],
+        ["K", "I", "D", "E", ".", "A", "A", "M", "U", "K", "A", "S", "E"],
+        ["K", ".", "U", ".", "L", ".", "L", ".", "S", ".", "J", ".", "L"],
+        ["I", "H", "M", "I", "N", "E", "N", ".", "T", "A", "I", "K", "A"]
+    ]
+};
+
 const defaultSettings = {
     hardMode: false,
     autoFill: false, // Default to manual input as requested
@@ -374,18 +421,10 @@ function toggleModal(id, show) {
 }
 
 async function fetchPuzzle() {
-    try {
-        // For dev: load mock data
-        const response = await fetch('puzzles/mock.json');
-        if (!response.ok) throw new Error("Fetch failed");
-        const data = await response.json();
-        STATE.currentPuzzle = data;
-        setupGame(data);
-    } catch (e) {
-        console.warn("Failed to load puzzle (likely CORS), using embedded mock:", e);
-        STATE.currentPuzzle = MOCK_DATA;
-        setupGame(MOCK_DATA);
-    }
+    // Directly use embedded MOCK_DATA to avoid caching issues with external files
+    console.log("Using embedded MOCK_DATA");
+    STATE.currentPuzzle = MOCK_DATA;
+    setupGame(MOCK_DATA);
 }
 
 function setupGame(puzzle) {
@@ -691,7 +730,11 @@ function saveSettings() {
     applyTheme(STATE.settings.darkMode);
 
     // Save to LocalStorage
-    localStorage.setItem('dailyPuzzleSettings_v2', JSON.stringify(STATE.settings));
+    try {
+        localStorage.setItem('dailyPuzzleSettings_v2', JSON.stringify(STATE.settings));
+    } catch (e) {
+        console.warn("Storage restricted (file:// protocol?)", e);
+    }
 
     // Refresh grid if display mode changed
     if (STATE.currentPuzzle) {
@@ -707,7 +750,12 @@ function saveSettings() {
     updateHeaderWidgets();
 }
 function loadSettings() {
-    const saved = localStorage.getItem('dailyPuzzleSettings_v2');
+    let saved = null;
+    try {
+        saved = localStorage.getItem('dailyPuzzleSettings_v2');
+    } catch (e) {
+        console.warn("Storage restricted", e);
+    }
     if (saved) {
         try {
             const parsed = JSON.parse(saved);
@@ -786,12 +834,17 @@ function saveProgress() {
         unlockedIds: STATE.unlockedIds,
         timestamp: Date.now()
     };
-    localStorage.setItem(key, JSON.stringify(data));
+    try {
+        localStorage.setItem(key, JSON.stringify(data));
+    } catch (e) { console.warn("Saving progess failed", e); }
 }
 
 function loadProgress(puzzleId) {
     const key = `dailyProgress_v2_${puzzleId}`;
-    const saved = localStorage.getItem(key);
+    let saved = null;
+    try {
+        saved = localStorage.getItem(key);
+    } catch (e) { console.warn("Loading progress failed", e); }
     if (saved) {
         try {
             const data = JSON.parse(saved);
@@ -1108,52 +1161,3 @@ function resetGame() {
 
 
 
-
-
-
-const MOCK_DATA = {
-    "date": "2026-01-16",
-    "id": "daily-2026-01-16",
-    "image_url": "https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1",
-    "image_clue": "SOUTUVENE",
-    "start_coords": [[4, 4], [4, 5], [4, 6], [4, 7], [4, 8], [4, 9], [4, 10], [4, 11], [4, 12]],
-    "cipher": {
-        "A": { "id": 1, "color": "#e54444", "symbol": "●" },
-        "E": { "id": 2, "color": "#e57a44", "symbol": "■" },
-        "H": { "id": 3, "color": "#e5af44", "symbol": "▲" },
-        "I": { "id": 4, "color": "#e5e544", "symbol": "▼" },
-        "J": { "id": 5, "color": "#afe544", "symbol": "◆" },
-        "K": { "id": 6, "color": "#7ae544", "symbol": "★" },
-        "L": { "id": 7, "color": "#44e544", "symbol": "✚" },
-        "M": { "id": 8, "color": "#44e57a", "symbol": "✖" },
-        "N": { "id": 9, "color": "#44e5af", "symbol": "⬟" },
-        "O": { "id": 10, "color": "#44e5e5", "symbol": "♥" },
-        "P": { "id": 11, "color": "#44afe5", "symbol": "♦" },
-        "R": { "id": 12, "color": "#447ae5", "symbol": "♠" },
-        "S": { "id": 13, "color": "#4444e5", "symbol": "♣" },
-        "T": { "id": 14, "color": "#7a44e5", "symbol": "☀" },
-        "U": { "id": 15, "color": "#af44e5", "symbol": "☾" },
-        "V": { "id": 16, "color": "#e544e5", "symbol": "☁" },
-        "Y": { "id": 17, "color": "#e544af", "symbol": "☂" },
-        "Ä": { "id": 18, "color": "#e5447a", "symbol": "☃" },
-        "Ö": { "id": 19, "color": "#e57a7a", "symbol": "☄" },
-        "D": { "id": 20, "color": "#afe5af", "symbol": "⚛" }
-    },
-    "width": 13,
-    "height": 13,
-    "grid": [
-        ["K", "U", "V", "A", ".", "L", "E", "H", "T", "I", ".", "O", "N"],
-        ["O", ".", "A", ".", "O", ".", "T", ".", "O", ".", "P", ".", "Ä"],
-        ["A", "L", "L", "I", ".", "K", "A", "H", "V", "I", ".", "S", "E"],
-        ["T", ".", "O", ".", "T", ".", "N", ".", "I", ".", "T", ".", "L"],
-        ["IMG", "IMG", "IMG", "IMG", "S", "O", "U", "T", "U", "V", "E", "N", "E"],
-        ["IMG", "IMG", "IMG", "IMG", "E", ".", "L", ".", "O", ".", "S", ".", "T"],
-        ["IMG", "IMG", "IMG", "IMG", "N", "A", "A", "M", "A", "R", "I", "T", "."],
-        ["IMG", "IMG", "IMG", "IMG", "T", ".", ".", ".", ".", "A", ".", "U", "."],
-        ["P", "O", "Y", "T", "A", ".", "T", "U", "O", "L", "I", ".", "."],
-        ["Ö", ".", ".", ".", ".", "V", ".", "U", ".", "L", ".", "J", "."],
-        ["K", "E", "L", "L", "O", ".", "R", "A", "D", "I", "O", ".", "O"],
-        ["K", ".", "A", ".", "R", ".", "I", ".", ".", ".", "S", ".", "K"],
-        ["I", "L", "M", "A", "S", "T", "O", ".", "T", "A", "A", "K", "S", "E"]
-    ]
-};
